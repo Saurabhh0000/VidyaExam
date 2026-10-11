@@ -1,0 +1,126 @@
+
+/* =========================================
+   VidyaExam — Compact Table Pagination
+   ========================================= */
+
+.ve-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  width: 100%;
+  padding: 16px 20px;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+/* Current page / total pages */
+
+.ve-pagination-status {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-width: 70px;
+  color: #64748b;
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.ve-pagination-current {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 30px;
+  height: 30px;
+  padding: 0 7px;
+  box-sizing: border-box;
+  color: #ffffff;
+  background: #0f766e;
+  border-radius: 9px;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.ve-pagination-divider {
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+.ve-pagination-total {
+  color: #172b4d;
+  font-weight: 650;
+}
+
+/* Previous and next buttons */
+
+.ve-pagination-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  color: #172b4d;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    border-color 160ms ease;
+}
+
+.ve-pagination-arrow:hover:not(:disabled) {
+  color: #0f766e;
+  background: #e5f5f2;
+  border-color: #b7e3dc;
+}
+
+.ve-pagination-arrow:disabled {
+  color: #c0cad5;
+  background: #f8fafc;
+  border-color: #edf1f5;
+  cursor: not-allowed;
+}
+
+.ve-pagination-arrow:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.25);
+  outline-offset: 3px;
+}
+
+/* Place the pagination at the bottom-right of its table wrapper */
+
+.ve-table-wrapper > .ve-pagination {
+  margin-left: auto;
+}
+
+/* Mobile responsiveness */
+
+@media (max-width: 640px) {
+  .ve-pagination {
+    gap: 10px;
+    padding: 14px 12px;
+  }
+
+  .ve-pagination-arrow {
+    width: 38px;
+    height: 38px;
+  }
+
+  .ve-pagination-status {
+    gap: 7px;
+  }
+}
+
+/* Accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  .ve-pagination-arrow {
+    transition: none;
+  }
+}

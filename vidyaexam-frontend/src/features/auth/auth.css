@@ -1,0 +1,457 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
+
+/* All tokens and rules are scoped under .ve-auth so nothing leaks to other pages. */
+.ve-auth {
+  --ve-navy: #172b4d;
+  --ve-navy-dark: #10213b;
+  --ve-teal: #0f766e;
+  --ve-teal-dark: #0b625b;
+  --ve-teal-light: #e5f5f2;
+  --ve-bg: #f6faf9;
+  --ve-muted: #64748b;
+  --ve-border: #d9e4e2;
+  --ve-danger: #b42318;
+  --ve-sans: "Plus Jakarta Sans", Inter, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --ve-display: "Fraunces", Georgia, serif; /* hero headline only */
+
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-height: 100vh;
+  min-height: 100dvh;
+  font-family: var(--ve-sans);
+  color: var(--ve-navy);
+  background: var(--ve-bg);
+  overflow-x: hidden;
+}
+.ve-auth *, .ve-auth *::before, .ve-auth *::after { box-sizing: border-box; }
+
+/* ───────── Form panel ───────── */
+.ve-auth__panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  min-height: 100vh;
+  min-height: 100dvh;
+  padding: 1.5rem 1.25rem;
+}
+/* margin:auto centres when there's room and never clips when there isn't */
+.ve-auth__card {
+  width: 100%;
+  max-width: 25rem;
+  margin: auto;
+  animation: ve-rise 0.45s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
+@keyframes ve-rise { from { opacity: 0; transform: translateY(8px); } }
+
+.ve-auth__mobilebrand {
+  margin-bottom: 1.25rem;
+}
+.ve-auth__mobilebrand .ve-auth__logo {
+  width: 10rem;
+  height: auto;
+  max-height: 3.5rem;
+  object-fit: contain;
+  object-position: left center;
+}
+.ve-auth__logo { display: block; max-width: 100%; background: none; border: 0; }
+
+.ve-auth__title {
+  margin: 0 0 0.5rem;
+  font-size: clamp(1.5rem, 2.4vw, 1.75rem);
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+.ve-auth__sub { margin: 0; color: var(--ve-muted); font-size: 0.95rem; line-height: 1.55; }
+.ve-auth__intro { margin-bottom: 1.25rem; }
+.ve-auth__switch {
+  margin: 1rem 0 0;
+  text-align: center;
+  color: var(--ve-muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ve-form { display: grid; gap: 0.9rem; }
+.ve-field { display: grid; gap: 0.35rem; }
+.ve-field label { font-size: 0.75rem; font-weight: 600; }
+.ve-field__row { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; flex-wrap: wrap; }
+
+.ve-form input {
+  width: 100%;
+  min-height: 2.9rem;
+  padding: 0 0.95rem;
+  font: inherit;
+  font-size: 1rem; /* ≥16px prevents iOS focus zoom */
+  color: var(--ve-navy);
+  background: #fff;
+  border: 1px solid var(--ve-border);
+  border-radius: 0.6rem;
+  transition: border-color 0.15s, box-shadow 0.15s, background-color 0.15s;
+}
+.ve-form input::placeholder { color: #94a3b8; }
+.ve-form input:hover:not(:disabled) { border-color: #b3c7c4; }
+.ve-form input:focus-visible {
+  outline: none;
+  border-color: var(--ve-teal);
+  box-shadow: 0 0 0 4px rgba(15, 118, 110, 0.15);
+}
+/* Invalid: thicker border + tint + shape change, not colour alone. Text is in the toast. */
+.ve-form input[aria-invalid="true"] {
+  border-color: var(--ve-danger);
+  background: #fffafa;
+  box-shadow: inset 3px 0 0 var(--ve-danger);
+}
+.ve-form input[aria-invalid="true"]:focus-visible {
+  box-shadow: inset 3px 0 0 var(--ve-danger), 0 0 0 4px rgba(180, 35, 24, 0.13);
+}
+.ve-form input:disabled { background: #eef3f2; cursor: not-allowed; }
+
+.ve-input-wrap { position: relative; }
+.ve-input-wrap input { padding-right: 3.1rem; }
+.ve-input-wrap__toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.3rem;
+  transform: translateY(-50%);
+  display: grid;
+  place-items: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  color: var(--ve-muted);
+  background: none;
+  border: 0;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: color 0.15s, background-color 0.15s;
+}
+.ve-input-wrap__toggle:hover:not(:disabled) { color: var(--ve-teal); background: var(--ve-teal-light); }
+.ve-input-wrap__toggle:focus-visible { outline: 2px solid var(--ve-teal); outline-offset: 1px; }
+.ve-input-wrap__toggle svg { animation: ve-pop 0.18s ease; }
+@keyframes ve-pop { from { transform: scale(0.8); opacity: 0.4; } }
+
+.ve-link, .ve-back {
+  color: var(--ve-teal);
+  font-weight: 600;
+  text-decoration: none;
+  border-radius: 0.25rem;
+}
+.ve-field__row .ve-link { font-size: 0.82rem; }
+.ve-link:hover, .ve-back:hover { color: var(--ve-teal-dark); text-decoration: underline; text-underline-offset: 3px; }
+.ve-link:focus-visible, .ve-back:focus-visible { outline: 2px solid var(--ve-teal); outline-offset: 3px; }
+.ve-back { display: inline-flex; align-items: center; gap: 0.4rem; font-size: 0.9rem; min-height: 2.5rem; }
+
+.ve-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  width: 100%;
+  height: 3rem;
+  margin-top: 0.4rem;
+  padding: 0 1.25rem;
+  font: inherit;
+  font-size: 0.975rem;
+  font-weight: 600;
+  line-height: 1;
+  text-decoration: none;
+  border: 1px solid transparent;
+  border-radius: 0.6rem;
+  cursor: pointer;
+  transition: background-color 0.15s, box-shadow 0.15s, transform 0.1s;
+}
+.ve-btn:focus-visible { outline: 3px solid rgba(15, 118, 110, 0.4); outline-offset: 2px; }
+.ve-btn--primary { color: #fff; background: var(--ve-teal); box-shadow: 0 1px 2px rgba(16, 33, 59, 0.2); }
+.ve-btn--primary:hover:not(:disabled) { background: var(--ve-teal-dark); }
+.ve-btn--primary:active:not(:disabled) { transform: translateY(1px); }
+.ve-btn--primary:disabled { opacity: 0.85; cursor: progress; }
+.ve-btn--secondary { margin-top: 1.5rem; color: var(--ve-navy); background: #fff; border-color: var(--ve-border); }
+.ve-btn--secondary:hover { background: var(--ve-teal-light); }
+/* Assumes the shared spinner is border-based; recolour it for the teal button. */
+.ve-btn--primary .ve-loader-spinner { border-color: rgba(255, 255, 255, 0.35); border-top-color: #fff; }
+
+.ve-auth__done-icon {
+  display: grid;
+  place-items: center;
+  width: 3.25rem;
+  height: 3.25rem;
+  margin-bottom: 1.25rem;
+  color: var(--ve-teal);
+  background: var(--ve-teal-light);
+  border-radius: 50%;
+}
+
+/* ───────── Hero ───────── */
+.ve-auth__hero { display: none; }
+
+.ve-auth__hero--dark {
+  --hero-bg:
+    radial-gradient(46rem 30rem at 12% 8%, rgba(15, 118, 110, 0.4), transparent 62%),
+    radial-gradient(34rem 26rem at 100% 100%, rgba(15, 118, 110, 0.18), transparent 65%),
+    linear-gradient(165deg, #172b4d 0%, #10213b 100%);
+  --hero-fg: #fff;
+  --hero-muted: rgba(229, 245, 242, 0.78);
+  --hero-line: rgba(229, 245, 242, 0.2);
+  --hero-grid: rgba(229, 245, 242, 0.06);
+  --hero-word: rgba(255, 255, 255, 0.055);
+  --hero-word-stroke: rgba(229, 245, 242, 0.12);
+  --hero-icon-bg: rgba(45, 212, 191, 0.12);
+  --hero-icon-fg: #5eead4;
+  --hero-soft: #8fe3d8;
+}
+.ve-auth__hero--light {
+  --hero-bg:
+    radial-gradient(46rem 30rem at 12% 8%, rgba(15, 118, 110, 0.14), transparent 62%),
+    linear-gradient(165deg, #e5f5f2 0%, #f6faf9 100%);
+  --hero-fg: #172b4d;
+  --hero-muted: #475569;
+  --hero-line: rgba(23, 43, 77, 0.16);
+  --hero-grid: rgba(23, 43, 77, 0.05);
+  --hero-word: rgba(23, 43, 77, 0.05);
+  --hero-word-stroke: rgba(23, 43, 77, 0.1);
+  --hero-icon-bg: #fff;
+  --hero-icon-fg: #0f766e;
+  --hero-soft: #0f766e;
+}
+
+@media (min-width: 768px) {
+  .ve-auth {
+    grid-template-columns: 5fr 6fr;
+    height: 100vh;
+    height: 100dvh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .ve-auth__mobilebrand {
+    display: none;
+  }
+
+  .ve-auth__panel {
+    min-height: 0;
+    height: 100%;
+    padding: clamp(1.25rem, 3vh, 2.5rem)
+      clamp(1.5rem, 3vw, 3rem);
+  }
+
+  .ve-auth__card {
+    max-width: 25rem;
+  }
+
+  .ve-auth__hero {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: clamp(1rem, 3vh, 2.5rem);
+    min-width: 0;
+    min-height: 0;
+    height: 100%;
+    padding: clamp(1.5rem, 3.5vh, 3rem)
+      clamp(1.5rem, 3vw, 3rem);
+    color: var(--hero-fg);
+    background: var(--hero-bg);
+    overflow: hidden;
+  }
+
+  .ve-auth__hero > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .ve-auth__logo--hero {
+    width: clamp(11rem, 20vw, 18rem);
+    height: auto;
+    max-height: 6rem;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .ve-auth__hero-body {
+    min-height: 0;
+  }
+
+  .ve-auth__headline {
+    display: grid;
+    gap: 0.1em;
+    margin: 0 0 0.85rem;
+    font-family: var(--ve-display);
+    font-size: clamp(1.7rem, 2.7vw, 2.7rem);
+    font-weight: 500;
+    line-height: 1.12;
+    letter-spacing: -0.02em;
+  }
+
+  .ve-auth__lede {
+    max-width: 29rem;
+    margin: 0;
+    color: var(--hero-muted);
+    font-size: clamp(0.85rem, 1vw, 1rem);
+    line-height: 1.55;
+  }
+
+  .ve-auth__benefits {
+    display: none;
+  }
+
+  .ve-auth__closing {
+    display: none;
+  }
+
+  .ve-auth__words {
+    position: absolute;
+    right: -0.04em;
+    bottom: 0.6rem;
+    z-index: 0;
+    display: grid;
+    justify-items: end;
+    font-size: min(8vw, 6rem);
+    font-weight: 800;
+    line-height: 0.84;
+    letter-spacing: -0.045em;
+    text-transform: uppercase;
+    color: var(--hero-word);
+    pointer-events: none;
+    user-select: none;
+  }
+
+  .ve-auth__words span:nth-child(2) {
+    color: transparent;
+    -webkit-text-stroke: 1px var(--hero-word-stroke);
+  }
+}
+
+@media (min-width: 1024px) {
+  .ve-auth {
+    grid-template-columns: 55fr 45fr;
+  }
+
+  .ve-auth__hero {
+    padding: clamp(1.75rem, 4vh, 3.5rem)
+      clamp(2rem, 3.5vw, 4rem);
+  }
+
+  .ve-auth__logo--hero {
+    width: clamp(13rem, 19vw, 19rem);
+    max-height: 6.5rem;
+  }
+
+  .ve-auth__headline {
+    font-size: clamp(2rem, 2.8vw, 3rem);
+  }
+
+  .ve-auth__benefits {
+    display: grid;
+    gap: 0.65rem;
+    margin: 1.25rem 0 0;
+    padding: 1rem 0 0;
+    list-style: none;
+    border-top: 1px solid var(--hero-line);
+    max-width: 29rem;
+  }
+
+  .ve-auth__benefits li {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .ve-auth__benefit-icon {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 2.1rem;
+    height: 2.1rem;
+    color: var(--hero-icon-fg);
+    background: var(--hero-icon-bg);
+    border: 1px solid var(--hero-line);
+    border-radius: 0.65rem;
+  }
+
+  .ve-auth__benefits strong {
+    display: block;
+    font-size: 0.85rem;
+    font-weight: 600;
+  }
+
+  .ve-auth__benefits small {
+    display: block;
+    margin-top: 0.1rem;
+    color: var(--hero-muted);
+    font-size: 0.78rem;
+  }
+
+  .ve-auth__closing {
+    display: block;
+    margin: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--hero-line);
+    color: var(--hero-muted);
+    font-size: 0.8rem;
+  }
+}
+@media (min-width: 768px) and (max-height: 760px) {
+  .ve-auth__panel {
+    padding-block: 1rem;
+  }
+
+  .ve-auth__hero {
+    gap: 0.75rem;
+    padding-block: 1.25rem;
+  }
+
+  .ve-auth__logo--hero {
+    max-height: 4.5rem;
+  }
+
+  .ve-auth__intro {
+    margin-bottom: 0.9rem;
+  }
+
+  .ve-form {
+    gap: 0.7rem;
+  }
+
+  .ve-auth__benefits {
+    gap: 0.45rem;
+    margin-top: 0.8rem;
+    padding-top: 0.7rem;
+  }
+
+  .ve-auth__closing {
+    padding-top: 0.5rem;
+  }
+}
+
+
+@media (max-width: 380px) {
+  .ve-auth__panel {
+    padding: 1rem;
+  }
+
+  .ve-auth__mobilebrand {
+    margin-bottom: 1rem;
+  }
+
+  .ve-auth__intro {
+    margin-bottom: 1rem;
+  }
+
+  .ve-form {
+    gap: 0.75rem;
+  }
+
+  .ve-auth__title {
+    font-size: 1.4rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ve-auth *,
+  .ve-auth *::before,
+  .ve-auth *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

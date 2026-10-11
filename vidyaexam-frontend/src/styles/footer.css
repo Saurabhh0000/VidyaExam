@@ -1,0 +1,213 @@
+/* VidyaExam footer (white theme). Uses unique site-footer__* class names so nothing else is affected. */
+
+footer.site-footer {
+  --ft-bg: #ffffff;
+  --ft-heading: var(--navy, #172b4d);
+  --ft-text: #4b5b73;               /* body text, ~7:1 on white */
+  --ft-muted: var(--muted, #64748b); /* secondary text, ~4.8:1 on white */
+  --ft-line: var(--border, #e3eae9);
+  --ft-teal: var(--teal, #0f766e);
+  --ft-teal-dark: var(--teal-dark, #0b625b);
+  --ft-teal-light: var(--teal-light, #e5f5f2);
+  --ft-ease: cubic-bezier(0.22, 1, 0.36, 1);
+
+  position: relative;
+  background: var(--ft-bg);
+  color: var(--ft-text);
+  border-top: 1px solid var(--ft-line);
+  padding: clamp(40px, 5vw, 64px) 0 0;
+  font-family: "Inter", "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  font-size: 0.9375rem;
+  line-height: 1.7;
+  overflow-x: clip;
+}
+/* thin brand accent along the top edge */
+footer.site-footer::before {
+  content: "";
+  position: absolute;
+  inset: -1px 0 auto 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--ft-teal), rgba(15, 118, 110, 0) 70%);
+}
+
+.site-footer__inner {
+  width: 100%;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding-inline: clamp(16px, 4vw, 32px);
+}
+
+/* Four columns on desktop; columns share the top edge */
+.site-footer__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) repeat(3, minmax(0, 1fr));
+  align-items: start;
+  gap: clamp(28px, 4vw, 56px);
+  padding-bottom: clamp(32px, 4vw, 48px);
+}
+.site-footer__grid--no-social {
+  grid-template-columns: minmax(0, 1.8fr) repeat(2, minmax(0, 1fr));
+}
+
+/* Brand: the logo is rendered directly on the white background, no card */
+.site-footer__logo-link {
+  display: inline-block;
+  line-height: 0;
+  border-radius: 6px;
+}
+.site-footer__logo {
+  display: block;
+  width: 208px;            /* 190-220px target */
+  height: auto;            /* keeps the original aspect ratio */
+  max-width: 100%;
+  object-fit: contain;
+}
+.site-footer__tagline {
+  max-width: 42ch;
+  margin: 20px 0 0;
+  color: var(--ft-text);
+}
+.site-footer__tagline::before {  /* short teal accent rule */
+  content: "";
+  display: block;
+  width: 36px;
+  height: 3px;
+  margin-bottom: 14px;
+  border-radius: 3px;
+  background: var(--ft-teal);
+}
+
+/* Columns */
+.site-footer__title {
+  position: relative;
+  margin: 0 0 18px;
+  padding-bottom: 10px;
+  font-size: 0.9375rem;
+  font-weight: 650;
+  letter-spacing: 0;
+  line-height: 1.3;
+  color: var(--ft-heading);
+}
+.site-footer__title::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 24px;
+  height: 2px;
+  border-radius: 2px;
+  background: var(--ft-teal);
+}
+.site-footer__list,
+.site-footer__social-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.site-footer__list li + li { margin-top: 2px; }
+
+footer.site-footer .site-footer__link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  color: var(--ft-text);
+  text-decoration: none;
+  border-radius: 6px;
+  transition: color 0.2s ease, transform 0.2s var(--ft-ease);
+}
+footer.site-footer .site-footer__link:hover {
+  color: var(--ft-teal);
+  text-decoration: none;
+  transform: translateX(2px);
+}
+
+/* Social icons */
+.site-footer__social-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+footer.site-footer .site-footer__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  color: var(--ft-heading);
+  border: 1px solid var(--ft-line);
+  border-radius: 50%;
+  background: #ffffff;
+  text-decoration: none;
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, transform 0.2s var(--ft-ease);
+}
+footer.site-footer .site-footer__social-link:hover {
+  background: var(--ft-teal);
+  border-color: var(--ft-teal);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* Keyboard focus */
+footer.site-footer a:focus-visible {
+  outline: 3px solid var(--ft-teal);
+  outline-offset: 3px;
+}
+
+/* Bottom bar */
+.site-footer__bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px 24px;
+  padding-block: 16px;
+  border-top: 1px solid var(--ft-line);
+  font-size: 0.8125rem;
+  color: var(--ft-muted);
+}
+.site-footer__legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 20px;
+}
+.site-footer__bottom .site-footer__link {
+  min-height: 32px;
+  font-size: 0.8125rem;
+  color: var(--ft-muted);
+}
+.site-footer__bottom .site-footer__link:hover { color: var(--ft-teal); }
+
+/* Tablet: brand spans the top, links sit in a row beneath */
+@media (max-width: 1024px) {
+  .site-footer__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 32px 28px;
+  }
+  .site-footer__grid--no-social { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-footer__brand { grid-column: 1 / -1; }
+  .site-footer__tagline { max-width: 56ch; }
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .site-footer__grid,
+  .site-footer__grid--no-social {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 28px 20px;
+  }
+  .site-footer__logo { width: 168px; }   /* 155-180px target */
+  .site-footer__social { grid-column: 1 / -1; }
+  .site-footer__bottom { flex-direction: column; align-items: flex-start; }
+}
+@media (max-width: 340px) {
+  .site-footer__logo { width: 156px; }
+  .site-footer__grid,
+  .site-footer__grid--no-social { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  footer.site-footer .site-footer__link,
+  footer.site-footer .site-footer__social-link { transition: none; }
+  footer.site-footer .site-footer__link:hover,
+  footer.site-footer .site-footer__social-link:hover { transform: none; }
+}

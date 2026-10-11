@@ -1,0 +1,251 @@
+
+/* =========================================
+   VIDYAEXAM — PREMIUM TOAST NOTIFICATIONS
+   ========================================= */
+
+.vidya-toaster {
+  font-family: inherit;
+}
+
+/* Base toast */
+
+
+.vidya-toast {
+  --toast-accent: #0f766e;
+  --toast-tint: #f0fdfa;
+
+  position: relative !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 12px !important;
+
+  width: 360px !important;
+  max-width: calc(100vw - 32px) !important;
+  min-height: 68px !important;
+  box-sizing: border-box !important;
+  padding: 16px 42px 16px 16px !important;
+
+  border: 1px solid #e2e8f0 !important;
+  border-radius: 14px !important;
+  background: #ffffff !important;
+  color: #172b4d !important;
+
+  box-shadow:
+    0 10px 30px rgba(23, 43, 77, 0.08),
+    0 2px 6px rgba(23, 43, 77, 0.03) !important;
+
+  font-family: inherit !important;
+  font-size: 14px !important;
+  line-height: 1.5 !important;
+  overflow-wrap: anywhere;
+}
+
+
+.vidya-toast:hover {
+  box-shadow:
+    0 16px 38px rgba(23, 43, 77, 0.13),
+    0 4px 10px rgba(23, 43, 77, 0.05) !important;
+}
+
+/* Status colors */
+
+.vidya-toast-success {
+  --toast-accent: #0f766e;
+  --toast-tint: #f0fdfa;
+  background: linear-gradient(110deg, #f0fdfa 0%, #ffffff 52%) !important;
+  border-color: #cceee7 !important;
+  border-left-color: #0f766e !important;
+}
+
+.vidya-toast-error {
+  --toast-accent: #dc2626;
+  --toast-tint: #fef2f2;
+  background: linear-gradient(110deg, #fef2f2 0%, #ffffff 52%) !important;
+  border-color: #fecaca !important;
+  border-left-color: #dc2626 !important;
+}
+
+.vidya-toast-warning {
+  --toast-accent: #d97706;
+  --toast-tint: #fffbeb;
+  background: linear-gradient(110deg, #fffbeb 0%, #ffffff 52%) !important;
+  border-color: #fde7b0 !important;
+  border-left-color: #d97706 !important;
+}
+
+.vidya-toast-info {
+  --toast-accent: #2563eb;
+  --toast-tint: #eff6ff;
+  background: linear-gradient(110deg, #eff6ff 0%, #ffffff 52%) !important;
+  border-color: #bfdbfe !important;
+  border-left-color: #2563eb !important;
+}
+
+.vidya-toast-loading {
+  --toast-accent: #0f766e;
+  --toast-tint: #f0fdfa;
+  background: linear-gradient(110deg, #f0fdfa 0%, #ffffff 52%) !important;
+  border-color: #cceee7 !important;
+  border-left-color: #0f766e !important;
+}
+
+/* Icon container */
+
+.vidya-toast [data-icon] {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 36px !important;
+
+  width: 36px !important;
+  height: 36px !important;
+  margin: 0 !important;
+
+  color: var(--toast-accent) !important;
+  background: var(--toast-tint) !important;
+  border: 1px solid color-mix(
+    in srgb,
+    var(--toast-accent) 16%,
+    transparent
+  ) !important;
+  border-radius: 11px !important;
+}
+
+.vidya-toast [data-icon] svg {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Content */
+
+.vidya-toast [data-content] {
+  display: flex !important;
+  flex: 1 1 auto !important;
+  flex-direction: column !important;
+  gap: 3px !important;
+  min-width: 0 !important;
+  padding-top: 1px !important;
+}
+
+.vidya-toast [data-title],
+.vidya-toast-title {
+  color: #172b4d !important;
+  font-size: 14px !important;
+  font-weight: 650 !important;
+  line-height: 1.4 !important;
+  letter-spacing: -0.15px;
+}
+
+.vidya-toast [data-description],
+.vidya-toast-description {
+  color: #64748b !important;
+  font-size: 12.5px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+}
+
+/* Close button */
+
+
+
+.vidya-toast button[data-close-button] {
+  position: absolute !important;
+  top: 50% !important;
+  right: 12px !important;
+  left: auto !important;
+
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+
+  transform: translateY(-50%) !important;
+  border: none !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #94a3b8 !important;
+
+  opacity: 1 !important;
+  cursor: pointer;
+  transition:
+    background-color 160ms ease,
+    color 160ms ease !important;
+}
+
+.vidya-toast button[data-close-button]:hover {
+  background: #f1f5f9 !important;
+  color: #172b4d !important;
+}
+
+.vidya-toast button[data-close-button] svg {
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+}
+
+
+
+/* Keyboard accessibility */
+
+.vidya-toast button:focus-visible {
+  outline: 2px solid #0f766e !important;
+  outline-offset: 2px !important;
+}
+
+/* Mobile */
+
+@media (max-width: 640px) {
+  [data-sonner-toaster] {
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    max-width: none !important;
+  }
+
+  .vidya-toast {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-height: 62px !important;
+    padding: 13px 40px 13px 12px !important;
+    gap: 10px !important;
+    border-radius: 14px !important;
+    font-size: 13px !important;
+  }
+
+  .vidya-toast [data-icon] {
+    flex-basis: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 10px !important;
+  }
+
+  .vidya-toast [data-icon] svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  .vidya-toast [data-title],
+  .vidya-toast-title {
+    font-size: 13px !important;
+  }
+
+  .vidya-toast [data-description],
+  .vidya-toast-description {
+    font-size: 12px !important;
+  }
+}
+
+/* Reduced motion accessibility */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-sonner-toast],
+  .vidya-toast,
+  .vidya-toast-close {
+    transition: none !important;
+    animation: none !important;
+  }
+}
