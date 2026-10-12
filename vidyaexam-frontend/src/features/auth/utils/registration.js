@@ -20,12 +20,12 @@ export const MIN_PASSWORD_LENGTH = 8;
  * { value, label } entries here once the backend enum is confirmed.
  */
 export const TENANT_TYPES = [
-  { value: "COACHING_INSTITUTE", label: "Coaching Institute / Academy (Govt Exams, IT/CSE, Test Prep)" },
-  { value: "EDUCATIONAL_INSTITUTE", label: "Educational Institute (College, University, School)" },
-  { value: "CORPORATE", label: "Corporate / Company (Hiring & Technical Assessments)" },
-  { value: "SCHOOL", label: "School" },
+  { value: "COACHING_INSTITUTE", label: "Coaching Institute / Academy" },
+{ value: "EDUCATIONAL_INSTITUTE", label: "Educational Institute" },
+ { value: "CORPORATE", label: "Corporate / Company" },
+{ value: "SCHOOL", label: "School" },
   { value: "COLLEGE", label: "College" },
-  { value: "OTHER", label: "Other" } 
+  { value: "OTHER", label: "Other" }  
 ];
 
 /** Advisory strength estimate only; it is not a backend rule. */
