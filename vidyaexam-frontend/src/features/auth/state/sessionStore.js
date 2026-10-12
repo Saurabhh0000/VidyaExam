@@ -1,22 +1,13 @@
-/**
- * Shared session state: one source of truth for the header (and, if you wish,
- * protected routes). Framework-free; React reads it via useSyncExternalStore
- * (see hooks/useHeaderUser.js).
- *
- * STORAGE: the access token is kept in module memory only. It is never written
- * to localStorage/sessionStorage and never exposed in state, so it can't leak
- * through React DevTools or logs. The trade-off is that a full page reload
- * signs the user out. To survive reloads safely, the backend needs to issue an
- * HttpOnly cookie plus a "current session" endpoint; see the notes delivered
- * with this change before choosing otherwise.
- */
+
 import { normalizeSession, parseExpiresIn } from "../utils/session";
+
+const STORAGE_KEY = "vidyaexam_session";
 
 let state = { status: "unauthenticated", user: null };
 let accessToken = null;
 let rawData = null;
 let expiryTimer = null;
-const listeners = new Set();
+let listeners = new Set();
 
 function publish(next) {
   state = next;
@@ -26,9 +17,32 @@ function publish(next) {
 function clearSecrets() {
   accessToken = null;
   rawData = null;
+
   if (expiryTimer !== null) {
     clearTimeout(expiryTimer);
     expiryTimer = null;
+  }
+}
+
+function clearStoredSession() {
+  try {
+    sessionStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // Storage may be unavailable.
+  }
+}
+
+function saveSession(result, expiresAt) {
+  try {
+    sessionStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify({
+        result,
+        expiresAt,
+      })
+    );
+  } catch {
+    // The in-memory session still works if storage is unavailable.
   }
 }
 
@@ -37,49 +51,89 @@ export const subscribe = (listener) => {
   return () => listeners.delete(listener);
 };
 
-/** Stable between changes, as useSyncExternalStore requires. */
 export const getSnapshot = () => state;
 
-/** For an API client's Authorization header. Null unless signed in. */
 export const getAccessToken = () =>
   state.status === "authenticated" ? accessToken : null;
 
-/** Called with the successful login response (see auth.service.js). */
 export function startSession(result) {
   const user = normalizeSession(result?.data);
+
   if (!user) return false;
 
   clearSecrets();
+
   rawData = result.data;
-  accessToken = typeof result.token === "string" ? result.token : null;
+  accessToken =
+    typeof result.token === "string" ? result.token : null;
 
   const ttl = parseExpiresIn(result.expiresIn);
-  if (ttl !== null) expiryTimer = setTimeout(expireSession, ttl);
+  const expiresAt = ttl !== null ? Date.now() + ttl : null;
 
+  if (expiresAt !== null) {
+    expiryTimer = setTimeout(
+      expireSession,
+      Math.max(0, expiresAt - Date.now())
+    );
+  }
+
+  saveSession(result, expiresAt);
   publish({ status: "authenticated", user });
+
   return true;
 }
 
-/** Local expiry (token lifetime elapsed). Header returns to its public state. */
+export function restoreSession() {
+  try {
+    const saved = sessionStorage.getItem(STORAGE_KEY);
+
+    if (!saved) return false;
+
+    const { result, expiresAt } = JSON.parse(saved);
+
+    if (
+      expiresAt !== null &&
+      expiresAt !== undefined &&
+      Date.now() >= expiresAt
+    ) {
+      clearStoredSession();
+      return false;
+    }
+
+    return startSession(result);
+  } catch {
+    clearStoredSession();
+    return false;
+  }
+}
+
 export function expireSession() {
   clearSecrets();
+  clearStoredSession();
   publish({ status: "expired", user: null });
 }
 
-/** Sign-out. */
 export function endSession() {
   clearSecrets();
+  clearStoredSession();
   publish({ status: "unauthenticated", user: null });
 }
 
-/**
- * Choose the active organization for a user with several memberships. Only a
- * tenant that is actually in the login response's memberships is accepted.
- */
 export function selectTenant(tenantId) {
   if (state.status !== "authenticated" || !rawData) return false;
-  const user = normalizeSession(rawData, { activeTenantId: tenantId });
-  if (!user || user.activeTenantId !== String(tenantId)) return false;
+
+  const user = normalizeSession(rawData, {
+    activeTenantId: tenantId,
+  });
+
+  if (!user || user.activeTenantId !== String(tenantId)) {
+    return false;
+  }
+
   publish({ status: "authenticated", user });
+
   return true;
 }
+
+// Restore the session once when this module is loaded.
+restoreSession();
