@@ -1,0 +1,254 @@
+/* VidyaExam profile menu + mobile account section.
+   Import AFTER header.css. It supersedes the old signed-in-state rules there
+   (.avatar, .profile*, .account-*, .role-badge, .menu-sep, .menu-item*). */
+
+/* ── Trigger ── */
+.site-header .profile { position: relative; }
+.site-header .profile-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 4px 10px 4px 4px;
+  font: inherit;
+  color: var(--hdr-navy);
+  text-align: left;
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+.site-header .profile-trigger:hover { border-color: #b9d3cf; background: #fbfdfd; }
+.site-header .profile-trigger[aria-expanded="true"] {
+  border-color: var(--hdr-teal);
+  background: var(--hdr-teal-light);
+  box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.12);
+}
+.site-header .profile-id { display: grid; min-width: 0; line-height: 1.2; }
+.site-header .profile-name {
+  max-width: 9rem;
+  overflow: hidden;
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.site-header .profile-role { font-size: 0.7rem; font-weight: 500; color: #64748b; }
+.site-header .profile-chevron { flex: none; color: #64748b; transition: transform 0.2s var(--hdr-ease); }
+.site-header .profile-trigger[aria-expanded="true"] .profile-chevron { transform: rotate(180deg); color: var(--hdr-teal); }
+
+/* ── Avatar ── */
+.site-header .avatar {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 36px;
+  height: 36px;
+  overflow: hidden;
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--hdr-teal-dark);
+  background: var(--hdr-teal-light);
+  border-radius: 999px;
+}
+.site-header .profile-trigger[aria-expanded="true"] .avatar { background: #fff; }
+.site-header .avatar--lg { width: 48px; height: 48px; font-size: 1rem; border-radius: 12px; }
+.site-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ── Panel (desktop) ── */
+.site-header .profile-menu {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 110;
+  width: min(20rem, calc(100vw - 32px));
+  max-height: calc(100dvh - var(--hdr-h) - 24px);
+  padding: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 14px;
+  box-shadow: 0 24px 48px -24px rgba(16, 33, 59, 0.4), 0 2px 6px rgba(16, 33, 59, 0.06);
+  transform-origin: top right;
+  /* closed: invisible and unfocusable */
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-6px) scale(0.98);
+  transition: opacity 0.16s ease, transform 0.2s var(--hdr-ease), visibility 0s linear 0.2s;
+}
+.site-header .profile-menu[data-open="true"] {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: none;
+  transition: opacity 0.16s ease, transform 0.2s var(--hdr-ease), visibility 0s;
+}
+
+/* ── Identity ── */
+.site-header .account-summary {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  padding: 10px 10px 12px;
+}
+.site-header .account-meta { display: grid; gap: 2px; min-width: 0; }
+.site-header .account-meta strong,
+.site-header .account-email { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.site-header .account-meta strong { font-size: 0.95rem; color: var(--hdr-navy); }
+.site-header .account-email { font-size: 0.8rem; color: #64748b; }
+.site-header .role-badge {
+  justify-self: start;
+  margin-top: 5px;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--hdr-teal-dark);
+  background: var(--hdr-teal-light);
+  border-radius: 6px;
+}
+
+/* ── Subscription card ── */
+.site-header .sub-card {
+  display: grid;
+  gap: 10px;
+  margin: 2px 2px 4px;
+  padding: 12px;
+  background: #f6faf9;
+  border: 1px solid var(--hdr-border);
+  border-radius: 12px;
+}
+.site-header .sub-card__row { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.site-header .sub-card__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 34px;
+  height: 34px;
+  color: var(--hdr-teal);
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 9px;
+}
+.site-header .sub-card__body { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+.site-header .sub-card__label { font-size: 0.7rem; font-weight: 500; color: #64748b; }
+.site-header .sub-card__plan {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--hdr-navy);
+}
+.site-header .sub-card__plan small { font-size: 0.72rem; font-weight: 500; color: #64748b; }
+.site-header .sub-card__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: none;
+  padding: 2px 8px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #475569;
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 6px;
+}
+.site-header .sub-card__status.is-active { color: var(--hdr-teal-dark); border-color: rgba(15, 118, 110, 0.3); }
+.site-header .sub-card__status i { width: 6px; height: 6px; background: var(--hdr-teal); border-radius: 50%; }
+.site-header .sub-card__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--hdr-teal-dark);
+  text-decoration: none;
+  background: #fff;
+  border: 1px solid var(--hdr-border);
+  border-radius: 9px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.site-header .sub-card__link:hover { border-color: var(--hdr-teal); background: var(--hdr-teal-light); }
+
+/* ── Items ── */
+.site-header .menu-sep { height: 1px; margin: 6px 4px; background: var(--hdr-border); }
+.site-header .menu-group { display: grid; gap: 1px; }
+.site-header .menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 44px;
+  padding: 0 10px;
+  font: inherit;
+  font-size: 0.9375rem;
+  font-weight: 550;
+  color: var(--hdr-navy);
+  text-align: left;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.site-header .menu-item svg { flex: none; color: #64748b; transition: color 0.15s ease; }
+.site-header a.menu-item:hover,
+.site-header a.menu-item:focus-visible { background: var(--hdr-teal-light); }
+.site-header a.menu-item:hover svg,
+.site-header a.menu-item:focus-visible svg { color: var(--hdr-teal); }
+.site-header .menu-item:focus-visible { outline-offset: -3px; }
+
+.site-header .menu-item.is-disabled { color: #94a3b8; cursor: not-allowed; }
+.site-header .menu-item.is-disabled svg { color: #cbd5e1; }
+.site-header .menu-soon {
+  margin-left: auto;
+  padding: 1px 7px;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 600;
+  color: #64748b;
+  background: #f1f5f9;
+  border-radius: 6px;
+}
+
+.site-header .menu-item--danger { color: #b42318; }
+.site-header .menu-item--danger svg { color: #b42318; }
+.site-header .menu-item--danger:hover:not(:disabled),
+.site-header .menu-item--danger:focus-visible { background: #fef3f2; }
+.site-header .menu-item--danger:disabled { opacity: 0.7; cursor: progress; }
+.site-header .profile-logout-spinner { animation: hdr-spin 0.8s linear infinite; }
+@keyframes hdr-spin { to { transform: rotate(360deg); } }
+
+/* ── Tablet: avatar-only trigger so nav links are never crowded ── */
+@media (min-width: 961px) and (max-width: 1100px) {
+  .site-header .profile-id { display: none; }
+  .site-header .profile-trigger { padding-right: 8px; gap: 6px; }
+}
+
+/* ── Mobile drawer account section (the desktop dropdown is hidden <=960px) ── */
+@media (max-width: 960px) {
+  .site-header .mobile-account {
+    display: grid;
+    gap: 6px;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid var(--hdr-border);
+  }
+  .site-header .mobile-account .account-summary { padding: 6px 6px 8px; }
+  .site-header .mobile-account .sub-card { margin: 0 0 4px; }
+  .site-header .mobile-account .menu-item { min-height: 48px; padding-inline: 14px; }
+  .site-header .mobile-account .menu-item--danger { margin-top: 4px; border-top: 1px solid var(--hdr-border); border-radius: 0 0 10px 10px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-header .profile-menu { transform: none; }
+  .site-header .profile-logout-spinner { animation: none; }
+}

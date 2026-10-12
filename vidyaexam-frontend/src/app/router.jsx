@@ -5,6 +5,13 @@ import Home from "../pages/Home";
 import LoginPage from "../features/auth/pages/LoginPage";
 import ForgotPasswordPage from "../features/auth/pages/ForgotPasswordPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
+import NotFoundPage from "../pages/errors/NotFoundPage";
+import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
+
+import RequireRole from "./RequireRole";
+import StudentDashboard from "../features/student/pages/StudentDashboard";
+import { STUDENT_DASHBOARD } from "./roleRoutes";
+
 export default function AppRouter() {
   return (
     <BrowserRouter>
@@ -23,7 +30,19 @@ export default function AppRouter() {
 
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-        <Route path="*" element={<Navigate to="/" replace />} />
+        <Route
+          path={STUDENT_DASHBOARD}
+          element={
+            <RequireRole role="STUDENT">
+              <MainLayout>
+                <StudentDashboard />
+              </MainLayout>
+            </RequireRole>
+          }
+        />
+
+        <Route path="*" element={<NotFoundPage />} />
+        <Route path="/unauthorized" element={<UnauthorizedPage />} />
       </Routes>
     </BrowserRouter>
   );

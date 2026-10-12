@@ -16,6 +16,7 @@ import {
   ChevronDown,
 } from "lucide-react";
 import { routes } from "../shared/config/siteConfig";
+import PricingSection from "../shared/components/PricingSection";
 import { useReveal } from "../shared/hooks/useReveal";
 import { useParallax } from "../shared/hooks/useParallax";
 import "../styles/variables.css";
@@ -925,47 +926,47 @@ export default function HomePage() {
           </div>
         </section>
 
-        {/* 13 — Final CTA */}
-        <section
-          className="hm-section hm-section--cta"
-          aria-labelledby="cta-title">
-          <div className="hm-container">
-            <div className="hm-cta reveal" data-reveal>
-              <BgWord speed="0.04" className="hm-bgword--cta">
-                YOUR FUTURE
-              </BgWord>
-              <span
-                className="hm-ring hm-ring--1"
-                aria-hidden="true"
-                data-speed="0.05"
-              />
-              <span
-                className="hm-ring hm-ring--2"
-                aria-hidden="true"
-                data-speed="-0.04"
-              />
-              <h2 id="cta-title">
-                Your next focused attempt{" "}
-                <span className="hm-accent-light">
-                  <em>starts here.</em>
-                </span>
-              </h2>
-              <p>
-                Choose your preparation path, practise with purpose, and use
-                what you learn from each attempt to plan the next one.
-              </p>
-              <div className="hm-cta-row hm-cta-row--center">
-                <a
-                  className="hm-btn hm-btn--light hm-btn--lg"
-                  href={routes.register}>
-                  Get Started <ArrowRight size={18} aria-hidden="true" />
-                </a>
-                <a
-                  className="hm-btn hm-btn--ghost-light hm-btn--lg"
-                  href={routes.exams}>
-                  Explore Exams
-                </a>
-              </div>
+        {/* 12b — Subscription plans (live from the API) */}
+        <PricingSection />
+
+        {/* 13 — Final CTA (full-bleed) */}
+        <section className="hm-section hm-final" aria-labelledby="cta-title">
+          <BgWord speed="0.04" className="hm-bgword--final">
+            YOUR NEXT
+          </BgWord>
+          <span className="hm-final-glow" aria-hidden="true" />
+          <span
+            className="hm-ring hm-ring--1"
+            aria-hidden="true"
+            data-speed="0.05"
+          />
+          <span
+            className="hm-ring hm-ring--2"
+            aria-hidden="true"
+            data-speed="-0.04"
+          />
+          <div className="hm-container hm-final-inner reveal" data-reveal>
+            <h2 id="cta-title">
+              Your next focused attempt{" "}
+              <span className="hm-accent-light">
+                <em>starts here.</em>
+              </span>
+            </h2>
+            <p className="hm-final-lead">
+              Choose your preparation path, practise with purpose, and use what
+              you learn from each attempt to plan the next one.
+            </p>
+            <div className="hm-cta-row hm-cta-row--center">
+              <a
+                className="hm-btn hm-btn--light hm-btn--lg"
+                href={routes.register}>
+                Get Started <ArrowRight size={18} aria-hidden="true" />
+              </a>
+              <a
+                className="hm-btn hm-btn--ghost-light hm-btn--lg"
+                href={routes.exams}>
+                Explore Exams
+              </a>
             </div>
           </div>
         </section>
