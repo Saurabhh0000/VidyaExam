@@ -1,6 +1,12 @@
-
-node_modules/
+# macOS
 .DS_Store
-.env
-.env.*
-!.env.example
+**/.DS_Store
+
+# Frontend environment files
+vidyaexam-frontend/.env
+vidyaexam-frontend/.env.*
+!vidyaexam-frontend/.env.example
+
+# Generated frontend files
+vidyaexam-frontend/node_modules/
+vidyaexam-frontend/dist/
