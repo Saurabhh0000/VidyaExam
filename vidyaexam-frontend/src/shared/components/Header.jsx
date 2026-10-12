@@ -1,138 +1,193 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, Menu, X } from "lucide-react";
+import { LogOut, Menu, X, LoaderCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+
 import { logo, routes, navLinks } from "../config/siteConfig";
 import { resolveRoleNav } from "../config/headerNav";
 import useHeaderUser from "../hooks/useHeaderUser";
 import AppLink from "./AppLink";
 import ProfileMenu, {
+  AccountItem,
   AccountSummary,
-  MENU_ICONS,
+  SubscriptionSummary,
+  getSubscriptionSummary,
   prettifyRole,
 } from "./ProfileMenu";
+import { buildAccountItems } from "../config/accountMenu";
 import "../../styles/header.css";
+import "../../styles/profile-menu.css";
 
-function buildMenuItems(roleNav) {
-  if (!roleNav) return [];
-  const items = [];
-  if (roleNav.dashboard) {
-    items.push({
-      label: "My Dashboard",
-      to: roleNav.dashboard,
-      icon: "dashboard",
-    });
-  }
-  return items.concat(roleNav.menu ?? []);
-}
+import { logout as logoutService } from "../../features/auth/services/auth.service";
 
 export default function Header() {
-  const { status, user, logout } = useHeaderUser();
+  const navigate = useNavigate();
+  const { status, user } = useHeaderUser();
+
   const authed = status === "authenticated" && Boolean(user);
   const loading = status === "loading";
-  // "unauthenticated" and "expired" both show the public header.
 
   const roleNav = authed ? resolveRoleNav(user.role) : null;
   const roleLabel = authed ? (roleNav?.label ?? prettifyRole(user.role)) : "";
-  const menuItems = useMemo(() => buildMenuItems(roleNav), [roleNav]);
+
+  const menuItems = useMemo(
+    () => buildAccountItems(roleNav, user?.role),
+    [roleNav, user?.role],
+  );
+  const subscription = authed ? getSubscriptionSummary(user) : null;
   const primaryNav = authed ? (roleNav?.nav ?? []) : navLinks;
   const homeTo = authed && roleNav?.dashboard ? roleNav.dashboard : routes.home;
 
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState("top");
-  const headerRef = useRef(null);
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  // Scroll-spy: public landing navigation only. Authenticated links are
-  // route-aware (NavLink), so no observer runs for them.
+  const headerRef = useRef(null);
+  const logoutInFlight = useRef(false);
+
+  // Scroll-spy for public landing page navigation.
   useEffect(() => {
     if (authed || loading) return undefined;
+
     const targets = navLinks
-      .map((l) => document.getElementById(l.id))
+      .map((link) => document.getElementById(link.id))
       .filter(Boolean);
-    if (!targets.length || !("IntersectionObserver" in window))
+
+    if (!targets.length || !("IntersectionObserver" in window)) {
       return undefined;
-    const io = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => e.isIntersecting && setActive(e.target.id)),
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) setActive(entry.target.id);
+        });
+      },
       { rootMargin: "-45% 0px -50% 0px" },
     );
-    targets.forEach((t) => io.observe(t));
-    return () => io.disconnect();
+
+    targets.forEach((target) => observer.observe(target));
+
+    return () => observer.disconnect();
   }, [authed, loading]);
 
-  // Escape closes the mobile menu
+  // Escape closes the mobile menu.
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => e.key === "Escape" && setOpen(false);
-    document.addEventListener("keydown", onKey);
-    return () => document.removeEventListener("keydown", onKey);
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => document.removeEventListener("keydown", onKeyDown);
   }, [open]);
 
-  // Close the menu if the viewport grows to the desktop layout
+  // Close the mobile menu when the desktop layout is reached.
   useEffect(() => {
-    const mq = window.matchMedia("(min-width: 961px)");
-    const onChange = (e) => e.matches && setOpen(false);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
+    const mediaQuery = window.matchMedia("(min-width: 961px)");
+    const onChange = (event) => {
+      if (event.matches) setOpen(false);
+    };
+
+    mediaQuery.addEventListener("change", onChange);
+
+    return () => mediaQuery.removeEventListener("change", onChange);
   }, []);
 
-  // Scrolled shadow: toggles a data attribute directly, so no React re-renders
+  // Header shadow on scroll.
   useEffect(() => {
-    const el = headerRef.current;
-    if (!el) return undefined;
+    const element = headerRef.current;
+    if (!element) return undefined;
+
     let ticking = false;
     let scrolled = false;
+
     const update = () => {
       ticking = false;
       const next = window.scrollY > 8;
+
       if (next !== scrolled) {
         scrolled = next;
-        el.dataset.scrolled = String(next);
+        element.dataset.scrolled = String(next);
       }
     };
+
     const onScroll = () => {
       if (!ticking) {
         ticking = true;
         requestAnimationFrame(update);
       }
     };
+
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
+
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLogout = async () => {
+  // Shared logout handler for desktop and mobile.
+  async function handleLogout() {
+    if (logoutInFlight.current) return;
+
+    logoutInFlight.current = true;
+    setLoggingOut(true);
     setOpen(false);
+
     try {
-      await logout();
-    } catch {
-      console.error("Sign out failed.");
+      // Use the existing shared session logout service.
+      await logoutService();
+
+      // Keep the header hook's logout contract in sync if it has extra logic.
+      // The service above already ends the shared session.
+      toast.success("You've logged out successfully!", {
+        description: "Thanks for learning with VidyaExam. See you soon!",
+        duration: 4000,
+      });
+
+      navigate(routes.home, { replace: true });
+    } catch (error) {
+      console.error("Sign out failed.", error);
+
+      toast.error("We couldn't complete your sign out.", {
+        description: "Please try again.",
+        duration: 4000,
+      });
+    } finally {
+      logoutInFlight.current = false;
+      setLoggingOut(false);
     }
-  };
+  }
 
   const tab = open ? 0 : -1;
   const closeMenu = () => setOpen(false);
 
-  const renderPrimaryLink = (l, mobile) => {
+  const renderPrimaryLink = (link, mobile) => {
     const common = {
       className: "nav-link",
       tabIndex: mobile ? tab : undefined,
       onClick: mobile ? closeMenu : undefined,
     };
+
     if (authed) {
       return (
-        <AppLink key={l.to} to={l.to} end={l.end} nav {...common}>
-          {l.label}
+        <AppLink key={link.to} to={link.to} end={link.end} nav {...common}>
+          {link.label}
         </AppLink>
       );
     }
-    const isActive = active === l.id;
+
+    const isActive = active === link.id;
+
     return (
       <a
-        key={l.id}
-        href={l.href}
+        key={link.id}
+        href={link.href}
         {...common}
         className={`nav-link${isActive ? " is-active" : ""}`}
         aria-current={isActive ? "true" : undefined}>
-        {l.label}
+        {link.label}
       </a>
     );
   };
@@ -154,24 +209,28 @@ export default function Header() {
         )}
 
         <nav className="nav-desktop" aria-label="Primary">
-          {primaryNav.map((l) => renderPrimaryLink(l, false))}
+          {primaryNav.map((link) => renderPrimaryLink(link, false))}
         </nav>
 
         <div className="header-actions">
           {loading && <span className="hdr-skeleton" aria-hidden="true" />}
+
           {authed && (
             <ProfileMenu
               user={user}
               roleLabel={roleLabel}
               items={menuItems}
-              onLogout={logout ? handleLogout : null}
+              onLogout={handleLogout}
+              loggingOut={loggingOut}
             />
           )}
+
           {!authed && !loading && (
             <>
               <AppLink className="btn btn-ghost" to={routes.login}>
                 Log In
               </AppLink>
+
               <AppLink className="btn btn-primary" to={routes.register}>
                 Get Started
               </AppLink>
@@ -185,7 +244,7 @@ export default function Header() {
           aria-expanded={open}
           aria-controls="mobile-nav"
           aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((v) => !v)}>
+          onClick={() => setOpen((value) => !value)}>
           {open ? (
             <X size={22} aria-hidden="true" />
           ) : (
@@ -199,35 +258,44 @@ export default function Header() {
         className={`mobile-panel${open ? " is-open" : ""}`}
         aria-hidden={!open}>
         <nav className="mobile-nav" aria-label="Mobile">
-          {primaryNav.map((l) => renderPrimaryLink(l, true))}
+          {primaryNav.map((link) => renderPrimaryLink(link, true))}
 
           {authed && (
             <div className="mobile-account">
               <AccountSummary user={user} roleLabel={roleLabel} />
-              {menuItems.map(({ label, to, icon }) => {
-                const Icon = MENU_ICONS[icon];
-                return (
-                  <AppLink
-                    key={`${to}:${label}`}
-                    to={to}
-                    className="menu-item"
-                    tabIndex={tab}
-                    onClick={closeMenu}>
-                    {Icon && <Icon size={18} aria-hidden="true" />}
-                    {label}
-                  </AppLink>
-                );
-              })}
-              {logout && (
-                <button
-                  type="button"
-                  className="menu-item menu-item--danger"
+              <SubscriptionSummary
+                summary={subscription}
+                onNavigate={closeMenu}
+                tabIndex={tab}
+              />
+
+              {menuItems.map((item) => (
+                <AccountItem
+                  key={`${item.to ?? "soon"}:${item.label}`}
+                  item={item}
                   tabIndex={tab}
-                  onClick={handleLogout}>
+                  onNavigate={closeMenu}
+                />
+              ))}
+
+              <button
+                type="button"
+                className="menu-item menu-item--danger"
+                tabIndex={tab}
+                disabled={loggingOut}
+                aria-busy={loggingOut}
+                onClick={handleLogout}>
+                {loggingOut ? (
+                  <LoaderCircle
+                    size={18}
+                    className="profile-logout-spinner"
+                    aria-hidden="true"
+                  />
+                ) : (
                   <LogOut size={18} aria-hidden="true" />
-                  Sign out
-                </button>
-              )}
+                )}
+                {loggingOut ? "Signing out..." : "Sign out"}
+              </button>
             </div>
           )}
 
@@ -240,6 +308,7 @@ export default function Header() {
                 onClick={closeMenu}>
                 Log In
               </AppLink>
+
               <AppLink
                 className="btn btn-primary"
                 to={routes.register}

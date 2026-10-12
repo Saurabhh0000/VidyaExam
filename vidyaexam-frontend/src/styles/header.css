@@ -1,5 +1,6 @@
 /* VidyaExam header. All rules are scoped to .site-header so shared .btn / .nav-link
-   styles elsewhere are untouched. Palette values fall back to the brand hex codes. */
+   styles elsewhere are untouched. Palette values fall back to the brand hex codes.
+   Profile menu / avatar / account styles live in profile-menu.css. */
 
 html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the sticky header */
 @media (max-width: 960px) { html { scroll-padding-top: 76px; } }
@@ -151,7 +152,7 @@ html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the st
   outline-offset: 2px;
 }
 
-/* Signed-in state: loading placeholder, avatar, profile trigger, dropdown */
+/* Loading placeholder while the session resolves */
 .site-header .hdr-skeleton {
   display: block;
   width: 120px;
@@ -160,137 +161,6 @@ html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the st
   border-radius: 999px;
   opacity: 0.7;
 }
-
-.site-header .avatar {
-  display: grid;
-  place-items: center;
-  flex: none;
-  width: 36px;
-  height: 36px;
-  overflow: hidden;
-  font-size: 0.8rem;
-  font-weight: 700;
-  line-height: 1;
-  color: var(--hdr-teal-dark);
-  background: var(--hdr-teal-light);
-  border-radius: 50%;
-}
-.site-header .avatar--lg { width: 44px; height: 44px; font-size: 0.95rem; }
-.site-header .avatar img { width: 100%; height: 100%; object-fit: cover; }
-
-.site-header .profile { position: relative; }
-.site-header .profile-trigger {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  min-height: 44px;
-  max-width: 100%;
-  padding: 4px 12px 4px 4px;
-  font: inherit;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--hdr-navy);
-  background: #fff;
-  border: 1px solid var(--hdr-border);
-  border-radius: 999px;
-  cursor: pointer;
-  transition: border-color 0.2s ease, background-color 0.2s ease;
-}
-.site-header .profile-trigger:hover,
-.site-header .profile-trigger[aria-expanded="true"] {
-  border-color: var(--hdr-teal);
-  background: var(--hdr-teal-light);
-}
-.site-header .profile-name {
-  max-width: 9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.site-header .profile-chevron {
-  flex: none;
-  color: #64748b;
-  transition: transform 0.2s var(--hdr-ease);
-}
-.site-header .profile-trigger[aria-expanded="true"] .profile-chevron {
-  transform: rotate(180deg);
-}
-
-.site-header .profile-menu {
-  position: absolute;
-  top: calc(100% + 10px);
-  right: 0;
-  z-index: 110;
-  width: min(19rem, calc(100vw - 32px));
-  padding: 8px;
-  background: #fff;
-  border: 1px solid var(--hdr-border);
-  border-radius: 14px;
-  box-shadow: 0 20px 40px -20px rgba(16, 33, 59, 0.35),
-    0 2px 6px rgba(16, 33, 59, 0.06);
-  transform-origin: top right;
-  animation: hdr-menu-in 0.16s var(--hdr-ease);
-}
-@keyframes hdr-menu-in {
-  from { opacity: 0; transform: translateY(-6px) scale(0.98); }
-}
-
-.site-header .account-summary {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  min-width: 0;
-  padding: 10px 10px 12px;
-}
-.site-header .account-meta { display: grid; gap: 2px; min-width: 0; }
-.site-header .account-meta strong,
-.site-header .account-email {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.site-header .account-meta strong { font-size: 0.95rem; color: var(--hdr-navy); }
-.site-header .account-email { font-size: 0.8rem; color: #64748b; }
-.site-header .role-badge {
-  justify-self: start;
-  margin-top: 4px;
-  padding: 2px 8px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--hdr-teal-dark);
-  background: var(--hdr-teal-light);
-  border-radius: 999px;
-}
-
-.site-header .menu-sep { height: 1px; margin: 6px 4px; background: var(--hdr-border); }
-.site-header .menu-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-  min-height: 44px;
-  padding: 0 10px;
-  font: inherit;
-  font-size: 0.9375rem;
-  font-weight: 550;
-  color: var(--hdr-navy);
-  text-align: left;
-  text-decoration: none;
-  background: none;
-  border: 0;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-.site-header .menu-item svg { flex: none; color: #64748b; }
-.site-header .menu-item:hover,
-.site-header .menu-item:focus-visible { background: var(--hdr-teal-light); }
-.site-header .menu-item:focus-visible { outline-offset: -3px; }
-.site-header .menu-item--danger:hover,
-.site-header .menu-item--danger:focus-visible { color: #b42318; background: #fef3f2; }
-.site-header .menu-item--danger:hover svg,
-.site-header .menu-item--danger:focus-visible svg { color: #b42318; }
 
 /* Hamburger (hidden on desktop) */
 .site-header .menu-btn {
@@ -319,8 +189,6 @@ html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the st
   .site-header .nav-link { padding-inline: 10px; }
   .site-header .nav-link::after { left: 10px; right: 10px; }
   .site-header .btn { padding-inline: 14px; }
-  .site-header .profile-name { display: none; }
-  .site-header .profile-trigger { padding-right: 8px; gap: 6px; }
 }
 
 /* Mobile / small tablet */
@@ -386,14 +254,6 @@ html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the st
     border-top: 1px solid var(--hdr-border);
   }
   .site-header .mobile-actions .btn { min-height: 48px; }
-  .site-header .mobile-account {
-    display: grid;
-    gap: 2px;
-    margin-top: 12px;
-    padding-top: 8px;
-    border-top: 1px solid var(--hdr-border);
-  }
-  .site-header .mobile-account .menu-item { min-height: 48px; padding-inline: 14px; }
 }
 
 @media (max-width: 360px) {
@@ -404,5 +264,4 @@ html { scroll-padding-top: 88px; } /* anchor targets are not hidden under the st
   .site-header,
   .site-header * { transition-duration: 0.01ms !important; transition-delay: 0s !important; }
   .site-header .btn:hover { transform: none; }
-  .site-header .profile-menu { animation: none; }
 }

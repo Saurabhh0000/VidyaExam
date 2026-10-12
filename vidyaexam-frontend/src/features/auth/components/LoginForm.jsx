@@ -6,6 +6,8 @@ import { notify } from "../utils/notify";
 import { validation } from "../utils/validation";
 import PasswordField from "./PasswordField";
 import SubmitButton from "./SubmitButton";
+import { getSnapshot } from "../state/sessionStore";
+import { dashboardPathFor } from "../../../app/roleRoutes";
 
 // Toast messages for this form
 const MESSAGES = {
@@ -68,7 +70,11 @@ export default function LoginForm() {
     try {
       await login({ email, password });
       notify.success(MESSAGES.success);
-      navigate(location.state?.from?.pathname || "/", { replace: true });
+      const from = location.state?.from?.pathname;
+      const destination =
+        from || dashboardPathFor(getSnapshot().user?.role) || "/";
+
+      navigate(destination, { replace: true });
     } catch (err) {
       const kind = err instanceof AuthError ? err.kind : "unexpected";
       notify.error(MESSAGES[kind] ?? MESSAGES.unexpected);
