@@ -68,11 +68,14 @@ exports.registerTenant = async (req, res, next) => {
 
         // 2. Validate tenant type
         const allowedTypes = [
+            "COACHING_INSTITUTE",    // Govt exam academies, IT bootcamps, test-prep centers
+            "EDUCATIONAL_INSTITUTE", // Schools, Colleges, Universities
+            "CORPORATE",             // Companies / Tech firms assessing candidates
             "SCHOOL",
             "COLLEGE",
-            "COACHING_INSTITUTE",
             "OTHER"
         ];
+
 
         if (!allowedTypes.includes(tenant_type)) {
             return res.status(400).json({

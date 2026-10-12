@@ -1,8 +1,12 @@
 
 const express = require("express");
 const cors = require("cors");
+const helmet = require("helmet");
 
 const app = express();
+
+// Secure HTTP Headers
+app.use(helmet());
 
 // CORS configuration
 const corsOptions = {
@@ -10,19 +14,18 @@ const corsOptions = {
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
     allowedHeaders: ["Content-Type", "Authorization"]
 };
+
+app.use(cors(corsOptions));
+
+// Parse JSON and URL-encoded requests
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+
+// Route imports
 const userRoutes = require("./routes/user.routes");
 const tenantRoutes = require("./routes/tenant.routes");
 const superAdminRoutes = require("./routes/super-admin.routes");
 const subscriptionRoutes = require("./routes/subscription.routes");
-
-
-app.use(cors(corsOptions));
-
-
-
-
-// Parse JSON requests
-app.use(express.json());
 
 // Root API
 app.get("/", (req, res) => {
@@ -40,12 +43,30 @@ app.get("/api/health", (req, res) => {
         timestamp: new Date().toISOString()
     });
 });
+
+// Mount Routes
 app.use("/api/users", userRoutes);
 app.use("/api/tenants", tenantRoutes);
 app.use("/api/super-admin", superAdminRoutes);
 app.use("/api/subscriptions", subscriptionRoutes);
-// Register your API routes above this line.
 
+// 404 Not Found Handler
+app.use((req, res) => {
+    res.status(404).json({
+        success: false,
+        message: `Route ${req.originalUrl} not found`
+    });
+});
 
+// Centralized Global Error Handler
+app.use((err, req, res, next) => {
+    console.error("Server error:", err);
+
+    res.status(err.status || 500).json({
+        success: false,
+        message: err.message || "Internal server error"
+    });
+});
 
 module.exports = app;
+

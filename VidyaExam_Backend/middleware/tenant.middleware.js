@@ -34,7 +34,36 @@ exports.requireTenantRole = (...allowedRoles) => {
                 });
             }
 
+            // Platform SUPER_ADMIN has full access to all tenant endpoints
+            if (req.user?.role === "SUPER_ADMIN") {
+                const tenantCheck = await pool.query(
+                    `SELECT tenant_id, tenant_name, is_active
+                     FROM vidya.tenant_master
+                     WHERE tenant_id = $1
+                     LIMIT 1`,
+                    [tenantId]
+                );
+
+                if (tenantCheck.rowCount === 0) {
+                    return res.status(404).json({
+                        success: false,
+                        message: "Organization not found"
+                    });
+                }
+
+                req.tenantMembership = {
+                    tenant_id: tenantCheck.rows[0].tenant_id,
+                    tenant_name: tenantCheck.rows[0].tenant_name,
+                    user_id: userId,
+                    role_name: "SUPER_ADMIN",
+                    is_super_admin: true
+                };
+
+                return next();
+            }
+
             const result = await pool.query(
+
                 `SELECT
                     tum.tenant_id,
                     tum.user_id,
