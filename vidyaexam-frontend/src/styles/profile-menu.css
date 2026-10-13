@@ -3,7 +3,10 @@
    (.avatar, .profile*, .account-*, .role-badge, .menu-sep, .menu-item*). */
 
 /* ── Trigger ── */
-.site-header .profile { position: relative; }
+.site-header .profile {
+  position: relative;
+  flex: none;
+}
 .site-header .profile-trigger {
   display: inline-flex;
   align-items: center;
@@ -64,7 +67,7 @@
   top: calc(100% + 10px);
   right: 0;
   z-index: 110;
-  width: min(20rem, calc(100vw - 32px));
+  width: min(20rem, calc(100vw - 24px));
   max-height: calc(100dvh - var(--hdr-h) - 24px);
   padding: 8px;
   overflow-y: auto;

@@ -11,6 +11,7 @@ import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 import RequireRole from "./RequireRole";
 import StudentDashboard from "../features/student/pages/StudentDashboard";
 import { STUDENT_DASHBOARD } from "./roleRoutes";
+import OrganizationDashboard from "../features/organization-admin/pages/OrganizationDashboard";
 
 export default function AppRouter() {
   return (
@@ -37,6 +38,14 @@ export default function AppRouter() {
               <MainLayout>
                 <StudentDashboard />
               </MainLayout>
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/organization/dashboard"
+          element={
+            <RequireRole role="ADMIN">
+              <OrganizationDashboard />
             </RequireRole>
           }
         />

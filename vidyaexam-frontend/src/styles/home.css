@@ -450,3 +450,83 @@
   .hm-bgword.hm-bgword--final { display: block; font-size: 17vw; bottom: 0; }
   .hm-final-lead { margin-top: 16px; }
 }
+/* Pricing: improved billing toggle on mobile */
+@media (max-width: 640px) {
+  .home .hm-pricing-controls {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    width: 100%;
+  }
+
+  .home .hm-seg {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row;
+    gap: 4px;
+    width: 100%;
+    min-width: 0;
+    padding: 4px;
+    border-radius: 18px;
+  }
+
+  .home .hm-seg-opt {
+    min-width: 0;
+    width: 100%;
+  }
+
+  .home .hm-seg-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 8px 6px;
+    font-size: 0.88rem;
+    line-height: 1.25;
+    text-align: center;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  /* More room between plan features and CTA */
+  .home .hm-plan-card {
+    padding: 24px 20px;
+  }
+
+  .home .hm-plan-list {
+    gap: 14px;
+    margin-top: 24px;
+    margin-bottom: 32px;
+    padding-top: 22px;
+  }
+
+  .home .hm-plan-cta {
+    flex-shrink: 0;
+    margin-top: 4px;
+    min-height: 48px;
+  }
+}
+
+/* Extra-small phones */
+@media (max-width: 380px) {
+  .home .hm-seg-btn {
+    font-size: 0.8rem;
+    padding-inline: 4px;
+  }
+
+  .home .hm-plan-card {
+    padding: 20px 16px;
+  }
+}
+/* Pricing cards: spacing between features and CTA on all screen sizes */
+.home .hm-plan-list {
+  margin-bottom: 32px;
+}
+
+.home .hm-plan-cta {
+  margin-top: 4px;
+  flex-shrink: 0;
+}

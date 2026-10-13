@@ -1,20 +1,19 @@
-import { useEffect, useMemo, useRef, useState } from "react";
-import { LogOut, Menu, X, LoaderCircle } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import { PanelLeft, Sparkles } from "lucide-react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
 import { logo, routes, navLinks } from "../config/siteConfig";
 import { resolveRoleNav } from "../config/headerNav";
 import useHeaderUser from "../hooks/useHeaderUser";
+import useMediaQuery from "../hooks/useMediaQuery";
 import AppLink from "./AppLink";
 import ProfileMenu, {
-  AccountItem,
-  AccountSummary,
-  SubscriptionSummary,
   getSubscriptionSummary,
   prettifyRole,
 } from "./ProfileMenu";
 import { buildAccountItems } from "../config/accountMenu";
+import NavigationSidebar, { MOBILE_QUERY } from "./NavigationSidebar";
 import "../../styles/header.css";
 import "../../styles/profile-menu.css";
 
@@ -22,7 +21,9 @@ import { logout as logoutService } from "../../features/auth/services/auth.servi
 
 export default function Header() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { status, user } = useHeaderUser();
+  const isMobile = useMediaQuery(MOBILE_QUERY);
 
   const authed = status === "authenticated" && Boolean(user);
   const loading = status === "loading";
@@ -38,65 +39,73 @@ export default function Header() {
   const primaryNav = authed ? (roleNav?.nav ?? []) : navLinks;
   const homeTo = authed && roleNav?.dashboard ? roleNav.dashboard : routes.home;
 
-  const [open, setOpen] = useState(false);
-  const [active, setActive] = useState("top");
+  // Single source of truth: open = expanded (desktop) / drawer open (mobile).
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [activeLandingSection, setActiveLandingSection] = useState("top");
   const [loggingOut, setLoggingOut] = useState(false);
 
   const headerRef = useRef(null);
+  const triggerBtnRef = useRef(null);
   const logoutInFlight = useRef(false);
 
-  // Scroll-spy for public landing page navigation.
+  const brandHidden = authed && sidebarOpen;
+
+  // Content offset on desktop (CSS applies the padding only above 960px).
+  useEffect(() => {
+    const cls = document.body.classList;
+    cls.remove("has-sidebar-rail", "has-sidebar-expanded");
+    if (authed)
+      cls.add(sidebarOpen ? "has-sidebar-expanded" : "has-sidebar-rail");
+    return () => cls.remove("has-sidebar-rail", "has-sidebar-expanded");
+  }, [authed, sidebarOpen]);
+
+  // Crossing the breakpoint resets state so a desktop-expanded sidebar never
+  // turns into an open modal drawer (or vice versa).
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [isMobile]);
+
+  // Route change closes the mobile drawer; desktop keeps the user's choice.
+  useEffect(() => {
+    if (isMobile) setSidebarOpen(false);
+  }, [location.pathname, location.hash, isMobile]);
+
+  // Public landing page scroll-spy
   useEffect(() => {
     if (authed || loading) return undefined;
 
     const targets = navLinks
+      .filter((link) => link.id !== "top")
       .map((link) => document.getElementById(link.id))
       .filter(Boolean);
 
+    const syncTopSection = () => {
+      if (window.scrollY <= 8) setActiveLandingSection("top");
+    };
+    syncTopSection();
+    window.addEventListener("scroll", syncTopSection, { passive: true });
+
     if (!targets.length || !("IntersectionObserver" in window)) {
-      return undefined;
+      return () => window.removeEventListener("scroll", syncTopSection);
     }
 
     const observer = new IntersectionObserver(
       (entries) => {
         entries.forEach((entry) => {
-          if (entry.isIntersecting) setActive(entry.target.id);
+          if (entry.isIntersecting) setActiveLandingSection(entry.target.id);
         });
       },
       { rootMargin: "-45% 0px -50% 0px" },
     );
 
     targets.forEach((target) => observer.observe(target));
-
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", syncTopSection);
+    };
   }, [authed, loading]);
 
-  // Escape closes the mobile menu.
-  useEffect(() => {
-    if (!open) return undefined;
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") setOpen(false);
-    };
-
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [open]);
-
-  // Close the mobile menu when the desktop layout is reached.
-  useEffect(() => {
-    const mediaQuery = window.matchMedia("(min-width: 961px)");
-    const onChange = (event) => {
-      if (event.matches) setOpen(false);
-    };
-
-    mediaQuery.addEventListener("change", onChange);
-
-    return () => mediaQuery.removeEventListener("change", onChange);
-  }, []);
-
-  // Header shadow on scroll.
+  // Elevation shadow on scroll
   useEffect(() => {
     const element = headerRef.current;
     if (!element) return undefined;
@@ -107,7 +116,6 @@ export default function Header() {
     const update = () => {
       ticking = false;
       const next = window.scrollY > 8;
-
       if (next !== scrolled) {
         scrolled = next;
         element.dataset.scrolled = String(next);
@@ -123,33 +131,24 @@ export default function Header() {
 
     update();
     window.addEventListener("scroll", onScroll, { passive: true });
-
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  // Shared logout handler for desktop and mobile.
-  async function handleLogout() {
+  const handleLogout = useCallback(async () => {
     if (logoutInFlight.current) return;
-
     logoutInFlight.current = true;
     setLoggingOut(true);
-    setOpen(false);
+    setSidebarOpen(false);
 
     try {
-      // Use the existing shared session logout service.
       await logoutService();
-
-      // Keep the header hook's logout contract in sync if it has extra logic.
-      // The service above already ends the shared session.
       toast.success("You've logged out successfully!", {
         description: "Thanks for learning with VidyaExam. See you soon!",
         duration: 4000,
       });
-
       navigate(routes.home, { replace: true });
     } catch (error) {
       console.error("Sign out failed.", error);
-
       toast.error("We couldn't complete your sign out.", {
         description: "Please try again.",
         duration: 4000,
@@ -158,168 +157,114 @@ export default function Header() {
       logoutInFlight.current = false;
       setLoggingOut(false);
     }
-  }
+  }, [navigate]);
 
-  const tab = open ? 0 : -1;
-  const closeMenu = () => setOpen(false);
-
-  const renderPrimaryLink = (link, mobile) => {
-    const common = {
-      className: "nav-link",
-      tabIndex: mobile ? tab : undefined,
-      onClick: mobile ? closeMenu : undefined,
-    };
-
-    if (authed) {
-      return (
-        <AppLink key={link.to} to={link.to} end={link.end} nav {...common}>
-          {link.label}
-        </AppLink>
-      );
-    }
-
-    const isActive = active === link.id;
-
-    return (
-      <a
-        key={link.id}
-        href={link.href}
-        {...common}
-        className={`nav-link${isActive ? " is-active" : ""}`}
-        aria-current={isActive ? "true" : undefined}>
-        {link.label}
-      </a>
-    );
-  };
+  const handleCloseSidebar = useCallback(() => {
+    setSidebarOpen(false);
+    if (isMobile) triggerBtnRef.current?.focus();
+  }, [isMobile]);
 
   return (
-    <header className="site-header" ref={headerRef} data-scrolled="false">
-      <div className="site-header__inner">
-        {authed && roleNav?.dashboard ? (
-          <AppLink
-            to={homeTo}
-            className="logo-link"
-            aria-label="VidyaExam dashboard">
-            <img src={logo} alt="VidyaExam" className="header-logo" />
-          </AppLink>
-        ) : (
-          <a className="logo-link" href={homeTo} aria-label="VidyaExam home">
-            <img src={logo} alt="VidyaExam" className="header-logo" />
-          </a>
-        )}
-
-        <nav className="nav-desktop" aria-label="Primary">
-          {primaryNav.map((link) => renderPrimaryLink(link, false))}
-        </nav>
-
-        <div className="header-actions">
-          {loading && <span className="hdr-skeleton" aria-hidden="true" />}
-
-          {authed && (
-            <ProfileMenu
-              user={user}
-              roleLabel={roleLabel}
-              items={menuItems}
-              onLogout={handleLogout}
-              loggingOut={loggingOut}
-            />
-          )}
-
-          {!authed && !loading && (
-            <>
-              <AppLink className="btn btn-ghost" to={routes.login}>
-                Log In
-              </AppLink>
-
-              <AppLink className="btn btn-primary" to={routes.register}>
-                Get Started
-              </AppLink>
-            </>
-          )}
-        </div>
-
-        <button
-          type="button"
-          className="menu-btn"
-          aria-expanded={open}
-          aria-controls="mobile-nav"
-          aria-label={open ? "Close menu" : "Open menu"}
-          onClick={() => setOpen((value) => !value)}>
-          {open ? (
-            <X size={22} aria-hidden="true" />
-          ) : (
-            <Menu size={22} aria-hidden="true" />
-          )}
-        </button>
-      </div>
-
-      <div
-        id="mobile-nav"
-        className={`mobile-panel${open ? " is-open" : ""}`}
-        aria-hidden={!open}>
-        <nav className="mobile-nav" aria-label="Mobile">
-          {primaryNav.map((link) => renderPrimaryLink(link, true))}
-
-          {authed && (
-            <div className="mobile-account">
-              <AccountSummary user={user} roleLabel={roleLabel} />
-              <SubscriptionSummary
-                summary={subscription}
-                onNavigate={closeMenu}
-                tabIndex={tab}
-              />
-
-              {menuItems.map((item) => (
-                <AccountItem
-                  key={`${item.to ?? "soon"}:${item.label}`}
-                  item={item}
-                  tabIndex={tab}
-                  onNavigate={closeMenu}
-                />
-              ))}
-
+    <>
+      <header
+        className={`site-header ${authed ? "is-authed-header" : "is-guest-header"}`}
+        ref={headerRef}
+        data-scrolled="false">
+        <div className="site-header__inner">
+          <div className="header-left-cluster">
+            {authed && isMobile && (
               <button
+                ref={triggerBtnRef}
                 type="button"
-                className="menu-item menu-item--danger"
-                tabIndex={tab}
-                disabled={loggingOut}
-                aria-busy={loggingOut}
-                onClick={handleLogout}>
-                {loggingOut ? (
-                  <LoaderCircle
-                    size={18}
-                    className="profile-logout-spinner"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <LogOut size={18} aria-hidden="true" />
-                )}
-                {loggingOut ? "Signing out..." : "Sign out"}
+                className="sidebar-hamburger-trigger"
+                aria-expanded={sidebarOpen}
+                aria-controls="vidyaexam-navigation-sidebar"
+                aria-label="Open navigation menu"
+                onClick={() => setSidebarOpen((prev) => !prev)}>
+                <PanelLeft size={19} aria-hidden="true" />
               </button>
-            </div>
-          )}
+            )}
+
+            {/* Keeps its layout box while hidden, so the navbar never shifts.
+                Hidden = visibility:hidden + tabIndex -1 + aria-hidden. */}
+            <AppLink
+              to={homeTo}
+              className={`header-logo-anchor${brandHidden ? " is-branding-hidden" : ""}`}
+              tabIndex={brandHidden ? -1 : 0}
+              aria-hidden={brandHidden || undefined}>
+              <img
+                src={logo}
+                alt="VidyaExam Logo"
+                className="header-main-logo"
+              />
+            </AppLink>
+          </div>
 
           {!authed && !loading && (
-            <div className="mobile-actions">
-              <AppLink
-                className="btn btn-ghost"
-                to={routes.login}
-                tabIndex={tab}
-                onClick={closeMenu}>
-                Log In
-              </AppLink>
-
-              <AppLink
-                className="btn btn-primary"
-                to={routes.register}
-                tabIndex={tab}
-                onClick={closeMenu}>
-                Get Started
-              </AppLink>
-            </div>
+            <nav className="header-pill-nav" aria-label="Landing Navigation">
+              {navLinks.map((link) => {
+                const isActive = activeLandingSection === link.id;
+                return (
+                  <a
+                    key={link.id}
+                    href={link.href}
+                    className={`nav-pill-link${isActive ? " is-active" : ""}`}
+                    aria-current={isActive ? "true" : undefined}
+                    onClick={() => setActiveLandingSection(link.id)}>
+                    {link.label}
+                  </a>
+                );
+              })}
+            </nav>
           )}
-        </nav>
-      </div>
-    </header>
+
+          <div className="header-right-cluster">
+            {loading && (
+              <span className="modern-avatar-skeleton" aria-hidden="true" />
+            )}
+
+            {authed && (
+              <ProfileMenu
+                user={user}
+                roleLabel={roleLabel}
+                items={menuItems}
+                onLogout={handleLogout}
+                loggingOut={loggingOut}
+              />
+            )}
+
+            {!authed && !loading && (
+              <div className="header-auth-group">
+                <AppLink className="btn-modern-text" to={routes.login}>
+                  Log in
+                </AppLink>
+                <AppLink className="btn-modern-solid" to={routes.register}>
+                  <Sparkles size={15} aria-hidden="true" />
+                  <span>Get Started</span>
+                </AppLink>
+              </div>
+            )}
+          </div>
+        </div>
+      </header>
+
+      {authed && (
+        <NavigationSidebar
+          id="vidyaexam-navigation-sidebar"
+          isOpen={sidebarOpen}
+          onToggle={() => setSidebarOpen((prev) => !prev)}
+          onClose={handleCloseSidebar}
+          logoSrc={logo}
+          homeTo={homeTo}
+          user={user}
+          roleLabel={roleLabel}
+          primaryNav={primaryNav}
+          menuItems={menuItems}
+          subscription={subscription}
+          loggingOut={loggingOut}
+          onLogout={handleLogout}
+        />
+      )}
+    </>
   );
 }
