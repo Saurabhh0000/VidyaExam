@@ -1,39 +1,70 @@
+
 /**
  * Single source of truth for role -> landing page.
- * Only routes that actually exist belong here. Roles without a built dashboard
- * (e.g. organization admins) are intentionally absent and fall back to "/".
+ *
+ * Only roles with implemented dashboards belong in ROLE_HOME.
+ * Organization Admins use /organization/dashboard.
+ * Roles without an implemented dashboard return null.
  */
+
 export const STUDENT_DASHBOARD = "/student/dashboard";
+export const ORGANIZATION_DASHBOARD = "/organization/dashboard";
 
 const ROLE_HOME = {
   STUDENT: STUDENT_DASHBOARD,
+  ADMIN: ORGANIZATION_DASHBOARD,
 };
 
-export const dashboardPathFor = (role) =>
-  ROLE_HOME[String(role ?? "").toUpperCase()] ?? null;
+/**
+ * Returns the landing page for a role.
+ *
+ * @param {string | null | undefined} role
+ * @returns {string | null}
+ */
+export const dashboardPathFor = (role) => {
+  const normalizedRole = String(role ?? "").trim().toUpperCase();
+
+  return ROLE_HOME[normalizedRole] ?? null;
+};
 
 /**
- * ASSUMPTION — where the role sits in the login response. Confirm against the
- * real payload; this is the only place that needs to change.
+ * Extracts a role from the login API response.
+ *
+ * Individual account:
+ *   data.default_role = "STUDENT"
+ *
+ * Organization account:
+ *   data.memberships = [
+ *     { role_name: "ADMIN", tenant_id: "..." }
+ *   ]
+ *
+ * If multiple memberships exist, the user must explicitly select
+ * an organization before a tenant-specific role can be determined.
+ *
+ * @param {object} result
+ * @returns {string | null}
  */
-
 export function getRoleFromLoginResult(result) {
   const data = result?.data ?? result;
 
   // Individual account, such as a student.
   if (data?.default_role) {
-    return String(data.default_role).toUpperCase();
+    return String(data.default_role).trim().toUpperCase();
   }
 
-  // Tenant account: infer a role only when there is exactly one membership.
+  // Organization memberships.
   const memberships = Array.isArray(data?.memberships)
     ? data.memberships
     : [];
 
+  // Infer a role only when there is exactly one membership.
   if (memberships.length === 1) {
-    return String(memberships[0]?.role_name ?? "").toUpperCase() || null;
+    const role = memberships[0]?.role_name;
+
+    return String(role ?? "").trim().toUpperCase() || null;
   }
 
-  // Multiple memberships require an explicit tenant selection.
+  // No membership or multiple memberships:
+  // do not guess which tenant role should be active.
   return null;
 }
