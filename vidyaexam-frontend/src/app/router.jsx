@@ -42,10 +42,12 @@ export default function AppRouter() {
           }
         />
         <Route
-          path="/organization/dashboard"
+          path="/organization/dashboard/:view?"
           element={
             <RequireRole role="ADMIN">
-              <OrganizationDashboard />
+              <MainLayout>
+                <OrganizationDashboard />
+              </MainLayout>
             </RequireRole>
           }
         />

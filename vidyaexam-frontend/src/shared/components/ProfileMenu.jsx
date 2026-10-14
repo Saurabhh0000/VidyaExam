@@ -3,6 +3,8 @@ import {
   ChevronDown,
   CircleHelp,
   CreditCard,
+  BookOpen,
+  GraduationCap,
   History,
   LayoutDashboard,
   LoaderCircle,
@@ -10,6 +12,7 @@ import {
   Settings,
   TrendingUp,
   UserRound,
+  Users,
 } from "lucide-react";
 import AppLink from "./AppLink";
 import { READY_ROUTES } from "../config/accountMenu";
@@ -23,6 +26,9 @@ export const MENU_ICONS = {
   history: History,
   performance: TrendingUp,
   subscription: CreditCard,
+  users: Users,
+  teacher: BookOpen,
+  student: GraduationCap,
 };
 
 export function getInitials(name, email) {
@@ -97,6 +103,11 @@ export function AccountSummary({ user, roleLabel }) {
         {user.name && user.email && (
           <span className="account-email" title={user.email}>
             {user.email}
+          </span>
+        )}
+        {user.activeTenantName && (
+          <span className="account-tenant" title={user.activeTenantName}>
+            {user.activeTenantName}
           </span>
         )}
         {roleLabel && <span className="role-badge">{roleLabel}</span>}

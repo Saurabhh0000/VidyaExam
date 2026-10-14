@@ -27,7 +27,10 @@ export function buildAccountItems(roleNav, role) {
   if (!roleNav) return [];
 
   const items = [];
-  if (roleNav.dashboard) {
+  const dashboardIsInPrimaryNav = roleNav.nav?.some(
+    (item) => item.to === roleNav.dashboard,
+  );
+  if (roleNav.dashboard && !dashboardIsInPrimaryNav) {
     items.push({ label: "My Dashboard", to: roleNav.dashboard, icon: "dashboard" });
   }
   items.push(...(roleNav.menu ?? []));

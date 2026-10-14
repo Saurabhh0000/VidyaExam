@@ -6,7 +6,8 @@
  * individual_subscription, tenant_subscriptions[]).
  *
  * Role resolution
- *  - default_role present            -> that role (individual account).
+ *  - default_role present            -> that role; attach a tenant only when
+ *                                       exactly one matching membership exists.
  *  - else exactly one membership     -> that membership's role_name and tenant.
  *  - else several memberships        -> NO role until a tenant is chosen
  *                                       (needsTenantSelection = true). The first
@@ -52,6 +53,19 @@ export function normalizeSession(data, options = {}) {
 
   if (defaultRole) {
     role = defaultRole;
+    const matchingMemberships = memberships.filter(
+      (membership) => membership.roleName.toUpperCase() === defaultRole.toUpperCase(),
+    );
+    const chosen = options.activeTenantId
+      ? matchingMemberships.find((membership) => membership.tenantId === options.activeTenantId)
+      : null;
+    if (chosen) {
+      active = chosen;
+    } else if (matchingMemberships.length === 1) {
+      active = matchingMemberships[0];
+    } else if (matchingMemberships.length > 1) {
+      needsTenantSelection = true;
+    }
   } else {
     const chosen = options.activeTenantId
       ? memberships.find((m) => m.tenantId === options.activeTenantId)

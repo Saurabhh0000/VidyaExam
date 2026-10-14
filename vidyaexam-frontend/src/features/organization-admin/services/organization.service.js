@@ -26,7 +26,13 @@ function getAuthConfig() {
   };
 }
 
-export async function createOrganizationTeacher(payload) {
+export async function createOrganizationMember({
+  full_name,
+  email,
+  mobile_no,
+  password,
+  role_name,
+}) {
   const tenantId = getTenantId();
 
   if (!tenantId) {
@@ -35,14 +41,24 @@ export async function createOrganizationTeacher(payload) {
     );
   }
 
+  if (!["TEACHER", "STUDENT"].includes(role_name)) {
+    throw new Error("Choose Teacher or Student before submitting.");
+  }
+
+  // Pick only the documented API fields so UI-only values never leak through.
+  const body = {
+    full_name: full_name.trim(),
+    email: email.trim(),
+    mobile_no: mobile_no.trim(),
+    password,
+    role_name,
+  };
+
   const response = await axios.post(
     `${API_BASE_URL}/tenants/${encodeURIComponent(
       tenantId
     )}/createTenantUser`,
-    {
-      ...payload,
-      role_name: "TEACHER",
-    },
+    body,
     getAuthConfig()
   );
 
