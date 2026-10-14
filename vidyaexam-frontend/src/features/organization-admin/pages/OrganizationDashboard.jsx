@@ -13,6 +13,8 @@ import {
   UserRoundPlus,
   Eye,
   EyeOff,
+  ChevronDown,
+  Check,
 } from "lucide-react";
 import toast from "../../../shared/components/ui/toast";
 
@@ -106,8 +108,32 @@ function AddMemberModal({ initialRole, onClose, tenantAvailable }) {
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({});
+  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const requestInFlight = useRef(false);
+  const rolePickerRef = useRef(null);
+  const roleTriggerRef = useRef(null);
+  const roleOptionsRef = useRef(null);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!roleMenuOpen) return undefined;
+    roleOptionsRef.current?.querySelector('[role="option"]')?.focus();
+    const onPointerDown = (event) => {
+      if (!rolePickerRef.current?.contains(event.target)) setRoleMenuOpen(false);
+    };
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        setRoleMenuOpen(false);
+        roleTriggerRef.current?.focus();
+      }
+    };
+    document.addEventListener("pointerdown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("pointerdown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [roleMenuOpen]);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -125,6 +151,15 @@ function AddMemberModal({ initialRole, onClose, tenantAvailable }) {
     const { name } = event.target;
     setTouched((current) => ({ ...current, [name]: true }));
     setErrors((current) => ({ ...current, [name]: validateMember(form)[name] || "" }));
+  }
+
+  function chooseRole(roleName) {
+    const nextForm = { ...form, role_name: roleName };
+    setForm(nextForm);
+    setTouched((current) => ({ ...current, role_name: true }));
+    setErrors((current) => ({ ...current, role_name: validateMember(nextForm).role_name || "", form: "" }));
+    setRoleMenuOpen(false);
+    roleTriggerRef.current?.focus();
   }
 
   async function handleSubmit(event) {
@@ -274,14 +309,56 @@ function AddMemberModal({ initialRole, onClose, tenantAvailable }) {
           <small className="org-member-hint">Use at least 8 characters.</small>
         </label>
 
-        <label className="org-member-field">
-          <span>Role <b>*</b></span>
-          <select name="role_name" value={form.role_name} onChange={updateField} onBlur={validateField} aria-invalid={Boolean(errors.role_name)}>
-            <option value="TEACHER">Teacher</option>
-            <option value="STUDENT">Student</option>
-          </select>
-          {errors.role_name && <small>{errors.role_name}</small>}
-        </label>
+        <div className="org-member-field org-member-role-field" ref={rolePickerRef}>
+          <span id="org-member-role-label">Role <b>*</b></span>
+          <button
+            ref={roleTriggerRef}
+            type="button"
+            name="role_name"
+            className="org-member-role-trigger"
+            aria-labelledby="org-member-role-label"
+            aria-haspopup="listbox"
+            aria-expanded={roleMenuOpen}
+            aria-invalid={Boolean(errors.role_name)}
+            aria-describedby={errors.role_name ? "org-member-role-error" : undefined}
+            disabled={submitting}
+            onClick={() => setRoleMenuOpen((open) => !open)}
+            onKeyDown={(event) => {
+              if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                event.preventDefault();
+                setRoleMenuOpen(true);
+              }
+            }}>
+            <span>{form.role_name === "STUDENT" ? "Student" : "Teacher"}</span>
+            <ChevronDown size={18} aria-hidden="true" />
+          </button>
+          {roleMenuOpen && (
+            <div className="org-member-role-options" role="listbox" aria-label="Choose member role" ref={roleOptionsRef}>
+              {[{ value: "TEACHER", label: "Teacher" }, { value: "STUDENT", label: "Student" }].map((option, index) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  role="option"
+                  aria-selected={form.role_name === option.value}
+                  tabIndex={0}
+                  disabled={submitting}
+                  onClick={() => chooseRole(option.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+                      event.preventDefault();
+                      const options = [...roleOptionsRef.current.querySelectorAll('[role="option"]')];
+                      const nextIndex = (index + (event.key === "ArrowDown" ? 1 : -1) + options.length) % options.length;
+                      options[nextIndex]?.focus();
+                    }
+                  }}>
+                  <span>{option.label}</span>
+                  {form.role_name === option.value && <Check size={17} aria-hidden="true" />}
+                </button>
+              ))}
+            </div>
+          )}
+          {errors.role_name && <small id="org-member-role-error">{errors.role_name}</small>}
+        </div>
 
         {errors.form && <p className="org-member-form-error" role="alert">{errors.form}</p>}
 
