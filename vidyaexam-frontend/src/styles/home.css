@@ -436,18 +436,18 @@
   color: #fff;
   text-align: center;
   background:
-    radial-gradient(56rem 28rem at 88% 0%, rgba(15, 118, 110, .5), transparent 65%),
-    radial-gradient(40rem 24rem at 0% 100%, rgba(15, 118, 110, .28), transparent 70%),
-    linear-gradient(135deg, var(--navy-dark), var(--navy) 55%, var(--navy-dark));
+    radial-gradient(56rem 28rem at 88% 0%, rgba(255, 255, 255, .16), transparent 65%),
+    radial-gradient(40rem 24rem at 0% 100%, rgba(23, 43, 77, .24), transparent 70%),
+    linear-gradient(135deg, #0f766e, #13877d 55%, #0b625b);
 }
 .hm-final-glow { position: absolute; inset: 0; pointer-events: none; background-image: radial-gradient(rgba(255, 255, 255, .07) 1px, transparent 1px); background-size: 26px 26px; -webkit-mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%); mask-image: radial-gradient(ellipse at center, #000 20%, transparent 75%); }
-.hm-bgword--final { left: 50%; bottom: -.1em; translate: -50% 0; font-size: clamp(5rem, 15vw, 15rem); color: rgba(255, 255, 255, .055); }
+.hm-bgword--final { left: 50%; bottom: .38em; translate: -50% 0; font-size: clamp(5rem, 15vw, 15rem); color: rgba(255, 255, 255, .055); }
 .hm-final-inner { display: flex; flex-direction: column; align-items: center; }
 .hm-final h2 { max-width: 18ch; font-size: clamp(2.2rem, 6vw, 4.4rem); line-height: 1.05; letter-spacing: -0.035em; }
 .hm-final-lead { max-width: 54ch; margin-top: 20px; color: #cbd5e1; font-size: clamp(1rem, 1.5vw, 1.15rem); }
 .hm-final .hm-cta-row { margin-top: 36px; }
 @media (max-width: 640px) {
-  .hm-bgword.hm-bgword--final { display: block; font-size: 17vw; bottom: 0; }
+  .hm-bgword.hm-bgword--final { display: block; font-size: 15vw; bottom: .35em; }
   .hm-final-lead { margin-top: 16px; }
 }
 /* Pricing: improved billing toggle on mobile */

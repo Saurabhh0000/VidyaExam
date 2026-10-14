@@ -12,7 +12,14 @@ export default function useAuthState() {
 
   return {
     isAuthenticated: Boolean(u),
-    user: u ? { name: u.name, role: u.role } : null,
+    user: u
+      ? {
+          name: u.name,
+          role: u.role,
+          activeTenantId: u.activeTenantId,
+          activeTenantName: u.activeTenantName,
+        }
+      : null,
     subscription: u?.subscription ?? null,
     dashboardPath: u ? dashboardPathFor(u.role) : null,
   };

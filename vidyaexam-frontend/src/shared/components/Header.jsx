@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
-import { PanelLeft, Sparkles } from "lucide-react";
+import { Menu, PanelLeft, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -14,6 +14,7 @@ import ProfileMenu, {
 } from "./ProfileMenu";
 import { buildAccountItems } from "../config/accountMenu";
 import NavigationSidebar, { MOBILE_QUERY } from "./NavigationSidebar";
+import NavigationDrawer from "./NavigationDrawer";
 import "../../styles/header.css";
 import "../../styles/profile-menu.css";
 
@@ -172,14 +173,14 @@ export default function Header() {
         data-scrolled="false">
         <div className="site-header__inner">
           <div className="header-left-cluster">
-            {authed && isMobile && (
+            {isMobile && authed && (
               <button
                 ref={triggerBtnRef}
                 type="button"
                 className="sidebar-hamburger-trigger"
                 aria-expanded={sidebarOpen}
                 aria-controls="vidyaexam-navigation-sidebar"
-                aria-label="Open navigation menu"
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
                 onClick={() => setSidebarOpen((prev) => !prev)}>
                 <PanelLeft size={19} aria-hidden="true" />
               </button>
@@ -219,6 +220,19 @@ export default function Header() {
           )}
 
           <div className="header-right-cluster">
+            {isMobile && !authed && !loading && (
+              <button
+                ref={triggerBtnRef}
+                type="button"
+                className="sidebar-hamburger-trigger"
+                aria-expanded={sidebarOpen}
+                aria-controls="vidyaexam-guest-navigation-drawer"
+                aria-label={sidebarOpen ? "Close navigation menu" : "Open navigation menu"}
+                onClick={() => setSidebarOpen((prev) => !prev)}>
+                <Menu size={20} aria-hidden="true" />
+              </button>
+            )}
+
             {loading && (
               <span className="modern-avatar-skeleton" aria-hidden="true" />
             )}
@@ -263,6 +277,23 @@ export default function Header() {
           subscription={subscription}
           loggingOut={loggingOut}
           onLogout={handleLogout}
+        />
+      )}
+
+      {!authed && !loading && isMobile && (
+        <NavigationDrawer
+          id="vidyaexam-guest-navigation-drawer"
+          isOpen={sidebarOpen}
+          onClose={handleCloseSidebar}
+          logoSrc={logo}
+          homeTo={routes.home}
+          authed={false}
+          loading={false}
+          primaryNav={navLinks}
+          activeSectionId={activeLandingSection}
+          menuItems={[]}
+          subscription={null}
+          loggingOut={false}
         />
       )}
     </>

@@ -1,4 +1,7 @@
-import { STUDENT_DASHBOARD } from "../../app/roleRoutes";
+import {
+  ORGANIZATION_DASHBOARD,
+  STUDENT_DASHBOARD,
+} from "../../app/roleRoutes";
 
 export const ROLE_NAV = {
   STUDENT: {
@@ -10,13 +13,20 @@ export const ROLE_NAV = {
   },
   ADMIN: {
     label: "Administrator",
-    // No admin dashboard page exists yet. Add `dashboard` when it does.
+    dashboard: ORGANIZATION_DASHBOARD,
+    nav: [
+      { label: "Dashboard", to: ORGANIZATION_DASHBOARD, icon: "dashboard", end: true },
+      { label: "Employee", to: `${ORGANIZATION_DASHBOARD}/employee`, icon: "users" },
+      { label: "Teacher", to: `${ORGANIZATION_DASHBOARD}/teacher`, icon: "teacher" },
+      { label: "Student", to: `${ORGANIZATION_DASHBOARD}/student`, icon: "student" },
+    ],
   },
 };
 
 export function resolveRoleNav(role) {
   if (typeof role !== "string") return null;
-  return Object.prototype.hasOwnProperty.call(ROLE_NAV, role)
-    ? ROLE_NAV[role]
+  const normalizedRole = role.trim().toUpperCase();
+  return Object.prototype.hasOwnProperty.call(ROLE_NAV, normalizedRole)
+    ? ROLE_NAV[normalizedRole]
     : null;
 }

@@ -4,7 +4,6 @@ import {
   FaLinkedinIn,
   FaXTwitter,
 } from "react-icons/fa6";
-
 import { Link } from "react-router-dom";
 import { logo, routes, socialLinks } from "../config/siteConfig";
 import { dashboardPathFor } from "../../app/roleRoutes";
@@ -26,51 +25,67 @@ const socialPlatforms = [
 
 export default function Footer() {
   const { isAuthenticated, user } = useAuthState();
-
   const role = user?.role?.toUpperCase();
   const dashboardPath = role ? dashboardPathFor(role) : null;
+  const audience = !isAuthenticated
+    ? "guest"
+    : role === "STUDENT"
+      ? "student"
+      : role === "ADMIN"
+        ? "organization"
+        : "member";
 
   const legal = [
-    routes.privacy && {
-      label: "Privacy Policy",
-      href: routes.privacy,
-    },
-    routes.terms && {
-      label: "Terms",
-      href: routes.terms,
-    },
+    routes.privacy && { label: "Privacy Policy", href: routes.privacy },
+    routes.terms && { label: "Terms", href: routes.terms },
   ].filter(Boolean);
 
   const socials = socialPlatforms.filter(({ key }) => {
     const url = socialLinks?.[key];
-
     return typeof url === "string" && /^https:\/\//i.test(url.trim());
   });
 
-  const hasSocial = socials.length > 0;
-
-  // Public links are shown to visitors.
-  // Authenticated users see only dashboard links that are configured.
   const accountLinks = isAuthenticated
     ? [
         dashboardPath && {
-          label: "My Dashboard",
+          label:
+            audience === "organization"
+              ? "Organization workspace"
+              : "My dashboard",
           href: dashboardPath,
         },
       ].filter(Boolean)
     : [
-        routes.login && {
-          label: "Log In",
-          href: routes.login,
-        },
-        routes.register && {
-          label: "Get Started",
-          href: routes.register,
-        },
+        routes.login && { label: "Log in", href: routes.login },
+        routes.register && { label: "Get started", href: routes.register },
       ].filter(Boolean);
 
+  const exploreLinks =
+    audience === "organization"
+      ? [
+          { label: "Organization dashboard", href: dashboardPath },
+          { label: "Public home", href: routes.home },
+        ].filter((item) => item.href)
+      : audience === "student"
+        ? [
+            { label: "Student dashboard", href: dashboardPath },
+            ...platformLinks.map(({ label, href }) => ({
+              label,
+              href: `${routes.home}${href}`,
+            })),
+          ].filter((item) => item.href)
+        : platformLinks;
+
+  const exploreTitle =
+    audience === "organization"
+      ? "Workspace"
+      : audience === "student"
+        ? "Learning"
+        : "Explore";
+  const hasSocial = socials.length > 0;
+
   return (
-    <footer className="site-footer">
+    <footer className={`site-footer site-footer--${audience}`}>
       <div className="site-footer__inner">
         <div
           className={`site-footer__grid${
@@ -88,59 +103,49 @@ export default function Footer() {
                 loading="lazy"
               />
             </Link>
-
             <p className="site-footer__tagline">
-              Prepare with purpose. Practice with confidence. Build exam
-              readiness through structured mock tests and meaningful performance
-              insights.
+              Empowering learning, achieving dreams.
             </p>
           </div>
 
-          {!isAuthenticated && (
-            <nav className="site-footer__col" aria-label="Platform">
-              <h2 className="site-footer__title">Platform</h2>
+          <nav className="site-footer__col" aria-label={exploreTitle}>
+            <h2 className="site-footer__title">{exploreTitle}</h2>
+            <ul className="site-footer__list">
+              {exploreLinks.map(({ label, href }) => (
+                <li key={`${label}:${href}`}>
+                  {audience === "guest" && href.startsWith("#") ? (
+                    <a className="site-footer__link" href={href}>{label}</a>
+                  ) : (
+                    <Link className="site-footer__link" to={href}>{label}</Link>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </nav>
 
-              <ul className="site-footer__list">
-                {platformLinks.map(({ label, href }) => (
-                  <li key={href}>
-                    <a className="site-footer__link" href={href}>
-                      {label}
-                    </a>
-                  </li>
-                ))}
-              </ul>
-            </nav>
-          )}
-
-          {isAuthenticated && role && (
+          {isAuthenticated && (
             <div className="site-footer__col">
-              <h2 className="site-footer__title">Your Account</h2>
-
+              <h2 className="site-footer__title">
+                {audience === "organization" ? "For your team" : "Your account"}
+              </h2>
               <p className="site-footer__tagline">
-                {user?.name
-                  ? `Welcome back, ${user.name}.`
-                  : "Manage your exam preparation from your account."}
+                {audience === "organization"
+                  ? "Keep your teaching team connected in one workspace."
+                  : user?.name
+                    ? `Welcome back, ${user.name}. Keep your preparation on track.`
+                    : "Practice, prepare, and track your exam readiness."}
               </p>
-
-              {role === "STUDENT" && (
-                <p className="site-footer__tagline">
-                  Practice, prepare, and track your exam readiness.
-                </p>
-              )}
             </div>
           )}
 
           <nav className="site-footer__col" aria-label="Account">
             <h2 className="site-footer__title">
-              {isAuthenticated ? "Quick Links" : "Account"}
+              {isAuthenticated ? "Quick links" : "Your account"}
             </h2>
-
             <ul className="site-footer__list">
               {accountLinks.map(({ label, href }) => (
                 <li key={href}>
-                  <Link className="site-footer__link" to={href}>
-                    {label}
-                  </Link>
+                  <Link className="site-footer__link" to={href}>{label}</Link>
                 </li>
               ))}
             </ul>
@@ -148,8 +153,7 @@ export default function Footer() {
 
           {hasSocial && (
             <div className="site-footer__col site-footer__social">
-              <h2 className="site-footer__title">Follow Us</h2>
-
+              <h2 className="site-footer__title">Follow us</h2>
               <ul className="site-footer__social-list">
                 {socials.map(({ key, label, Icon }) => (
                   <li key={key}>
@@ -169,16 +173,11 @@ export default function Footer() {
         </div>
 
         <div className="site-footer__bottom">
-          <span>
-            © {new Date().getFullYear()} VidyaExam. All rights reserved.
-          </span>
-
+          <span>© {new Date().getFullYear()} VidyaExam. All rights reserved.</span>
           {legal.length > 0 && (
             <span className="site-footer__legal">
               {legal.map(({ label, href }) => (
-                <Link key={href} className="site-footer__link" to={href}>
-                  {label}
-                </Link>
+                <Link key={href} className="site-footer__link" to={href}>{label}</Link>
               ))}
             </span>
           )}
