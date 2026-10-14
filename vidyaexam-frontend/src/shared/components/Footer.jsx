@@ -33,7 +33,9 @@ export default function Footer() {
       ? "student"
       : role === "ADMIN"
         ? "organization"
-        : "member";
+        : role === "SUPER_ADMIN"
+          ? "super-admin"
+          : "member";
 
   const legal = [
     routes.privacy && { label: "Privacy Policy", href: routes.privacy },
@@ -51,7 +53,9 @@ export default function Footer() {
           label:
             audience === "organization"
               ? "Organization workspace"
-              : "My dashboard",
+              : audience === "super-admin"
+                ? "Super Admin dashboard"
+                : "My dashboard",
           href: dashboardPath,
         },
       ].filter(Boolean)
@@ -61,27 +65,35 @@ export default function Footer() {
       ].filter(Boolean);
 
   const exploreLinks =
-    audience === "organization"
+    audience === "super-admin"
       ? [
-          { label: "Organization dashboard", href: dashboardPath },
-          { label: "Public home", href: routes.home },
+          { label: "Super Admin dashboard", href: dashboardPath },
+          { label: "Organizations / Tenants", href: `${dashboardPath}/organizations` },
+          { label: "Subscriptions & Plans", href: `${dashboardPath}/subscriptions` },
         ].filter((item) => item.href)
-      : audience === "student"
+      : audience === "organization"
         ? [
-            { label: "Student dashboard", href: dashboardPath },
-            ...platformLinks.map(({ label, href }) => ({
-              label,
-              href: `${routes.home}${href}`,
-            })),
+            { label: "Organization dashboard", href: dashboardPath },
+            { label: "Public home", href: routes.home },
           ].filter((item) => item.href)
-        : platformLinks;
+        : audience === "student"
+          ? [
+              { label: "Student dashboard", href: dashboardPath },
+              ...platformLinks.map(({ label, href }) => ({
+                label,
+                href: `${routes.home}${href}`,
+              })),
+            ].filter((item) => item.href)
+          : platformLinks;
 
   const exploreTitle =
-    audience === "organization"
-      ? "Workspace"
-      : audience === "student"
-        ? "Learning"
-        : "Explore";
+    audience === "super-admin"
+      ? "Platform"
+      : audience === "organization"
+        ? "Workspace"
+        : audience === "student"
+          ? "Learning"
+          : "Explore";
   const hasSocial = socials.length > 0;
 
   return (

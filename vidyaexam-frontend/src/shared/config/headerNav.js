@@ -1,6 +1,7 @@
 import {
   ORGANIZATION_DASHBOARD,
   STUDENT_DASHBOARD,
+  SUPER_ADMIN_DASHBOARD,
 } from "../../app/roleRoutes";
 
 export const ROLE_NAV = {
@@ -19,6 +20,20 @@ export const ROLE_NAV = {
       { label: "Employee", to: `${ORGANIZATION_DASHBOARD}/employee`, icon: "users" },
       { label: "Teacher", to: `${ORGANIZATION_DASHBOARD}/teacher`, icon: "teacher" },
       { label: "Student", to: `${ORGANIZATION_DASHBOARD}/student`, icon: "student" },
+    ],
+  },
+  SUPER_ADMIN: {
+    label: "Super Admin",
+    dashboard: SUPER_ADMIN_DASHBOARD,
+    nav: [
+      { label: "Dashboard", to: SUPER_ADMIN_DASHBOARD, icon: "dashboard", end: true },
+      { label: "Organizations / Tenants", to: `${SUPER_ADMIN_DASHBOARD}/organizations`, icon: "building", end: true },
+      { label: "Users", to: `${SUPER_ADMIN_DASHBOARD}/users`, icon: "users", end: true },
+      { label: "Teachers", to: `${SUPER_ADMIN_DASHBOARD}/teachers`, icon: "teacher", end: true },
+      { label: "Students", to: `${SUPER_ADMIN_DASHBOARD}/students`, icon: "student", end: true },
+      { label: "Subscriptions & Plans", to: `${SUPER_ADMIN_DASHBOARD}/subscriptions`, icon: "subscription", end: true },
+      { label: "Reports & Analytics", to: `${SUPER_ADMIN_DASHBOARD}/analytics`, icon: "analytics", end: true },
+      { label: "Platform Settings", to: `${SUPER_ADMIN_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },
 };

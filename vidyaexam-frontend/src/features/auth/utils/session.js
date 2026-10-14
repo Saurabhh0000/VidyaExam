@@ -6,7 +6,8 @@
  * individual_subscription, tenant_subscriptions[]).
  *
  * Role resolution
- *  - default_role present            -> that role; attach a tenant only when
+ *  - default_role present            -> that standalone platform/account role;
+ *                                       attach a tenant only when
  *                                       exactly one matching membership exists.
  *  - else exactly one membership     -> that membership's role_name and tenant.
  *  - else several memberships        -> NO role until a tenant is chosen

@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import { Menu, PanelLeft, Sparkles } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { toast } from "sonner";
+import toast from "./ui/toast";
 
 import { logo, routes, navLinks } from "../config/siteConfig";
 import { resolveRoleNav } from "../config/headerNav";
