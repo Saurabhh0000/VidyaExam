@@ -64,3 +64,33 @@ export async function createOrganizationMember({
 
   return response.data;
 }
+
+export async function getOrganizationUsers({ signal } = {}) {
+  const tenantId = getTenantId();
+
+  if (!tenantId) {
+    throw new Error("No active organization was found. Please sign in again.");
+  }
+
+  const response = await axios.get(
+    `${API_BASE_URL}/tenants/${encodeURIComponent(tenantId)}/getTenantUsers`,
+    { ...getAuthConfig(), signal },
+  );
+  const payload = response?.data?.data && !Array.isArray(response.data.data)
+    ? response.data.data
+    : response?.data;
+
+  if (!payload || typeof payload !== "object" || !Array.isArray(payload.data)) {
+    throw new Error("The organization users response was not in the expected format.");
+  }
+  if (payload.success === false) {
+    throw new Error(payload.message || "The organization users request was unsuccessful.");
+  }
+
+  return {
+    success: true,
+    quota: payload.quota && typeof payload.quota === "object" ? payload.quota : null,
+    total_users: payload.total_users != null && Number.isFinite(Number(payload.total_users)) ? Number(payload.total_users) : null,
+    data: payload.data,
+  };
+}
