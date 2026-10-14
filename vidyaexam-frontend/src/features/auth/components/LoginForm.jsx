@@ -71,8 +71,12 @@ export default function LoginForm() {
       await login({ email, password });
       notify.success(MESSAGES.success);
       const from = location.state?.from?.pathname;
-      const destination =
-        from || dashboardPathFor(getSnapshot().user?.role) || "/";
+      const roleHome = dashboardPathFor(getSnapshot().user?.role);
+      const canReturnToRequestedPath =
+        !roleHome || from === roleHome || from?.startsWith(`${roleHome}/`);
+      const destination = canReturnToRequestedPath
+        ? from || roleHome || "/"
+        : roleHome || "/";
 
       navigate(destination, { replace: true });
     } catch (err) {

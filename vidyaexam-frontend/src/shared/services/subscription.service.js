@@ -1,3 +1,4 @@
+import axios from "axios";
 import { normalizePlansResponse } from "../utils/plans";
 
 /**
@@ -23,29 +24,19 @@ export class PlansError extends Error {
 }
 
 async function requestPlans() {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
-
-  let response;
+  let json;
   try {
-    response = await fetch(`${API_BASE}${PLANS_PATH}`, {
-      method: "GET",
+    const response = await axios.get(`${API_BASE}${PLANS_PATH}`, {
+      timeout: TIMEOUT_MS,
       headers: { Accept: "application/json" },
-      signal: controller.signal,
     });
+    json = response.data;
   } catch (error) {
-    throw new PlansError(error?.name === "AbortError" ? "timeout" : "network");
-  } finally {
-    clearTimeout(timer);
-  }
-
-  if (!response.ok) throw new PlansError("http", response.status);
-
-  let json = null;
-  try {
-    json = await response.json();
-  } catch {
-    throw new PlansError("invalid", response.status);
+    if (error?.response) throw new PlansError("http", error.response.status);
+    if (error?.code === "ECONNABORTED" || error?.code === "ETIMEDOUT") {
+      throw new PlansError("timeout");
+    }
+    throw new PlansError("network");
   }
 
   try {

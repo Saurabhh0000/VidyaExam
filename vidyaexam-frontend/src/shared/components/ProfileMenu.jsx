@@ -3,6 +3,8 @@ import {
   ChevronDown,
   CircleHelp,
   CreditCard,
+  Building2,
+  ChartNoAxesCombined,
   BookOpen,
   GraduationCap,
   History,
@@ -29,6 +31,8 @@ export const MENU_ICONS = {
   users: Users,
   teacher: BookOpen,
   student: GraduationCap,
+  building: Building2,
+  analytics: ChartNoAxesCombined,
 };
 
 export function getInitials(name, email) {

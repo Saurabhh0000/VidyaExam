@@ -14,7 +14,7 @@ export default function RequireRole({ role, children }) {
   if (!isAuthenticated) {
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
-  if (role && String(user?.role ?? "").toUpperCase() !== role) {
+  if (role && String(user?.role ?? "").trim().toUpperCase() !== role.trim().toUpperCase()) {
     return <Navigate to="/unauthorized" state={{ from: location }} replace />;
   }
   return children;

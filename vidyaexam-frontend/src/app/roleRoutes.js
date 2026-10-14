@@ -2,17 +2,20 @@
 /**
  * Single source of truth for role -> landing page.
  *
- * Only roles with implemented dashboards belong in ROLE_HOME.
+ * Roles with implemented dashboards belong in ROLE_HOME.
+ * Platform Super Admins use /super-admin/dashboard.
  * Organization Admins use /organization/dashboard.
  * Roles without an implemented dashboard return null.
  */
 
 export const STUDENT_DASHBOARD = "/student/dashboard";
 export const ORGANIZATION_DASHBOARD = "/organization/dashboard";
+export const SUPER_ADMIN_DASHBOARD = "/super-admin/dashboard";
 
 const ROLE_HOME = {
   STUDENT: STUDENT_DASHBOARD,
   ADMIN: ORGANIZATION_DASHBOARD,
+  SUPER_ADMIN: SUPER_ADMIN_DASHBOARD,
 };
 
 /**
@@ -30,8 +33,8 @@ export const dashboardPathFor = (role) => {
 /**
  * Extracts a role from the login API response.
  *
- * Individual account:
- *   data.default_role = "STUDENT"
+ * Standalone account:
+ *   data.default_role = "STUDENT" | "SUPER_ADMIN"
  *
  * Organization account:
  *   data.memberships = [
