@@ -77,40 +77,75 @@ export default function OrganizationRegisterForm() {
 
   const [values, setValues] = useState(INITIAL);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const bind = (field) => ({
     value: values[field],
     disabled: submitting,
     onChange: (e) => {
-      const next = e.target.value;
-      setValues((v) => ({ ...v, [field]: next }));
-      setErrors((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
+      const next = ["tenant_mobile", "admin_mobile"].includes(field)
+        ? e.target.value.replace(/\D/g, "").slice(0, 10)
+        : e.target.value;
+      const nextValues = { ...values, [field]: next };
+      setValues(nextValues);
+      setErrors((prev) => {
+        const updated = { ...prev };
+        if (touched[field] || prev[field]) updated[field] = findErrors(nextValues)[field];
+        if (field === "admin_password" && (touched.confirm || prev.confirm)) {
+          updated.confirm = findErrors(nextValues).confirm;
+        }
+        return updated;
+      });
       clear(field);
+      if (field === "admin_password") clear("confirm");
+    },
+    onBlur: () => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+      setErrors((prev) => ({ ...prev, [field]: findErrors(values)[field] }));
     },
   });
 
-  const emailError = (value, message) =>
-    value.trim() && isValidEmail(value.trim()) ? "" : message;
-
-  function findErrors() {
-    const v = values;
+  function findErrors(v = values) {
     const password = v.admin_password;
+    const organizationName = v.tenant_name.trim();
+    const organizationCode = v.tenant_code.trim();
+    const adminName = v.admin_full_name.trim();
     return {
-      tenant_name: v.tenant_name.trim() ? "" : ORG_MESSAGES.tenant_name,
-      tenant_code: v.tenant_code.trim() ? "" : ORG_MESSAGES.tenant_code,
+      tenant_name: !organizationName
+        ? ORG_MESSAGES.tenant_name
+        : organizationName.length > 200
+          ? "Organization name must be 200 characters or fewer."
+          : "",
+      tenant_code: !organizationCode
+        ? ORG_MESSAGES.tenant_code
+        : organizationCode.length > 50 || !/^[a-z\d_-]+$/i.test(organizationCode)
+          ? "Use up to 50 letters, numbers, hyphens, or underscores for the organization code."
+          : "",
       tenant_type: TENANT_TYPES.some((t) => t.value === v.tenant_type)
         ? ""
         : ORG_MESSAGES.tenant_type,
-      tenant_email: emailError(v.tenant_email, ORG_MESSAGES.tenant_email),
+      tenant_email: !v.tenant_email.trim()
+        ? ORG_MESSAGES.tenant_email
+        : v.tenant_email.trim().length > 255 || !isValidEmail(v.tenant_email.trim())
+          ? ORG_MESSAGES.tenant_email
+          : "",
       tenant_mobile: isValidMobile(v.tenant_mobile)
         ? ""
         : ORG_MESSAGES.tenant_mobile,
       address: v.address.trim() ? "" : ORG_MESSAGES.address,
-      admin_full_name: v.admin_full_name.trim()
-        ? ""
-        : ORG_MESSAGES.admin_full_name,
-      admin_email: emailError(v.admin_email, ORG_MESSAGES.admin_email),
+      admin_full_name: !adminName
+        ? ORG_MESSAGES.admin_full_name
+        : adminName.length < 2
+          ? "Enter at least 2 characters for the administrator name."
+          : adminName.length > 150
+            ? "Administrator name must be 150 characters or fewer."
+            : "",
+      admin_email: !v.admin_email.trim()
+        ? ORG_MESSAGES.admin_email
+        : v.admin_email.trim().length > 255 || !isValidEmail(v.admin_email.trim())
+          ? ORG_MESSAGES.admin_email
+          : "",
       admin_mobile: isValidMobile(v.admin_mobile)
         ? ""
         : ORG_MESSAGES.admin_mobile,
@@ -118,6 +153,8 @@ export default function OrganizationRegisterForm() {
         ? M.passwordRequired
         : password.length < MIN_PASSWORD_LENGTH
           ? M.passwordShort
+          : new TextEncoder().encode(password).length > 72
+            ? "Password must be 72 UTF-8 bytes or fewer."
           : "",
       confirm: !v.confirm
         ? M.confirmRequired
@@ -239,6 +276,8 @@ export default function OrganizationRegisterForm() {
             type="tel"
             autoComplete="off"
             inputMode="numeric"
+            pattern="[0-9]{10}"
+            maxLength={10}
             placeholder="10-digit mobile number"
             inputRef={refs.tenant_mobile}
             error={errors.tenant_mobile}
@@ -299,6 +338,8 @@ export default function OrganizationRegisterForm() {
             type="tel"
             autoComplete="tel-national"
             inputMode="numeric"
+            pattern="[0-9]{10}"
+            maxLength={10}
             placeholder="10-digit mobile number"
             inputRef={refs.admin_mobile}
             error={errors.admin_mobile}

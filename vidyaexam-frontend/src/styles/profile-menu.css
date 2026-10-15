@@ -255,6 +255,33 @@
   .site-header .mobile-account .menu-item--danger { margin-top: 4px; border-top: 1px solid var(--hdr-border); border-radius: 0 0 10px 10px; }
 }
 
+@media (max-width: 960px) {
+  .site-header .profile { margin-left: auto; }
+  .site-header .profile-id,
+  .site-header .profile-chevron { display: none; }
+  .site-header .profile-trigger {
+    display: grid;
+    place-items: center;
+    width: 44px;
+    height: 44px;
+    min-height: 44px;
+    padding: 3px;
+    gap: 0;
+    border-radius: 50%;
+  }
+  .site-header .profile-trigger .avatar { width: 36px; height: 36px; font-size: 0.78rem; }
+  .site-header .profile-trigger:focus-visible {
+    outline: 2px solid var(--hdr-teal);
+    outline-offset: 3px;
+  }
+  .site-header .profile-menu {
+    top: calc(100% + 8px);
+    right: 0;
+    width: min(20rem, calc(100vw - 16px));
+    max-height: calc(100dvh - var(--hdr-h) - 16px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .site-header .profile-menu { transform: none; }
   .site-header .profile-logout-spinner { animation: none; }

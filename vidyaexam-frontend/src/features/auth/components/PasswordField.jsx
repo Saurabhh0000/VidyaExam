@@ -6,6 +6,7 @@ export default function PasswordField({
   label,
   value,
   onChange,
+  onBlur,
   inputRef,
   invalid,
   disabled,
@@ -32,6 +33,7 @@ export default function PasswordField({
           disabled={disabled}
           aria-invalid={Boolean(invalid)}
           onChange={onChange}
+          onBlur={onBlur}
         />
         <button
           type="button"
