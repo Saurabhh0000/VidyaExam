@@ -1,5 +1,6 @@
 import DataTable from "react-data-table-component";
 import styled from "styled-components";
+import { Check, CreditCard } from "lucide-react";
 import { formatPrice, intervalSuffix, planRows } from "../../../shared/utils/plans";
 
 const PlanTable = styled(DataTable)`
@@ -39,7 +40,42 @@ function formatPlanPrice(plan) {
   return formatPrice(plan.price, plan.currency);
 }
 
-export default function PlanCatalogTable({ plans, title }) {
+export default function PlanCatalogTable({ plans, title, view = "list" }) {
+  if (view === "grid") {
+    return (
+      <div className="sa-plan-card-grid" aria-label={`${title} plan cards`}>
+        {plans.map((plan) => {
+          const included = planRows(plan).filter((row) => row.included);
+          const billing = String(plan.rawInterval || "Not set").replaceAll("_", " ").toLowerCase();
+          return (
+            <article className="sa-plan-card" key={plan.id}>
+              <div className="sa-plan-card-heading">
+                <div>
+                  <span className={`sa-plan-audience${plan.scope === "TENANT" ? " is-tenant" : ""}`}>
+                    {plan.scope === "TENANT" ? "Organization" : "Individual"}
+                  </span>
+                  <h3>{plan.name}</h3>
+                </div>
+                <span className="sa-plan-card-icon"><CreditCard size={19} aria-hidden="true" /></span>
+              </div>
+              <div className="sa-plan-card-price">
+                <strong>{formatPlanPrice(plan)}</strong>
+                {intervalSuffix(plan) && <span>{intervalSuffix(plan)}</span>}
+              </div>
+              <p className="sa-plan-card-billing">Billed <strong>{billing}</strong></p>
+              <div className="sa-plan-card-features">
+                <span>Included limits &amp; features</span>
+                {included.length ? (
+                  <ul>{included.map((row) => <li key={row.label}><Check size={15} aria-hidden="true" />{row.label}</li>)}</ul>
+                ) : <p className="sa-plan-details is-muted">Not configured</p>}
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    );
+  }
+
   const columns = [
     {
       name: "Plan",

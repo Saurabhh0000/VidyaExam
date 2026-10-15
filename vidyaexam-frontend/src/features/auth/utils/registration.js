@@ -2,9 +2,8 @@ import { AuthError } from "../services/auth.service";
 import { notify } from "./notify";
 
 /**
- * Mobile rule. ASSUMPTION (unconfirmed with backend): exactly 10 digits, as in
- * the sample payloads. The value is validated as typed — nothing is stripped or
- * reformatted, so leading zeros are preserved. Change here if the backend differs.
+ * Registration forms accept exactly 10 digits; their inputs strip non-digits
+ * and cap typing/paste at 10 characters. Leading zeroes are preserved.
  */
 export const MOBILE_PATTERN = /^\d{10}$/;
 export const isValidMobile = (value) => MOBILE_PATTERN.test(value.trim());
@@ -16,8 +15,7 @@ export const isValidMobile = (value) => MOBILE_PATTERN.test(value.trim());
 export const MIN_PASSWORD_LENGTH = 8;
 
 /**
- * Only COACHING_INSTITUTE is confirmed by the sample payload. Add further
- * { value, label } entries here once the backend enum is confirmed.
+ * Keep these values aligned with the tenant registration endpoint enum.
  */
 export const TENANT_TYPES = [
   { value: "COACHING_INSTITUTE", label: "Coaching Institute / Academy" },

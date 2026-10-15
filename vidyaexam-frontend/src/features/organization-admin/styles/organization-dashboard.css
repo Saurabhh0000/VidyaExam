@@ -473,3 +473,47 @@
   .org-quota-track > span, .org-user-actions button, .org-menu-select-options { transition: none; animation: none; }
   .org-users-loading > svg { animation: none; }
 }
+
+/* Tenant member edit and soft-delete dialogs */
+.org-member-action-modal .ve-modal-footer { padding: 16px 24px 22px; }
+.org-member-edit-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 17px 16px; }
+.org-member-edit-form .org-member-field { min-width: 0; }
+.org-member-edit-form .org-member-role-select { width: 100%; padding: 0 12px; border: 1px solid #d7e1e5; border-radius: 11px; background: #fff; }
+.org-member-edit-form .org-member-role-select:focus-within { border-color: #0f766e; box-shadow: 0 0 0 3px rgba(15,118,110,.13); }
+.org-member-edit-form .org-member-role-select .org-menu-select-trigger { min-height: 46px; color: #172b4d; font-size: .9rem; }
+.org-member-edit-form .org-member-role-select .org-menu-select-options { z-index: 1200; }
+.org-member-password-field { grid-column: 1 / -1; }
+.org-member-password-field > span:first-child small { color: #64748b; font-size: .76rem; font-weight: 500; }
+.org-member-password-field .org-member-password input { padding-right: 48px; }
+.org-member-action-modal .org-member-form-actions { width: 100%; padding-top: 0; }
+.org-member-action-modal .org-member-form-actions .org-dashboard-button { min-height: 45px; }
+.org-member-action-modal .org-member-button--submit { display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.org-member-spinner { animation: org-member-spin 900ms linear infinite; }
+@keyframes org-member-spin { to { transform: rotate(360deg); } }
+.org-member-delete-content { display: grid; gap: 17px; }
+.org-member-delete-warning { display: flex; align-items: flex-start; gap: 12px; padding: 14px; color: #7f1d1d; background: #fff7f5; border: 1px solid #f5d2cc; border-radius: 13px; }
+.org-member-delete-warning > span { display: grid; flex: none; place-items: center; width: 38px; height: 38px; color: #b42318; background: #feeceb; border-radius: 11px; }
+.org-member-delete-warning p { margin: 0; color: #693c3a; font-size: .84rem; line-height: 1.55; }
+.org-member-delete-summary { display: flex; align-items: center; gap: 11px; min-width: 0; padding: 13px; background: #f7faf9; border: 1px solid #e2ecea; border-radius: 12px; }
+.org-member-delete-summary > div { display: grid; flex: 1; min-width: 0; gap: 3px; }
+.org-member-delete-summary > div strong { overflow: hidden; color: #172b4d; font-size: .9rem; text-overflow: ellipsis; white-space: nowrap; }
+.org-member-delete-summary > div span { overflow: hidden; color: #64748b; font-size: .76rem; text-overflow: ellipsis; white-space: nowrap; }
+.org-member-delete-summary .org-role-badge { flex: none; }
+.org-member-delete-note { margin: 0; color: #64748b; font-size: .79rem; line-height: 1.5; }
+.org-member-action-modal .org-delete-confirm { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-width: 150px; color: #fff; background: #b42318; border-color: #b42318; box-shadow: 0 6px 14px rgba(180,35,24,.14); }
+.org-member-action-modal .org-delete-confirm:hover:not(:disabled) { color: #fff; background: #921d15; border-color: #921d15; }
+.org-member-action-modal .org-delete-confirm:disabled { color: #fff; background: #bd7771; border-color: #bd7771; }
+.org-role-directory-empty { display: grid; justify-items: center; padding: clamp(42px, 8vw, 88px) 20px; text-align: center; }
+.org-role-directory-empty > span { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 15px; color: var(--org-teal); background: var(--org-teal-light); border: 1px solid #cde9e4; border-radius: 17px; }
+.org-role-directory-empty h2 { margin: 0; color: var(--org-navy); font-size: 1.15rem; }
+.org-role-directory-empty p { margin: 7px 0 0; color: var(--org-muted); font-size: .86rem; }
+@media (max-width: 700px) {
+  .org-member-edit-form { grid-template-columns: minmax(0, 1fr); gap: 14px; }
+  .org-member-password-field { grid-column: auto; }
+  .org-member-action-modal .ve-modal-footer { padding: 13px 18px 18px; }
+  .org-member-action-modal .org-member-form-actions { flex-wrap: wrap; }
+  .org-member-action-modal .org-member-form-actions .org-dashboard-button { flex: 1 1 125px; min-width: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .org-member-spinner { animation-duration: 2s; }
+}

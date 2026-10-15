@@ -53,7 +53,7 @@ export default function AppRouter() {
           }
         />
         <Route
-          path={`${SUPER_ADMIN_DASHBOARD}/:section?`}
+          path={`${SUPER_ADMIN_DASHBOARD}/:section?/:tab?`}
           element={
             <RequireRole role="SUPER_ADMIN">
               <MainLayout>

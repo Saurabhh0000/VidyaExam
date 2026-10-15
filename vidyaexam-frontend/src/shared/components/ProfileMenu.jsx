@@ -15,8 +15,13 @@ import {
   TrendingUp,
   UserRound,
   Users,
+  FolderTree,
+  Layers,
+  Library,
+  FileText,
 } from "lucide-react";
 import AppLink from "./AppLink";
+import useMediaQuery from "../hooks/useMediaQuery";
 import { READY_ROUTES } from "../config/accountMenu";
 
 /** Icon keys a role config may use for a menu item. */
@@ -33,6 +38,10 @@ export const MENU_ICONS = {
   student: GraduationCap,
   building: Building2,
   analytics: ChartNoAxesCombined,
+  taxonomy: FolderTree,
+  category: Layers,
+  subject: Library,
+  topic: FileText,
 };
 
 export function getInitials(name, email) {
@@ -78,10 +87,10 @@ export function getSubscriptionSummary(user) {
   };
 }
 
-export function Avatar({ user, large = false }) {
+export function Avatar({ user, large = false, initialsOnly = false }) {
   const [failed, setFailed] = useState(false);
   const initials = getInitials(user.name, user.email);
-  const showImage = Boolean(user.avatarUrl) && !failed;
+  const showImage = !initialsOnly && Boolean(user.avatarUrl) && !failed;
 
   return (
     <span className={`avatar${large ? " avatar--lg" : ""}`} aria-hidden="true">
@@ -197,6 +206,7 @@ export default function ProfileMenu({
   onLogout,
   loggingOut = false,
 }) {
+  const compactProfile = useMediaQuery("(max-width: 960px)");
   const [open, setOpen] = useState(false);
   const wrapRef = useRef(null);
   const buttonRef = useRef(null);
@@ -240,7 +250,7 @@ export default function ProfileMenu({
         aria-controls={menuId}
         aria-label={`Account menu, ${displayName}`}
         onClick={() => setOpen((v) => !v)}>
-        <Avatar user={user} />
+        <Avatar user={user} initialsOnly={compactProfile} />
         <span className="profile-id">
           <span className="profile-name">{displayName}</span>
           {roleLabel && <span className="profile-role">{roleLabel}</span>}

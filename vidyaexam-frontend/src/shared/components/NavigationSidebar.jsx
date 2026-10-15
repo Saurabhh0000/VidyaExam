@@ -1,11 +1,13 @@
 import { useEffect, useRef, useState, useId } from "react";
 import { createPortal } from "react-dom";
+import { useLocation } from "react-router-dom";
 import {
   X,
   LogOut,
   LoaderCircle,
   LayoutDashboard,
   PanelLeftOpen,
+  ChevronDown,
 } from "lucide-react";
 import AppLink from "./AppLink";
 import {
@@ -84,6 +86,29 @@ export default function NavigationSidebar({
   const asideRef = useRef(null);
   const closeBtnRef = useRef(null);
   const isMobile = useMediaQuery(MOBILE_QUERY);
+  const location = useLocation();
+
+  const [openMenus, setOpenMenus] = useState(() => {
+    const initial = {};
+    primaryNav?.forEach((item) => {
+      if (item.children?.length && location.pathname.startsWith(item.to)) {
+        initial[item.to] = true;
+      }
+    });
+    return initial;
+  });
+
+  useEffect(() => {
+    primaryNav?.forEach((item) => {
+      if (item.children?.length && location.pathname.startsWith(item.to)) {
+        setOpenMenus((prev) => ({ ...prev, [item.to]: true }));
+      }
+    });
+  }, [location.pathname, primaryNav]);
+
+  const toggleMenu = (to) => {
+    setOpenMenus((prev) => ({ ...prev, [to]: !prev[to] }));
+  };
 
   const collapsed = !isOpen;
   const showTips = collapsed && !isMobile;
@@ -202,24 +227,85 @@ export default function NavigationSidebar({
             <div className="sidebar-group">
               {isOpen && <span className="sidebar-group-title">Workspace</span>}
               <nav className="sidebar-nav" aria-label="Workspace">
-                {primaryNav.map((link) => (
-                  <RailTip key={link.to} label={link.label} enabled={showTips}>
-                    <AppLink
-                      to={link.to}
-                      end={link.end}
-                      nav
-                      className="sidebar-nav-item"
-                      aria-label={collapsed ? link.label : undefined}
-                      onClick={handleNavigate}>
-                      <span className="sidebar-icon-wrap">
-                        {renderNavIcon(link)}
-                      </span>
-                      {isOpen && (
-                        <span className="sidebar-label">{link.label}</span>
-                      )}
-                    </AppLink>
-                  </RailTip>
-                ))}
+                {primaryNav.map((link) => {
+                  const hasChildren = Boolean(link.children?.length);
+                  const isMenuOpen = Boolean(openMenus[link.to]);
+                  const isParentActive = location.pathname.startsWith(link.to);
+
+                  if (hasChildren && isOpen) {
+                    return (
+                      <div
+                        key={link.to}
+                        className={`sidebar-parent-group ${
+                          isParentActive ? "is-active-parent" : ""
+                        }`}>
+                        <button
+                          type="button"
+                          className={`sidebar-nav-item sidebar-parent-btn ${
+                            isParentActive ? "is-parent-selected" : ""
+                          }`}
+                          onClick={() => toggleMenu(link.to)}
+                          aria-expanded={isMenuOpen}>
+                          <span className="sidebar-icon-wrap">
+                            {renderNavIcon(link)}
+                          </span>
+                          <span className="sidebar-label">{link.label}</span>
+                          <ChevronDown
+                            size={16}
+                            className={`sidebar-chevron ${
+                              isMenuOpen ? "is-open" : ""
+                            }`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                        {isMenuOpen && (
+                          <div
+                            className="sidebar-sub-nav"
+                            role="group"
+                            aria-label={link.label}>
+                            {link.children.map((child) => (
+                              <AppLink
+                                key={child.to}
+                                to={child.to}
+                                nav
+                                className="sidebar-sub-item"
+                                onClick={handleNavigate}>
+                                <span className="sidebar-sub-icon-wrap">
+                                  {renderNavIcon(child)}
+                                </span>
+                                <span className="sidebar-sub-label">
+                                  {child.label}
+                                </span>
+                              </AppLink>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <RailTip
+                      key={link.to}
+                      label={link.label}
+                      enabled={showTips}>
+                      <AppLink
+                        to={link.to}
+                        end={link.end}
+                        nav
+                        className="sidebar-nav-item"
+                        aria-label={collapsed ? link.label : undefined}
+                        onClick={handleNavigate}>
+                        <span className="sidebar-icon-wrap">
+                          {renderNavIcon(link)}
+                        </span>
+                        {isOpen && (
+                          <span className="sidebar-label">{link.label}</span>
+                        )}
+                      </AppLink>
+                    </RailTip>
+                  );
+                })}
               </nav>
             </div>
           )}

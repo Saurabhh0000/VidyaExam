@@ -135,6 +135,28 @@ export default function NavigationDrawer({
             <div className="drawer-section-label">Navigation</div>
             {primaryNav.map((link) => {
               if (authed) {
+                const hasChildren = Boolean(link.children?.length);
+                if (hasChildren) {
+                  return (
+                    <div key={link.to} className="drawer-nav-group">
+                      <div className="drawer-nav-group-title">{link.label}</div>
+                      <div className="drawer-nav-group-children">
+                        {link.children.map((child) => (
+                          <AppLink
+                            key={child.to}
+                            to={child.to}
+                            nav
+                            className="drawer-nav-link drawer-sub-link"
+                            tabIndex={tabIndex}
+                            onClick={onClose}>
+                            {child.label}
+                          </AppLink>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                }
+
                 return (
                   <AppLink
                     key={link.to}
