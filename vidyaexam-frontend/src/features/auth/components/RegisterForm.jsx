@@ -37,26 +37,49 @@ export default function RegisterForm() {
 
   const [values, setValues] = useState(INITIAL);
   const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
 
   const bind = (field) => ({
     value: values[field],
     disabled: submitting,
     onChange: (e) => {
-      const next = e.target.value;
-      setValues((v) => ({ ...v, [field]: next }));
-      setErrors((prev) => (prev[field] ? { ...prev, [field]: "" } : prev));
+      const next = field === "mobile_no"
+        ? e.target.value.replace(/\D/g, "").slice(0, 10)
+        : e.target.value;
+      const nextValues = { ...values, [field]: next };
+      setValues(nextValues);
+      setErrors((prev) => {
+        const updated = { ...prev };
+        if (touched[field] || prev[field]) updated[field] = findErrors(nextValues)[field];
+        if (field === "password" && (touched.confirm || prev.confirm)) {
+          updated.confirm = findErrors(nextValues).confirm;
+        }
+        return updated;
+      });
       clear(field);
+      if (field === "password") clear("confirm");
+    },
+    onBlur: () => {
+      setTouched((prev) => ({ ...prev, [field]: true }));
+      setErrors((prev) => ({ ...prev, [field]: findErrors(values)[field] }));
     },
   });
 
-  function findErrors() {
-    const { full_name, email, mobile_no, password, confirm } = values;
+  function findErrors(formValues = values) {
+    const { full_name, email, mobile_no, password, confirm } = formValues;
+    const name = full_name.trim();
     return {
-      full_name: full_name.trim() ? "" : M.nameRequired,
+      full_name: !name
+        ? M.nameRequired
+        : name.length < 2
+          ? "Enter at least 2 characters for your name."
+          : name.length > 150
+            ? "Your name must be 150 characters or fewer."
+            : "",
       email: !email.trim()
         ? M.emailRequired
-        : !isValidEmail(email.trim())
+        : email.trim().length > 255 || !isValidEmail(email.trim())
           ? M.emailInvalid
           : "",
       mobile_no: isValidMobile(mobile_no) ? "" : M.mobileInvalid,
@@ -64,6 +87,8 @@ export default function RegisterForm() {
         ? M.passwordRequired
         : password.length < MIN_PASSWORD_LENGTH
           ? M.passwordShort
+          : new TextEncoder().encode(password).length > 72
+            ? "Password must be 72 UTF-8 bytes or fewer."
           : "",
       confirm: !confirm
         ? M.confirmRequired
@@ -144,6 +169,8 @@ export default function RegisterForm() {
         type="tel"
         autoComplete="tel-national"
         inputMode="numeric"
+        pattern="[0-9]{10}"
+        maxLength={10}
         placeholder="10-digit mobile number"
         inputRef={refs.mobile_no}
         error={errors.mobile_no}
