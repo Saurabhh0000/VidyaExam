@@ -9,6 +9,7 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CircleAlert,
+  AlertTriangle,
   Download,
   FileDown,
   FileSpreadsheet,
@@ -34,7 +35,7 @@ import toast from "../../../shared/components/ui/toast";
 import { endSession } from "../../auth/state/sessionStore";
 import useAuthState from "../../auth/utils/useAuthState";
 import { isValidMobile } from "../../auth/utils/registration";
-import { createOrganizationMember, getOrganizationUsers } from "../services/organization.service";
+import { createOrganizationMember, deleteTenantUser, getOrganizationUsers, updateTenantUser } from "../services/organization.service";
 import Modal from "../../../shared/components/ui/Modal";
 import "../styles/organization-dashboard.css";
 
@@ -435,6 +436,16 @@ function formatDate(value, includeTime = false) {
 }
 
 function roleLabel(value) { return ({ ADMIN: "Admin", TEACHER: "Teacher", STUDENT: "Student" })[String(value || "").toUpperCase()] || value || "Unknown"; }
+
+function tenantMutationError(error, action) {
+  const statusCode = error?.response?.status;
+  const message = error?.response?.data?.message || "";
+  if (message && !/(stack trace|syntax error|sqlstate|database error|constraint failed| at .*\(.*:\d+:\d+\))/i.test(message)) return message;
+  if (statusCode === 401 || statusCode === 403) return "Your session may have expired or you may not have permission. Sign in again and retry.";
+  if (statusCode === 404 || statusCode === 405) return `The tenant-user ${action} endpoint is not available in the connected backend yet.`;
+  if (!error?.response) return "The server could not be reached. Check your connection and try again.";
+  return `Unable to ${action} this user right now. Please try again.`;
+}
 function initials(value) { return String(value || "?").trim().split(/\s+/).slice(0, 2).map((part) => part[0]?.toUpperCase()).join("") || "?"; }
 
 function exportCsv(rows) {
@@ -611,17 +622,142 @@ async function buildPdf(rows, organizationName, appliedRole, appliedStatus) {
   return new Blob([header, ...objectBodies, encode(xref)], { type: "application/pdf" });
 }
 
-function MemberNoticeModal({ mode, member, onClose }) {
+function MemberActionModal({ mode, member, tenantId, user, onClose, onCompleted }) {
   const isDelete = mode === "delete";
-  return <Modal isOpen onClose={onClose} title={isDelete ? "Delete Member?" : "Edit Member"} description={isDelete ? "Are you sure you want to delete this member? This action may affect their access to the organization." : "Update the member’s information for this organization."} size="sm" className="org-member-modal">
-    <div className="org-unavailable-notice"><CircleAlert size={20} /><p>{isDelete ? "Deletion is unavailable because the connected backend does not expose a tenant-member delete route. The member has not been changed." : "Editing is unavailable because the connected backend does not expose a tenant-member update route. These values are read-only and no changes can be saved."}</p></div>
-    <div className="org-member-readonly-grid">
-      <label className="org-member-field"><span>Full Name</span><input value={member?.full_name || ""} readOnly /></label>
-      <label className="org-member-field"><span>Email Address</span><input value={member?.email || ""} readOnly /></label>
-      <label className="org-member-field"><span>Mobile Number</span><input value={member?.mobile_no || ""} readOnly /></label>
-      <label className="org-member-field"><span>Role</span><input value={roleLabel(member?.role_name)} readOnly /></label>
-    </div>
-    <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={onClose}>{isDelete ? "Cancel" : "Close"}</button>{isDelete && <button type="button" className="org-dashboard-button org-delete-disabled" disabled title="Delete API is not available">Delete Member</button>}{!isDelete && <button type="button" className="org-dashboard-button org-dashboard-button--primary" disabled title="Update API is not available">Save Changes</button>}</div>
+  const [form, setForm] = useState(() => ({
+    full_name: member?.full_name || "",
+    email: member?.email || "",
+    mobile_no: member?.mobile_no || "",
+    role_name: String(member?.role_name || "TEACHER").toUpperCase(),
+    membership_active: member?.mapping_is_active !== false,
+    password: "",
+  }));
+  const [showPassword, setShowPassword] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState("");
+  const requestLock = useRef(false);
+  const formId = useId();
+  const name = member?.full_name || "this user";
+  const roleOptions = [
+    { value: "ADMIN", label: "Admin" },
+    { value: "TEACHER", label: "Teacher" },
+    { value: "STUDENT", label: "Student" },
+  ];
+  const membershipOptions = [
+    { value: "active", label: "Active in organization" },
+    { value: "inactive", label: "Inactive in organization" },
+  ];
+  const closeSafely = () => { if (!requestLock.current) onClose(); };
+
+  function updateField(field, value) {
+    setForm((current) => ({ ...current, [field]: value }));
+    setFormError("");
+  }
+
+  async function saveChanges(event) {
+    event.preventDefault();
+    if (requestLock.current) return;
+    const fullName = form.full_name.trim();
+    const email = form.email.trim();
+    const mobile = form.mobile_no.trim();
+    let validationMessage = "";
+    if (!fullName) validationMessage = "Enter the user's full name.";
+    else if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) validationMessage = "Enter a valid email address.";
+    else if (!mobile || !isValidMobile(mobile)) validationMessage = "Enter a valid 10-digit mobile number.";
+    else if (!roleOptions.some((option) => option.value === form.role_name)) validationMessage = "Choose a valid role.";
+    else if (form.password && (form.password.length < 8 || new TextEncoder().encode(form.password).length > 72)) validationMessage = "A new password must be at least 8 characters and no more than 72 UTF-8 bytes.";
+
+    if (validationMessage) {
+      setFormError(validationMessage);
+      toast.warning("Please review the form.", { description: validationMessage });
+      return;
+    }
+
+    const userId = member?.user_id;
+    if (!tenantId || !userId) {
+      const message = !tenantId ? "No active organization was found. Please sign in again." : "This user could not be identified. Refresh the directory and try again.";
+      setFormError(message);
+      toast.error("Unable to update user.", { description: message });
+      return;
+    }
+    const payload = {};
+    if (fullName !== String(member?.full_name || "").trim()) payload.full_name = fullName;
+    if (email !== String(member?.email || "").trim()) payload.email = email;
+    if (mobile !== String(member?.mobile_no || "").trim()) payload.mobile_no = mobile;
+    if (form.role_name !== String(member?.role_name || "").toUpperCase()) payload.role_name = form.role_name;
+    if (form.membership_active !== (member?.mapping_is_active !== false)) payload.is_active = form.membership_active;
+    if (form.password) payload.password = form.password;
+    if (Object.keys(payload).length === 0) {
+      toast.info("No changes to save.");
+      onClose();
+      return;
+    }
+
+    requestLock.current = true;
+    setSubmitting(true);
+    try {
+      const response = await updateTenantUser(tenantId, userId, payload);
+      if (response?.success === false) throw Object.assign(new Error(response.message || "The user update was not accepted."), { response: { data: response } });
+      toast.success(response?.message || "User details updated successfully.");
+      onCompleted();
+      onClose();
+    } catch (requestError) {
+      const message = tenantMutationError(requestError, "update");
+      setFormError(message);
+      toast.error("Unable to update user.", { description: message });
+    } finally {
+      requestLock.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  async function confirmDelete() {
+    if (requestLock.current) return;
+    const userId = member?.user_id;
+    if (!tenantId || !userId) {
+      toast.error("Unable to remove user.", { description: !tenantId ? "No active organization was found. Please sign in again." : "This user could not be identified. Refresh the directory and try again." });
+      return;
+    }
+    if (String(user?.userId || "") === String(userId) && String(member?.role_name || "").toUpperCase() === "ADMIN") {
+      toast.error("Unable to remove this administrator.", { description: "You cannot remove your own administrator membership." });
+      return;
+    }
+
+    requestLock.current = true;
+    setSubmitting(true);
+    try {
+      const response = await deleteTenantUser(tenantId, userId);
+      if (response?.success === false) throw Object.assign(new Error(response.message || "The user could not be removed."), { response: { data: response } });
+      toast.success(response?.message || "User removed from this organization successfully.");
+      onCompleted();
+      onClose();
+    } catch (requestError) {
+      const message = tenantMutationError(requestError, "remove");
+      toast.error("Unable to remove user.", { description: message });
+    } finally {
+      requestLock.current = false;
+      setSubmitting(false);
+    }
+  }
+
+  const footer = isDelete
+    ? <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="button" className="org-dashboard-button org-delete-confirm" onClick={confirmDelete} disabled={submitting} aria-busy={submitting}>{submitting && <LoaderCircle size={16} className="org-member-spinner" />}{submitting ? "Removing…" : "Yes, Delete User"}</button></div>
+    : <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="submit" form={formId} className="org-dashboard-button org-dashboard-button--primary org-member-button--submit" disabled={submitting} aria-busy={submitting}>{submitting && <LoaderCircle size={16} className="org-member-spinner" />}{submitting ? "Saving changes…" : "Save Changes"}</button></div>;
+
+  return <Modal isOpen onClose={closeSafely} closeOnEscape={!submitting} closeOnOverlay={!submitting} title={isDelete ? "Delete User?" : "Edit User"} description={isDelete ? `Are you sure you want to remove ${name} from this organization? Their organization access will be deactivated.` : "Update this user's details, role, and organization access."} size={isDelete ? "sm" : "lg"} className="org-member-modal org-member-action-modal" footer={footer}>
+    {isDelete ? <div className="org-member-delete-content">
+      <div className="org-member-delete-warning"><span><AlertTriangle size={21} /></span><p>This action deactivates the user's membership in this organization. It does not permanently delete their account.</p></div>
+      <div className="org-member-delete-summary"><span className="org-user-avatar">{initials(member?.full_name)}</span><div><strong>{member?.full_name || "Unnamed user"}</strong><span>{member?.email || "No email provided"}</span></div><span className="org-role-badge">{roleLabel(member?.role_name)}</span></div>
+      <p className="org-member-delete-note">You can review this action before confirming. The directory will update after the server confirms the change.</p>
+    </div> : <form id={formId} className="org-member-edit-form" onSubmit={saveChanges} noValidate>
+      <label className="org-member-field"><span>Full Name <b>*</b></span><input autoComplete="name" value={form.full_name} onChange={(event) => updateField("full_name", event.target.value)} aria-invalid={Boolean(formError && !form.full_name.trim())} required /></label>
+      <label className="org-member-field"><span>Email Address <b>*</b></span><input type="email" autoComplete="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} aria-invalid={Boolean(formError && (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())))} required /></label>
+      <label className="org-member-field"><span>Mobile Number <b>*</b></span><input type="tel" inputMode="numeric" autoComplete="tel" value={form.mobile_no} onChange={(event) => updateField("mobile_no", event.target.value.replace(/\D/g, "").slice(0, 10))} aria-invalid={Boolean(formError && !isValidMobile(form.mobile_no))} required /></label>
+      <label className="org-member-field"><span>Role <b>*</b></span><MenuSelect value={form.role_name} options={roleOptions} onChange={(value) => updateField("role_name", value)} ariaLabel="User role" className="org-member-role-select" /></label>
+      <label className="org-member-field"><span>Organization membership</span><MenuSelect value={form.membership_active ? "active" : "inactive"} options={membershipOptions} onChange={(value) => updateField("membership_active", value === "active")} ariaLabel="Organization membership status" className="org-member-role-select" /></label>
+      <label className="org-member-field org-member-password-field"><span>New Password <small>(optional)</small></span><span className="org-member-password"><input type={showPassword ? "text" : "password"} autoComplete="new-password" value={form.password} onChange={(event) => updateField("password", event.target.value)} aria-invalid={Boolean(formError && form.password && (form.password.length < 8 || new TextEncoder().encode(form.password).length > 72))} /><button type="button" aria-label={showPassword ? "Hide new password" : "Show new password"} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span><small className="org-member-hint">Leave blank to keep the existing password. Use 8–72 UTF-8 bytes.</small></label>
+      {formError && <p className="org-member-form-error" role="alert">{formError}</p>}
+    </form>}
   </Modal>;
 }
 
@@ -636,6 +772,18 @@ function QuotaCard({ label, quota }) {
 
 function SummaryCard({ icon: Icon, label, value, detail }) {
   return <article className="org-user-summary"><span><Icon size={18} /></span><div><p>{label}</p><strong>{value ?? "—"}</strong><small>{detail}</small></div></article>;
+}
+
+function RoleDirectoryEmptyState({ view, organizationName }) {
+  const isStudent = view === "student";
+  const Icon = isStudent ? GraduationCap : BookOpen;
+  const label = isStudent ? "students" : "teachers";
+  return <div className="org-users-page">
+    <section className="org-users-heading"><div><span className="org-dashboard-eyebrow"><Building2 size={14} /> ORGANIZATION WORKSPACE</span><h1>{isStudent ? "Students" : "Teachers"}</h1><p>{organizationName}</p></div></section>
+    <section className="org-users-table-panel">
+      <div className="org-role-directory-empty" role="status"><span><Icon size={25} /></span><h2>No {label} to show yet</h2><p>This section is empty for now.</p></div>
+    </section>
+  </div>;
 }
 
 function UserDirectory({ view, user, onAddMember, onReloadReady, onQuotaChange }) {
@@ -673,7 +821,12 @@ function UserDirectory({ view, user, onAddMember, onReloadReady, onQuotaChange }
     return () => { active = false; controller.abort(); };
   }, [tenantId, reloadKey, onQuotaChange]);
 
-  const sourceUsers = result?.data || [];
+  // Until dedicated teacher/student directories are available, only the
+  // employee directory displays API records. Keep membership status distinct
+  // from the global account status while listing those active memberships.
+  const sourceUsers = view === "employee"
+    ? (result?.data || []).filter((member) => member.mapping_is_active !== false)
+    : [];
   const filteredUsers = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     const start = startDate ? new Date(`${startDate}T00:00:00`).getTime() : null;
@@ -741,9 +894,9 @@ function UserDirectory({ view, user, onAddMember, onReloadReady, onQuotaChange }
         <label className="org-date-control"><CalendarDays size={15} /><span className="org-visually-hidden">Joined to date</span><input aria-label="Joined to" type="date" value={endDate} min={startDate || undefined} onChange={(event) => setEndDate(event.target.value)} /></label>
         <button type="button" className="org-clear-filters" onClick={clearFilters}>Clear filters</button>
       </div>
-      {error ? <div className="org-users-state org-users-state--error"><span><CircleAlert size={21} /></span><h3>Couldn’t load users</h3><p>{error}</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={reload}>Retry</button></div> : loading ? <div className="org-users-loading"><LoaderCircle size={21} /><span>Loading organization users…</span><div className="org-users-skeleton" /></div> : !hasUsers ? <div className="org-users-state"><span><Users size={22} /></span><h3>No organization users yet</h3><p>Add a teacher or student to start building your directory.</p><button className="org-dashboard-button org-dashboard-button--primary" onClick={() => onAddMember("TEACHER")}><Plus size={16} />Add Member</button></div> : filteredUsers.length === 0 ? <div className="org-users-state"><span><Search size={21} /></span><h3>No users match your filters.</h3><p>Try another search or clear the selected filters.</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={clearFilters}>Clear filters</button></div> : <TableShell><DataTable keyField="mapping_id" columns={columns} data={filteredUsers} customStyles={TABLE_STYLES} pagination paginationPerPage={10} paginationRowsPerPageOptions={[5, 10, 20, 50]} paginationResetDefaultPage={paginationReset} paginationComponent={OrganizationPagination} responsive highlightOnHover persistTableHead /></TableShell>}
+      {error ? <div className="org-users-state org-users-state--error"><span><CircleAlert size={21} /></span><h3>Couldn’t load users</h3><p>{error}</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={reload}>Retry</button></div> : loading ? <div className="org-users-loading"><LoaderCircle size={21} /><span>Loading organization records…</span><div className="org-users-skeleton" /></div> : !hasUsers ? <div className="org-users-state"><span>{view === "student" ? <GraduationCap size={22} /> : view === "teacher" ? <BookOpen size={22} /> : <Users size={22} />}</span><h3>{view === "student" ? "No students yet" : view === "teacher" ? "No teachers yet" : "No organization users yet"}</h3><p>{view === "student" ? "Student records will appear here when they are available in this directory." : view === "teacher" ? "Teacher records will appear here when they are available in this directory." : "Add a teacher or student to start building your directory."}</p>{view === "employee" && <button className="org-dashboard-button org-dashboard-button--primary" onClick={() => onAddMember("TEACHER")}><Plus size={16} />Add Member</button>}</div> : filteredUsers.length === 0 ? <div className="org-users-state"><span><Search size={21} /></span><h3>No users match your filters.</h3><p>Try another search or clear the selected filters.</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={clearFilters}>Clear filters</button></div> : <TableShell><DataTable keyField="mapping_id" columns={columns} data={filteredUsers} customStyles={TABLE_STYLES} pagination paginationPerPage={10} paginationRowsPerPageOptions={[5, 10, 20, 50]} paginationResetDefaultPage={paginationReset} paginationComponent={OrganizationPagination} responsive highlightOnHover persistTableHead /></TableShell>}
     </section>
-    {modalMode && <MemberNoticeModal mode={modalMode} member={selected} onClose={() => { setModalMode(null); setSelected(null); }} />}
+    {modalMode && selected && <MemberActionModal key={`${modalMode}-${selected.user_id || selected.mapping_id || "member"}`} mode={modalMode} member={selected} tenantId={tenantId} user={user} onCompleted={reload} onClose={() => { setModalMode(null); setSelected(null); }} />}
     {bulkOpen && <BulkMemberModal tenantAvailable={Boolean(tenantId)} onCompleted={reload} onClose={() => setBulkOpen(false)} />}
   </div>;
 }
@@ -759,7 +912,7 @@ export default function OrganizationDashboard() {
   const firstName = (user?.name || "Organization Admin").trim().split(/\s+/)[0];
 
   return <div className="organization-dashboard"><div className="org-dashboard-container">
-    {view ? <UserDirectory view={view} user={user} onAddMember={setModalRole} onReloadReady={setReloadUsers} onQuotaChange={setQuota} /> : <section className="org-dashboard-welcome">
+    {view === "teacher" || view === "student" ? <RoleDirectoryEmptyState view={view} organizationName={user?.activeTenantName || "Your organization"} /> : view ? <UserDirectory view={view} user={user} onAddMember={setModalRole} onReloadReady={setReloadUsers} onQuotaChange={setQuota} /> : <section className="org-dashboard-welcome">
       <div className="org-dashboard-welcome-copy">
         <span className="org-dashboard-eyebrow"><Building2 size={14} aria-hidden="true" /> ORGANIZATION WORKSPACE</span>
         <h1>Organization Dashboard</h1>

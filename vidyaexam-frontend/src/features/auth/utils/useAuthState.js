@@ -14,6 +14,7 @@ export default function useAuthState() {
     isAuthenticated: Boolean(u),
     user: u
       ? {
+          userId: u.userId,
           name: u.name,
           role: u.role,
           activeTenantId: u.activeTenantId,

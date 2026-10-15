@@ -15,6 +15,20 @@ function getTenantId() {
   return session?.user?.activeTenantId ?? null;
 }
 
+function requireTenantScope(tenantId, userId) {
+  const activeTenantId = getTenantId();
+  if (!activeTenantId) {
+    throw new Error("No active organization was found. Please sign in again.");
+  }
+  if (!tenantId || String(tenantId) !== String(activeTenantId)) {
+    throw new Error("The active organization changed. Refresh the page and try again.");
+  }
+  if (userId === undefined || userId === null || String(userId).trim() === "") {
+    throw new Error("This user could not be identified. Refresh the directory and try again.");
+  }
+  return activeTenantId;
+}
+
 function getAuthConfig() {
   const token = getAccessToken();
 
@@ -93,4 +107,23 @@ export async function getOrganizationUsers({ signal } = {}) {
     total_users: payload.total_users != null && Number.isFinite(Number(payload.total_users)) ? Number(payload.total_users) : null,
     data: payload.data,
   };
+}
+
+export async function updateTenantUser(tenantId, userId, payload) {
+  const activeTenantId = requireTenantScope(tenantId, userId);
+  const response = await axios.put(
+    `${API_BASE_URL}/tenants/${encodeURIComponent(activeTenantId)}/updateTenantUser/${encodeURIComponent(userId)}`,
+    payload,
+    getAuthConfig(),
+  );
+  return response.data;
+}
+
+export async function deleteTenantUser(tenantId, userId) {
+  const activeTenantId = requireTenantScope(tenantId, userId);
+  const response = await axios.delete(
+    `${API_BASE_URL}/tenants/${encodeURIComponent(activeTenantId)}/deleteTenantUser/${encodeURIComponent(userId)}`,
+    getAuthConfig(),
+  );
+  return response.data;
 }

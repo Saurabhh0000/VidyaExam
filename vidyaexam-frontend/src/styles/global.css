@@ -3,6 +3,58 @@
   box-sizing: border-box;
 }
 
+/* ==========================================================================
+   Universal Sleek & Thin Scrollbars
+   ========================================================================== */
+
+/* Standard Firefox Scrollbars */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 transparent;
+}
+
+/* WebKit (Chrome, Edge, Safari, Brave) Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 99px;
+  transition: background-color 0.2s ease;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+::-webkit-scrollbar-thumb:active {
+  background: var(--teal, #0f766e);
+}
+
+::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Utility to completely hide scrollbar while preserving scrollability */
+.no-scrollbar,
+.hide-scrollbar {
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.no-scrollbar::-webkit-scrollbar,
+.hide-scrollbar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
+}
+
 html {
   scroll-behavior: smooth;
   scroll-padding-top: calc(var(--header-height) + 20px);
