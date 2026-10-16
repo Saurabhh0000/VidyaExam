@@ -210,21 +210,37 @@ async function downloadPdf(records) {
 
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
-  const margin = 38;
-
+  const margin = 36;
+  const contentWidth = pageWidth - margin * 2;
   const navy = [23, 43, 77];
   const teal = [15, 118, 110];
-  const muted = [91, 109, 133];
-
-  const columns = [
-    { label: "BATCH / CLASS", x: 38, width: 102 },
-    { label: "CODE", x: 148, width: 68 },
-    { label: "DESCRIPTION", x: 223, width: 162 },
-    { label: "ORGANIZATION", x: 393, width: 122 },
-    { label: "STUDENTS", x: 523, width: 58 },
-    { label: "STATUS", x: 588, width: 62 },
-    { label: "CREATED", x: 658, width: 108 },
+  const muted = [100, 119, 145];
+  const border = [220, 232, 233];
+  const pale = [241, 248, 247];
+  const exportedAt = new Date().toLocaleString();
+  const activeCount = records.filter(isActiveBatch).length;
+  const inactiveCount = records.length - activeCount;
+  const studentCount = records.reduce((total, batch) => total + (Number(batch.total_students) || 0), 0);
+  const columnDefinitions = [
+    { label: "BATCH / CLASS", width: 130, value: (batch) => batch.batch_name || "—" },
+    { label: "CODE", width: 78, value: (batch) => batch.batch_code || "—" },
+    { label: "DESCRIPTION", width: 195, value: (batch) => batch.description || "—" },
+    { label: "ORGANIZATION", width: 128, value: (batch) => batch.tenant_name || "—" },
+    { label: "STUDENTS", width: 62, value: (batch) => String(Number(batch.total_students) || 0), align: "center" },
+    { label: "STATUS", width: 75, value: (batch) => isActiveBatch(batch) ? "Active" : "Inactive", status: true },
+    { label: "CREATED", width: 102, value: (batch) => batch.created_at ? formatDate(batch.created_at) : "—" },
   ];
+  // Keep the column proportions but guarantee they fit the printable width.
+  const baseWidth = columnDefinitions.reduce((total, column) => total + column.width, 0);
+  const columns = columnDefinitions.map((column) => ({
+    ...column,
+    width: (column.width / baseWidth) * contentWidth,
+  }));
+  let columnX = margin;
+  columns.forEach((column) => {
+    column.x = columnX;
+    columnX += column.width;
+  });
 
   let logo = null;
 
@@ -236,112 +252,167 @@ async function downloadPdf(records) {
 
   function drawHeader(pageNumber) {
     pdf.setFillColor(...navy);
-    pdf.rect(0, 0, pageWidth, 104, "F");
-
+    pdf.rect(0, 0, pageWidth, 112, "F");
     pdf.setFillColor(...teal);
-    pdf.rect(0, 101, pageWidth, 3, "F");
+    pdf.rect(0, 108, pageWidth, 4, "F");
 
     if (logo) {
-      pdf.addImage(logo, "PNG", margin, 28, 145, 48, undefined, "FAST");
+      pdf.addImage(logo, "PNG", margin, 31, 145, 48, undefined, "FAST");
     } else {
       pdf.setTextColor(255, 255, 255);
       pdf.setFont("helvetica", "bold");
-      pdf.setFontSize(21);
-      pdf.text("VidyaExam", margin, 53);
+      pdf.setFontSize(23);
+      pdf.text("VidyaExam", margin, 59);
     }
 
+    pdf.setDrawColor(61, 91, 125);
+    pdf.setLineWidth(0.8);
+    pdf.line(margin + 166, 25, margin + 166, 88);
     pdf.setTextColor(107, 231, 209);
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(9);
-    pdf.text("MASTER DATA  /  BATCHES & CLASSES", 225, 38);
+    pdf.setFontSize(8);
+    pdf.text("VIDYAEXAM  /  MASTER DATA", margin + 188, 36);
 
     pdf.setTextColor(255, 255, 255);
-    pdf.setFontSize(23);
-    pdf.text("Batch Directory", 225, 65);
+    pdf.setFontSize(22);
+    pdf.text("Batch & Class Directory", margin + 188, 62);
 
     pdf.setTextColor(225, 234, 244);
     pdf.setFont("helvetica", "normal");
-    pdf.setFontSize(9);
+    pdf.setFontSize(8.5);
     pdf.text(
-      `${records.length} ${
-        records.length === 1 ? "record" : "records"
-      }  ·  Generated ${new Date().toLocaleString()}`,
-      225,
-      84,
+      `${records.length} ${records.length === 1 ? "batch" : "batches"}  ·  Generated ${exportedAt}`,
+      margin + 188,
+      83,
     );
 
-    pdf.setTextColor(...muted);
+    pdf.setFillColor(255, 255, 255);
+    pdf.setDrawColor(73, 103, 136);
+    pdf.roundedRect(pageWidth - margin - 62, 35, 62, 27, 8, 8, "FD");
+    pdf.setTextColor(255, 255, 255);
+    pdf.setFont("helvetica", "bold");
     pdf.setFontSize(8);
-    pdf.text(`Page ${pageNumber}`, pageWidth - margin, 88, {
-      align: "right",
+    pdf.text(`PAGE ${pageNumber}`, pageWidth - margin - 31, 52, { align: "center" });
+  }
+
+  function drawSummary(y) {
+    const gap = 10;
+    const cardWidth = (contentWidth - gap * 3) / 4;
+    const summary = [
+      { label: "TOTAL BATCHES", value: records.length, color: navy },
+      { label: "ACTIVE", value: activeCount, color: [22, 143, 86] },
+      { label: "INACTIVE", value: inactiveCount, color: [201, 71, 63] },
+      { label: "TOTAL STUDENTS", value: studentCount, color: teal },
+    ];
+    summary.forEach((item, index) => {
+      const x = margin + index * (cardWidth + gap);
+      pdf.setFillColor(255, 255, 255);
+      pdf.setDrawColor(...border);
+      pdf.roundedRect(x, y, cardWidth, 43, 7, 7, "FD");
+      pdf.setFillColor(...item.color);
+      pdf.roundedRect(x + 10, y + 10, 4, 23, 2, 2, "F");
+      pdf.setFont("helvetica", "bold");
+      pdf.setFontSize(7);
+      pdf.setTextColor(...muted);
+      pdf.text(item.label, x + 23, y + 17);
+      pdf.setFontSize(13);
+      pdf.setTextColor(...item.color);
+      pdf.text(String(item.value), x + 23, y + 33);
     });
   }
 
   function drawTableHead(y) {
-    pdf.setFillColor(241, 247, 246);
-    pdf.roundedRect(margin, y, pageWidth - margin * 2, 28, 5, 5, "F");
+    pdf.setFillColor(...pale);
+    pdf.setDrawColor(...border);
+    pdf.roundedRect(margin, y, contentWidth, 30, 5, 5, "FD");
 
     pdf.setFont("helvetica", "bold");
-    pdf.setFontSize(8);
+    pdf.setFontSize(7.5);
     pdf.setTextColor(...muted);
 
-    columns.forEach((column) => {
-      pdf.text(column.label, column.x, y + 18);
+    columns.forEach((column, index) => {
+      const labelLines = pdf.splitTextToSize(column.label, column.width - 16);
+      pdf.text(labelLines, column.x + 8, y + 19);
+      if (index > 0) {
+        pdf.setDrawColor(213, 225, 224);
+        pdf.line(column.x, y + 6, column.x, y + 24);
+      }
     });
 
-    return y + 36;
+    return y + 39;
   }
 
   drawHeader(1);
-
-  let y = drawTableHead(132);
-  const rowHeight = 34;
-
-  pdf.setFont("helvetica", "normal");
-  pdf.setFontSize(8.5);
+  drawSummary(126);
+  let y = drawTableHead(183);
+  const footerTop = pageHeight - 38;
 
   records.forEach((batch, index) => {
-    if (y + rowHeight > pageHeight - 42) {
-      pdf.addPage();
-      drawHeader(pdf.internal.getNumberOfPages());
-      y = drawTableHead(132);
-
+    const cells = columns.map((column) => String(column.value(batch)));
+    const wrappedCells = cells.map((value, cellIndex) => {
       pdf.setFont("helvetica", "normal");
-      pdf.setFontSize(8.5);
+      pdf.setFontSize(8);
+      return pdf.splitTextToSize(value, columns[cellIndex].width - 16);
+    });
+    const maxLines = Math.max(...wrappedCells.map((lines) => lines.length));
+    const rowHeight = Math.max(38, maxLines * 10.5 + 18);
+
+    if (y + rowHeight > footerTop - 8) {
+      pdf.addPage();
+      const pageNumber = pdf.internal.getNumberOfPages();
+      drawHeader(pageNumber);
+      drawSummary(126);
+      y = drawTableHead(183);
     }
 
     if (index % 2 === 1) {
-      pdf.setFillColor(249, 251, 251);
-      pdf.rect(margin, y - 9, pageWidth - margin * 2, rowHeight, "F");
+      pdf.setFillColor(249, 252, 251);
+      pdf.rect(margin, y - 7, contentWidth, rowHeight, "F");
     }
 
-    pdf.setDrawColor(228, 236, 235);
-    pdf.line(margin, y + 19, pageWidth - margin, y + 19);
-    pdf.setTextColor(...navy);
-
-    const values = [
-      batch.batch_name || "—",
-      batch.batch_code || "—",
-      batch.description || "—",
-      batch.tenant_name || "—",
-      String(Number(batch.total_students) || 0),
-      isActiveBatch(batch) ? "Active" : "Inactive",
-      batch.created_at ? formatDate(batch.created_at) : "—",
-    ];
-
-    values.forEach((value, valueIndex) => {
-      const column = columns[valueIndex];
-      const wrapped = pdf.splitTextToSize(String(value), column.width);
-
-      pdf.text(wrapped.slice(0, 2), column.x, y + 2);
+    wrappedCells.forEach((lines, cellIndex) => {
+      const column = columns[cellIndex];
+      const textHeight = lines.length * 10.5;
+      const textY = y + Math.max(3, (rowHeight - textHeight) / 2);
+      if (column.status) {
+        const active = isActiveBatch(batch);
+        const badgeWidth = active ? 47 : 55;
+        const badgeX = column.x + (column.width - badgeWidth) / 2;
+        pdf.setFillColor(...(active ? [232, 249, 240] : [254, 241, 240]));
+        pdf.setDrawColor(...(active ? [169, 238, 199] : [248, 205, 200]));
+        pdf.roundedRect(badgeX, y + (rowHeight - 21) / 2, badgeWidth, 21, 10, 10, "FD");
+        pdf.setFont("helvetica", "bold");
+        pdf.setFontSize(7.5);
+        pdf.setTextColor(...(active ? [22, 120, 73] : [177, 54, 48]));
+        pdf.text(active ? "ACTIVE" : "INACTIVE", badgeX + badgeWidth / 2, y + rowHeight / 2 + 2.5, { align: "center" });
+        return;
+      }
+      pdf.setFont("helvetica", cellIndex === 0 ? "bold" : "normal");
+      pdf.setFontSize(cellIndex === 0 ? 8.5 : 8);
+      pdf.setTextColor(...(cellIndex === 0 ? navy : muted));
+      const textX = column.align === "center" ? column.x + column.width / 2 : column.x + 8;
+      pdf.text(lines, textX, textY + 7, column.align === "center" ? { align: "center" } : undefined);
     });
 
+    pdf.setDrawColor(...border);
+    pdf.setLineWidth(0.45);
+    pdf.line(margin, y + rowHeight - 7, pageWidth - margin, y + rowHeight - 7);
     y += rowHeight;
   });
 
-  pdf.setTextColor(...muted);
-  pdf.setFontSize(8);
-  pdf.text("Empowering learning, achieving dreams.", margin, pageHeight - 22);
+  const totalPages = pdf.internal.getNumberOfPages();
+  for (let pageNumber = 1; pageNumber <= totalPages; pageNumber += 1) {
+    pdf.setPage(pageNumber);
+    pdf.setDrawColor(...border);
+    pdf.setLineWidth(0.7);
+    pdf.line(margin, pageHeight - 28, pageWidth - margin, pageHeight - 28);
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(7.5);
+    pdf.setTextColor(...muted);
+    pdf.text("VidyaExam  ·  Empowering learning, achieving dreams.", margin, pageHeight - 15);
+    pdf.setFont("helvetica", "bold");
+    pdf.text(`Page ${pageNumber} of ${totalPages}`, pageWidth - margin, pageHeight - 15, { align: "right" });
+  }
 
   pdf.save(`vidyaexam-batches-${new Date().toISOString().slice(0, 10)}.pdf`);
 }

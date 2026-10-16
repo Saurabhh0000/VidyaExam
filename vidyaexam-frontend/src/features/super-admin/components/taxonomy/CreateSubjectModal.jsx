@@ -38,12 +38,16 @@ export default function CreateSubjectModal({
     setError("");
 
     if (!categoryId) {
-      setError("Please select an exam category.");
+      const message = "Please select an exam category.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
     const name = subjectName.trim();
     if (!name) {
-      setError("Subject Name is required.");
+      const message = "Subject Name is required.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
 
@@ -57,7 +61,9 @@ export default function CreateSubjectModal({
       toast.success("Subject created successfully");
       handleClose();
     } catch (err) {
-      setError(err?.message || "Failed to create subject");
+      const message = err?.message || "Failed to create subject";
+      setError(message);
+      toast.error("Unable to create subject", { description: message });
     } finally {
       setLoading(false);
     }
