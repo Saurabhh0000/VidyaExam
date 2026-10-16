@@ -42,11 +42,12 @@ const SECTIONS = {
 };
 
 function MetricCard({ label, Icon, value = "—", stateLabel, isLive = false }) {
+  const isLoading = value === "...";
   return (
-    <article className="sa-metric-card" aria-label={`${label}: ${value}`}>
+    <article className="sa-metric-card" aria-label={`${label}: ${isLoading ? "loading" : value}`} aria-busy={isLoading}>
       <span className="sa-metric-icon"><Icon size={20} aria-hidden="true" /></span>
       <span className="sa-metric-label">{label}</span>
-      <strong className="sa-metric-value">{value}</strong>
+      <strong className="sa-metric-value">{isLoading ? "…" : value}</strong>
       <span className="sa-metric-state">
         <span style={isLive ? { background: "#10b981" } : undefined} />
         {stateLabel || "Reporting API unavailable"}
@@ -92,8 +93,8 @@ function PlansSection() {
 
   if (status === "loading") {
     return (
-      <section className="sa-plans-grid" aria-label="Loading subscription plans" aria-busy="true">
-        {[1, 2, 3, 4].map((item) => <div className="sa-plan-skeleton" key={item} />)}
+      <section aria-label="Loading subscription plans" aria-busy="true">
+        <p className="sa-loading-message">Loading subscription plans…</p>
       </section>
     );
   }
@@ -134,7 +135,7 @@ function PlansSection() {
         <section className="sa-plan-group" key={group.title}>
           <div className="sa-section-heading"><h2>{group.title}</h2><span>{group.plans.length} active {group.plans.length === 1 ? "plan" : "plans"}</span></div>
           {group.plans.length ? (
-            <Suspense fallback={<div className="sa-plan-skeleton" aria-label="Loading table" />}>
+              <Suspense fallback={<p className="sa-loading-message">Loading plans…</p>}>
               <PlanCatalogTable plans={group.plans} title={group.title} view={view} />
             </Suspense>
           ) : (
@@ -341,56 +342,31 @@ export default function SuperAdminDashboard() {
             </header>
             {activeSection === "organizations" ? (
               <Suspense
-                fallback={
-                  <div
-                    className="sa-plan-skeleton"
-                    aria-label="Loading organizations"
-                  />
-                }
+                fallback={<p className="sa-loading-message">Loading organizations…</p>}
               >
                 <TenantsSection />
               </Suspense>
             ) : activeSection === "users" ? (
               <Suspense
-                fallback={
-                  <div
-                    className="sa-plan-skeleton"
-                    aria-label="Loading users"
-                  />
-                }
+                fallback={<p className="sa-loading-message">Loading users…</p>}
               >
                 <UsersSection initialRole="ALL" />
               </Suspense>
             ) : activeSection === "taxonomy" ? (
               <Suspense
-                fallback={
-                  <div
-                    className="sa-plan-skeleton"
-                    aria-label="Loading taxonomy"
-                  />
-                }
+                fallback={<p className="sa-loading-message">Loading taxonomy…</p>}
               >
                 <TaxonomySection />
               </Suspense>
             ) : activeSection === "teachers" ? (
               <Suspense
-                fallback={
-                  <div
-                    className="sa-plan-skeleton"
-                    aria-label="Loading teachers"
-                  />
-                }
+                fallback={<p className="sa-loading-message">Loading teachers…</p>}
               >
                 <UsersSection initialRole="TEACHER" title="Teachers Directory" />
               </Suspense>
             ) : activeSection === "students" ? (
               <Suspense
-                fallback={
-                  <div
-                    className="sa-plan-skeleton"
-                    aria-label="Loading students"
-                  />
-                }
+                fallback={<p className="sa-loading-message">Loading students…</p>}
               >
                 <UsersSection initialRole="STUDENT" title="Students Directory" />
               </Suspense>

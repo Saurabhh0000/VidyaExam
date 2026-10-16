@@ -310,7 +310,6 @@ export default function UsersSection({ initialRole = "ALL", title }) {
             >
               <RefreshCw
                 size={16}
-                className={isRefreshing || status === "loading" ? "sa-spin" : ""}
                 aria-hidden="true"
               />
             </button>
@@ -336,11 +335,7 @@ export default function UsersSection({ initialRole = "ALL", title }) {
 
         {/* Content Area */}
         {status === "loading" && (
-          <div className="sa-tenants-loading" aria-label="Loading users" aria-busy="true">
-            <div className="sa-plan-skeleton" />
-            <div className="sa-plan-skeleton" />
-            <div className="sa-plan-skeleton" />
-          </div>
+          <p className="sa-loading-message" role="status">Loading users…</p>
         )}
 
         {status === "error" && (

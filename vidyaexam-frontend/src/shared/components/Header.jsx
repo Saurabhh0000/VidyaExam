@@ -233,10 +233,6 @@ export default function Header() {
               </button>
             )}
 
-            {loading && (
-              <span className="modern-avatar-skeleton" aria-hidden="true" />
-            )}
-
             {authed && (
               <ProfileMenu
                 user={user}

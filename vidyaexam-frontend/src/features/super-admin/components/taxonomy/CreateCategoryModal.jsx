@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { FolderPlus, Loader2 } from "lucide-react";
+import { FolderPlus } from "lucide-react";
 import Modal from "../../../../shared/components/ui/Modal";
 import toast from "../../../../shared/components/ui/toast";
 
@@ -76,16 +76,7 @@ export default function CreateCategoryModal({ isOpen, onClose, onSubmit }) {
             className="sa-btn sa-btn--primary"
             onClick={handleSubmit}
             disabled={loading}>
-            {loading ? (
-              <>
-                <Loader2
-                  size={16}
-                  className="sa-spin-icon"
-                  aria-hidden="true"
-                />
-                Creating...
-              </>
-            ) : (
+            {loading ? "Creating..." : (
               <>
                 <FolderPlus size={16} aria-hidden="true" />
                 Create Category

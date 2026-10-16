@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { X, LogOut, LoaderCircle } from "lucide-react";
+import { X, LogOut } from "lucide-react";
 import AppLink from "./AppLink";
 import { routes } from "../config/siteConfig";
 import {
@@ -215,15 +215,7 @@ export default function NavigationDrawer({
                 disabled={loggingOut}
                 aria-busy={loggingOut}
                 onClick={onLogout}>
-                {loggingOut ? (
-                  <LoaderCircle
-                    size={18}
-                    className="profile-logout-spinner"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <LogOut size={18} aria-hidden="true" />
-                )}
+                <LogOut size={18} aria-hidden="true" />
                 <span>{loggingOut ? "Signing out..." : "Sign out"}</span>
               </button>
             </div>

@@ -4,10 +4,9 @@ import { useLocation } from "react-router-dom";
 import {
   X,
   LogOut,
-  LoaderCircle,
   LayoutDashboard,
   PanelLeftOpen,
-  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import AppLink from "./AppLink";
 import {
@@ -225,7 +224,7 @@ export default function NavigationSidebar({
         <div className="sidebar-scrollable">
           {primaryNav?.length > 0 && (
             <div className="sidebar-group">
-              {isOpen && <span className="sidebar-group-title">Workspace</span>}
+              {isOpen && <span className="sidebar-group-title">WORKSPACE</span>}
               <nav className="sidebar-nav" aria-label="Workspace">
                 {primaryNav.map((link) => {
                   const hasChildren = Boolean(link.children?.length);
@@ -250,7 +249,7 @@ export default function NavigationSidebar({
                             {renderNavIcon(link)}
                           </span>
                           <span className="sidebar-label">{link.label}</span>
-                          <ChevronDown
+                          <ChevronRight
                             size={16}
                             className={`sidebar-chevron ${
                               isMenuOpen ? "is-open" : ""
@@ -312,7 +311,7 @@ export default function NavigationSidebar({
 
           <div className="sidebar-group sidebar-account-group">
             {isOpen && (
-              <span className="sidebar-group-title">Account &amp; Tools</span>
+              <span className="sidebar-group-title">ACCOUNT &amp; TOOLS</span>
             )}
 
             {isOpen ? (
@@ -356,15 +355,7 @@ export default function NavigationSidebar({
               aria-label={collapsed ? "Sign out" : undefined}
               onClick={onLogout}>
               <span className="sidebar-icon-wrap">
-                {loggingOut ? (
-                  <LoaderCircle
-                    size={18}
-                    className="profile-logout-spinner"
-                    aria-hidden="true"
-                  />
-                ) : (
-                  <LogOut size={18} aria-hidden="true" />
-                )}
+                <LogOut size={18} aria-hidden="true" />
               </span>
               {isOpen && (
                 <span className="sidebar-label">

@@ -4,7 +4,6 @@ import {
   XCircle,
   AlertTriangle,
   Info,
-  LoaderCircle,
 } from "lucide-react";
 import "./toaster.css";
 
@@ -13,7 +12,7 @@ const toastIcons = {
   error: <XCircle size={20} strokeWidth={2.2} />,
   warning: <AlertTriangle size={20} strokeWidth={2.2} />,
   info: <Info size={20} strokeWidth={2.2} />,
-  loading: <LoaderCircle size={20} strokeWidth={2.2} />,
+  loading: <Info size={20} strokeWidth={2.2} />,
 };
 
 export default function Toaster() {

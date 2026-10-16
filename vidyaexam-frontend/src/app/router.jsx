@@ -13,6 +13,7 @@ import StudentDashboard from "../features/student/pages/StudentDashboard";
 import { STUDENT_DASHBOARD, SUPER_ADMIN_DASHBOARD } from "./roleRoutes";
 import OrganizationDashboard from "../features/organization-admin/pages/OrganizationDashboard";
 import SuperAdminDashboard from "../features/super-admin/pages/SuperAdminDashboard";
+import UserSettings from "../features/account/pages/UserSettings";
 
 export default function AppRouter() {
   return (
@@ -43,7 +44,17 @@ export default function AppRouter() {
           }
         />
         <Route
-          path="/organization/dashboard/:view?"
+          path={`${STUDENT_DASHBOARD}/settings`}
+          element={
+            <RequireRole role="STUDENT">
+              <MainLayout>
+                <UserSettings />
+              </MainLayout>
+            </RequireRole>
+          }
+        />
+        <Route
+          path="/organization/dashboard/:view?/:tab?"
           element={
             <RequireRole role="ADMIN">
               <MainLayout>

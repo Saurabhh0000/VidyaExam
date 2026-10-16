@@ -16,9 +16,12 @@ export default function useAuthState() {
       ? {
           userId: u.userId,
           name: u.name,
+          email: u.email,
           role: u.role,
           activeTenantId: u.activeTenantId,
           activeTenantName: u.activeTenantName,
+          memberships: u.memberships,
+          needsTenantSelection: u.needsTenantSelection,
         }
       : null,
     subscription: u?.subscription ?? null,

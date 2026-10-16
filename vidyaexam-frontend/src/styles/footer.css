@@ -14,7 +14,7 @@ footer.site-footer {
   color: var(--ft-text);
   background: var(--ft-bg);
   border-top: 1px solid var(--ft-line);
-  font-family: var(--font-body, Inter, "Manrope", system-ui, sans-serif);
+  font-family: var(--font-family-base);
   font-size: 0.9rem;
   line-height: 1.65;
 }

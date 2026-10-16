@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Layers, Loader2 } from "lucide-react";
+import { Layers } from "lucide-react";
 import Modal from "../../../../shared/components/ui/Modal";
 import toast from "../../../../shared/components/ui/toast";
 import { TenantSelect } from "../TenantControls";
@@ -84,12 +84,7 @@ export default function CreateTopicModal({
             onClick={handleSubmit}
             disabled={loading}
           >
-            {loading ? (
-              <>
-                <Loader2 size={16} className="sa-spin-icon" aria-hidden="true" />
-                Creating...
-              </>
-            ) : (
+            {loading ? "Creating..." : (
               <>
                 <Layers size={16} aria-hidden="true" />
                 Create Topic
