@@ -2,6 +2,7 @@ import {
   ORGANIZATION_DASHBOARD,
   STUDENT_DASHBOARD,
   SUPER_ADMIN_DASHBOARD,
+  TEACHER_DASHBOARD,
 } from "../../app/roleRoutes";
 
 export const ROLE_NAV = {
@@ -22,6 +23,7 @@ export const ROLE_NAV = {
       { label: "Employee", to: `${ORGANIZATION_DASHBOARD}/employee`, icon: "users" },
       { label: "Teacher", to: `${ORGANIZATION_DASHBOARD}/teacher`, icon: "teacher" },
       { label: "Student", to: `${ORGANIZATION_DASHBOARD}/student`, icon: "student" },
+      { label: "Question Bank", to: `${ORGANIZATION_DASHBOARD}/questions`, icon: "question-bank" },
       {
         label: "Taxonomy",
         to: `${ORGANIZATION_DASHBOARD}/taxonomy`,
@@ -41,6 +43,7 @@ export const ROLE_NAV = {
       { label: "Dashboard", to: SUPER_ADMIN_DASHBOARD, icon: "dashboard", end: true },
       { label: "Organizations / Tenants", to: `${SUPER_ADMIN_DASHBOARD}/organizations`, icon: "building", end: true },
       { label: "Users", to: `${SUPER_ADMIN_DASHBOARD}/users`, icon: "users", end: true },
+      { label: "Question Bank", to: `${SUPER_ADMIN_DASHBOARD}/questions`, icon: "question-bank", end: true },
       { label: "Teachers", to: `${SUPER_ADMIN_DASHBOARD}/teachers`, icon: "teacher", end: true },
       { label: "Students", to: `${SUPER_ADMIN_DASHBOARD}/students`, icon: "student", end: true },
       { label: "Subscriptions & Plans", to: `${SUPER_ADMIN_DASHBOARD}/subscriptions`, icon: "subscription", end: true },
@@ -56,6 +59,15 @@ export const ROLE_NAV = {
       },
       { label: "Reports & Analytics", to: `${SUPER_ADMIN_DASHBOARD}/analytics`, icon: "analytics", end: true },
       { label: "Platform Settings", to: `${SUPER_ADMIN_DASHBOARD}/settings`, icon: "settings", end: true },
+    ],
+  },
+  TEACHER: {
+    label: "Teacher",
+    dashboard: TEACHER_DASHBOARD,
+    nav: [
+      { label: "Dashboard", to: TEACHER_DASHBOARD, icon: "dashboard", end: true },
+      { label: "Question Bank", to: `${TEACHER_DASHBOARD}/questions`, icon: "question-bank" },
+      { label: "Settings", to: `${TEACHER_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },
 };

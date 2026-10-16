@@ -9,11 +9,13 @@
  */
 
 export const STUDENT_DASHBOARD = "/student/dashboard";
+export const TEACHER_DASHBOARD = "/teacher/dashboard";
 export const ORGANIZATION_DASHBOARD = "/organization/dashboard";
 export const SUPER_ADMIN_DASHBOARD = "/super-admin/dashboard";
 
 const ROLE_HOME = {
   STUDENT: STUDENT_DASHBOARD,
+  TEACHER: TEACHER_DASHBOARD,
   ADMIN: ORGANIZATION_DASHBOARD,
   SUPER_ADMIN: SUPER_ADMIN_DASHBOARD,
 };

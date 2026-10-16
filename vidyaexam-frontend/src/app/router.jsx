@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 
 import MainLayout from "./layouts/MainLayout";
@@ -10,10 +11,16 @@ import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 
 import RequireRole from "./RequireRole";
 import StudentDashboard from "../features/student/pages/StudentDashboard";
-import { STUDENT_DASHBOARD, SUPER_ADMIN_DASHBOARD } from "./roleRoutes";
+import { STUDENT_DASHBOARD, SUPER_ADMIN_DASHBOARD, TEACHER_DASHBOARD } from "./roleRoutes";
 import OrganizationDashboard from "../features/organization-admin/pages/OrganizationDashboard";
 import SuperAdminDashboard from "../features/super-admin/pages/SuperAdminDashboard";
 import UserSettings from "../features/account/pages/UserSettings";
+import TeacherDashboard from "../features/teacher/pages/TeacherDashboard";
+const QuestionBankPage = lazy(() => import("../features/question-bank/pages/QuestionBankPage"));
+
+function QuestionBankRoute({ initialCreate = false }) {
+  return <Suspense fallback={<p className="qb-loading" role="status">Loading Question Bank…</p>}><QuestionBankPage initialCreate={initialCreate} /></Suspense>;
+}
 
 export default function AppRouter() {
   return (
@@ -52,6 +59,30 @@ export default function AppRouter() {
               </MainLayout>
             </RequireRole>
           }
+        />
+        <Route
+          path={`${TEACHER_DASHBOARD}/settings`}
+          element={<RequireRole role="TEACHER"><MainLayout><UserSettings /></MainLayout></RequireRole>}
+        />
+        <Route
+          path={`${TEACHER_DASHBOARD}/questions/create`}
+          element={<RequireRole role="TEACHER"><MainLayout><QuestionBankRoute initialCreate /></MainLayout></RequireRole>}
+        />
+        <Route
+          path={`${TEACHER_DASHBOARD}/questions`}
+          element={<RequireRole role="TEACHER"><MainLayout><QuestionBankRoute /></MainLayout></RequireRole>}
+        />
+        <Route
+          path={TEACHER_DASHBOARD}
+          element={<RequireRole role="TEACHER"><MainLayout><TeacherDashboard /></MainLayout></RequireRole>}
+        />
+        <Route
+          path="/organization/dashboard/questions"
+          element={<RequireRole role="ADMIN"><MainLayout><QuestionBankRoute /></MainLayout></RequireRole>}
+        />
+        <Route
+          path="/organization/dashboard/questions/create"
+          element={<RequireRole role="ADMIN"><MainLayout><QuestionBankRoute initialCreate /></MainLayout></RequireRole>}
         />
         <Route
           path="/organization/dashboard/:view?/:tab?"

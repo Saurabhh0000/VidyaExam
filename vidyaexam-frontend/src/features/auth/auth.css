@@ -271,11 +271,16 @@
     display: grid;
     gap: 0.1em;
     margin: 0 0 0.85rem;
+    color: var(--hero-fg);
     font-family: var(--font-heading);
     font-size: clamp(1.7rem, 2.7vw, 2.7rem);
     font-weight: 500;
     line-height: 1.12;
     letter-spacing: -0.02em;
+  }
+
+  .ve-auth__headline span:last-child {
+    color: var(--hero-soft);
   }
 
   .ve-auth__lede {

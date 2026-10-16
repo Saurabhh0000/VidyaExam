@@ -41,6 +41,7 @@ export const MENU_ICONS = {
   category: Layers,
   subject: Library,
   topic: FileText,
+  "question-bank": FileText,
 };
 
 export function getInitials(name, email) {
