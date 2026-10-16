@@ -80,25 +80,6 @@ function PlanCard({ plan, category, index }) {
   );
 }
 
-function PlanSkeleton() {
-  return (
-    <ul className="hm-plans" aria-hidden="true">
-      {[0, 1, 2].map((n) => (
-        <li key={n} className="hm-plan">
-          <div className="hm-plan-card hm-plan-card--skeleton">
-            <span className="hm-skel hm-skel--sm" />
-            <span className="hm-skel hm-skel--lg" />
-            <span className="hm-skel" />
-            <span className="hm-skel" />
-            <span className="hm-skel" />
-            <span className="hm-skel hm-skel--btn" />
-          </div>
-        </li>
-      ))}
-    </ul>
-  );
-}
-
 export default function PricingSection() {
   const { status, plans, errorKind, retry } = usePlans();
   const [category, setCategory] = useState("individual");
@@ -199,7 +180,7 @@ export default function PricingSection() {
           aria-labelledby={tabId(category)}
           aria-busy={status === "loading"}
           className="hm-pricing-panel">
-          {status === "loading" && <PlanSkeleton />}
+          {status === "loading" && <p className="pricing-loading-message">Loading plans…</p>}
 
           {status === "error" && (
             <div className="hm-pricing-state" role="alert">

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { lazy, Suspense, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BookOpen,
@@ -9,12 +9,10 @@ import {
   ChevronsLeft,
   ChevronsRight,
   CircleAlert,
-  AlertTriangle,
   Download,
   FileDown,
   FileSpreadsheet,
   GraduationCap,
-  LoaderCircle,
   Pencil,
   Plus,
   ShieldCheck,
@@ -34,10 +32,14 @@ import toast from "../../../shared/components/ui/toast";
 
 import { endSession } from "../../auth/state/sessionStore";
 import useAuthState from "../../auth/utils/useAuthState";
+import { ORGANIZATION_DASHBOARD } from "../../../app/roleRoutes";
 import { isValidMobile } from "../../auth/utils/registration";
 import { createOrganizationMember, deleteTenantUser, getOrganizationUsers, updateTenantUser } from "../services/organization.service";
 import Modal from "../../../shared/components/ui/Modal";
+import UserSettings from "../../account/pages/UserSettings";
 import "../styles/organization-dashboard.css";
+
+const TaxonomySection = lazy(() => import("../../super-admin/components/TaxonomySection"));
 
 const VIEW_INFO = {
   employee: { title: "Employees", singular: "employee", description: "Review employee access for your organization." },
@@ -402,7 +404,7 @@ function BulkMemberModal({ onClose, onCompleted, tenantAvailable }) {
       <div className="org-bulk-table-wrap"><table className="org-bulk-table"><thead><tr><th>CSV row</th><th>Name</th><th>Email</th><th>Mobile</th><th>Role</th><th>Result</th></tr></thead><tbody>{rows.map((row) => <tr key={row.rowNumber}><td>{row.rowNumber}</td><td>{row.full_name || "—"}</td><td>{row.email || "—"}</td><td>{row.mobile_no || "—"}</td><td>{row.role_name === "STUDENT" ? "Student" : row.role_name === "TEACHER" ? "Teacher" : row.role_name || "—"}</td><td><span className={`org-bulk-row-status is-${row.status}`}>{row.status === "ready" ? "Ready" : row.status === "uploading" ? "Adding…" : row.status === "success" ? "Added" : row.status === "invalid" ? row.error : row.error}</span></td></tr>)}</tbody></table></div>
       <p className="org-bulk-security-note">Passwords are not shown in the preview or result table. Only valid rows are submitted.</p>
     </>}
-    <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={uploading}>{finished ? "Close" : "Cancel"}</button><button type="button" className="org-dashboard-button org-dashboard-button--primary" onClick={uploadRows} disabled={uploading || !readyCount || !tenantAvailable || Boolean(fileError) || finished} aria-busy={uploading}>{uploading ? <><LoaderCircle size={16} />Adding {processed + 1} of {uploadTotal}…</> : finished ? "Upload completed" : `Add ${readyCount || "valid"} members`}</button></div>
+    <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={uploading}>{finished ? "Close" : "Cancel"}</button><button type="button" className="org-dashboard-button org-dashboard-button--primary" onClick={uploadRows} disabled={uploading || !readyCount || !tenantAvailable || Boolean(fileError) || finished} aria-busy={uploading}>{uploading ? `Adding ${processed + 1} of ${uploadTotal}…` : finished ? "Upload completed" : `Add ${readyCount || "valid"} members`}</button></div>
   </Modal>;
 }
 
@@ -412,7 +414,7 @@ const TableShell = styled.div`
   .rdt_TableHeadRow { border-bottom: 1px solid #e2eae9; }
   .rdt_TableRow { transition: background-color 140ms ease; }
   .rdt_TableRow:hover { background: #f4faf8; }
-  .rdt_Pagination { gap: 8px; padding-inline: 12px; color: #64748b; font-family: Inter, Manrope, system-ui, sans-serif; font-size: 13px; }
+  .rdt_Pagination { gap: 8px; padding-inline: 12px; color: #64748b; font-family: var(--font-family-base); font-size: 13px; }
   .rdt_Pagination select { min-height: 38px; padding: 0 30px 0 11px; color: #172b4d; background-color: #fff; border: 1px solid #dce6e5; border-radius: 9px; font: inherit; }
   .rdt_Pagination button { width: 34px; height: 34px; color: #52637a; border-radius: 8px; transition: color 140ms ease, background-color 140ms ease; }
   .rdt_Pagination button:hover:not(:disabled) { color: #0f766e; background: #e5f5f2; }
@@ -630,19 +632,17 @@ function MemberActionModal({ mode, member, tenantId, user, onClose, onCompleted 
     mobile_no: member?.mobile_no || "",
     role_name: String(member?.role_name || "TEACHER").toUpperCase(),
     membership_active: member?.mapping_is_active !== false,
-    password: "",
   }));
-  const [showPassword, setShowPassword] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
   const requestLock = useRef(false);
   const formId = useId();
   const name = member?.full_name || "this user";
   const roleOptions = [
-    { value: "ADMIN", label: "Admin" },
     { value: "TEACHER", label: "Teacher" },
     { value: "STUDENT", label: "Student" },
   ];
+  const isExistingAdmin = String(member?.role_name || "").toUpperCase() === "ADMIN";
   const membershipOptions = [
     { value: "active", label: "Active in organization" },
     { value: "inactive", label: "Inactive in organization" },
@@ -664,8 +664,7 @@ function MemberActionModal({ mode, member, tenantId, user, onClose, onCompleted 
     if (!fullName) validationMessage = "Enter the user's full name.";
     else if (!email || email.length > 254 || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email)) validationMessage = "Enter a valid email address.";
     else if (!mobile || !isValidMobile(mobile)) validationMessage = "Enter a valid 10-digit mobile number.";
-    else if (!roleOptions.some((option) => option.value === form.role_name)) validationMessage = "Choose a valid role.";
-    else if (form.password && (form.password.length < 8 || new TextEncoder().encode(form.password).length > 72)) validationMessage = "A new password must be at least 8 characters and no more than 72 UTF-8 bytes.";
+    else if (!isExistingAdmin && !roleOptions.some((option) => option.value === form.role_name)) validationMessage = "Choose a valid role.";
 
     if (validationMessage) {
       setFormError(validationMessage);
@@ -686,7 +685,6 @@ function MemberActionModal({ mode, member, tenantId, user, onClose, onCompleted 
     if (mobile !== String(member?.mobile_no || "").trim()) payload.mobile_no = mobile;
     if (form.role_name !== String(member?.role_name || "").toUpperCase()) payload.role_name = form.role_name;
     if (form.membership_active !== (member?.mapping_is_active !== false)) payload.is_active = form.membership_active;
-    if (form.password) payload.password = form.password;
     if (Object.keys(payload).length === 0) {
       toast.info("No changes to save.");
       onClose();
@@ -741,21 +739,16 @@ function MemberActionModal({ mode, member, tenantId, user, onClose, onCompleted 
   }
 
   const footer = isDelete
-    ? <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="button" className="org-dashboard-button org-delete-confirm" onClick={confirmDelete} disabled={submitting} aria-busy={submitting}>{submitting && <LoaderCircle size={16} className="org-member-spinner" />}{submitting ? "Removing…" : "Yes, Delete User"}</button></div>
-    : <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="submit" form={formId} className="org-dashboard-button org-dashboard-button--primary org-member-button--submit" disabled={submitting} aria-busy={submitting}>{submitting && <LoaderCircle size={16} className="org-member-spinner" />}{submitting ? "Saving changes…" : "Save Changes"}</button></div>;
+    ? <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="button" className="org-dashboard-button org-delete-confirm" onClick={confirmDelete} disabled={submitting} aria-busy={submitting}>{submitting ? "Deleting…" : "Delete User"}</button></div>
+    : <div className="org-member-form-actions"><button type="button" className="org-dashboard-button org-dashboard-button--quiet" onClick={closeSafely} disabled={submitting}>Cancel</button><button type="submit" form={formId} className="org-dashboard-button org-dashboard-button--primary org-member-button--submit" disabled={submitting} aria-busy={submitting}>{submitting ? "Saving changes…" : "Save Changes"}</button></div>;
 
-  return <Modal isOpen onClose={closeSafely} closeOnEscape={!submitting} closeOnOverlay={!submitting} title={isDelete ? "Delete User?" : "Edit User"} description={isDelete ? `Are you sure you want to remove ${name} from this organization? Their organization access will be deactivated.` : "Update this user's details, role, and organization access."} size={isDelete ? "sm" : "lg"} className="org-member-modal org-member-action-modal" footer={footer}>
-    {isDelete ? <div className="org-member-delete-content">
-      <div className="org-member-delete-warning"><span><AlertTriangle size={21} /></span><p>This action deactivates the user's membership in this organization. It does not permanently delete their account.</p></div>
-      <div className="org-member-delete-summary"><span className="org-user-avatar">{initials(member?.full_name)}</span><div><strong>{member?.full_name || "Unnamed user"}</strong><span>{member?.email || "No email provided"}</span></div><span className="org-role-badge">{roleLabel(member?.role_name)}</span></div>
-      <p className="org-member-delete-note">You can review this action before confirming. The directory will update after the server confirms the change.</p>
-    </div> : <form id={formId} className="org-member-edit-form" onSubmit={saveChanges} noValidate>
+  return <Modal isOpen onClose={closeSafely} closeOnEscape={!submitting} closeOnOverlay={!submitting} title={isDelete ? "Delete User?" : "Edit User"} description={isDelete ? "This will deactivate their access to your organization." : "Update this user's details, role, and organization access."} size={isDelete ? "sm" : "lg"} className="org-member-modal org-member-action-modal" footer={footer}>
+    {isDelete ? <div className="org-member-delete-content"><p>Are you sure you want to delete <strong>{name}</strong>?</p><small>Their account will not be permanently deleted.</small></div> : <form id={formId} className="org-member-edit-form" onSubmit={saveChanges} noValidate>
       <label className="org-member-field"><span>Full Name <b>*</b></span><input autoComplete="name" value={form.full_name} onChange={(event) => updateField("full_name", event.target.value)} aria-invalid={Boolean(formError && !form.full_name.trim())} required /></label>
       <label className="org-member-field"><span>Email Address <b>*</b></span><input type="email" autoComplete="email" value={form.email} onChange={(event) => updateField("email", event.target.value)} aria-invalid={Boolean(formError && (!form.email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(form.email.trim())))} required /></label>
       <label className="org-member-field"><span>Mobile Number <b>*</b></span><input type="tel" inputMode="numeric" autoComplete="tel" value={form.mobile_no} onChange={(event) => updateField("mobile_no", event.target.value.replace(/\D/g, "").slice(0, 10))} aria-invalid={Boolean(formError && !isValidMobile(form.mobile_no))} required /></label>
-      <label className="org-member-field"><span>Role <b>*</b></span><MenuSelect value={form.role_name} options={roleOptions} onChange={(value) => updateField("role_name", value)} ariaLabel="User role" className="org-member-role-select" /></label>
+      {isExistingAdmin ? <label className="org-member-field"><span>Role</span><input value="Admin" readOnly aria-label="Current role: Admin" /></label> : <label className="org-member-field"><span>Role <b>*</b></span><MenuSelect value={form.role_name} options={roleOptions} onChange={(value) => updateField("role_name", value)} ariaLabel="User role" className="org-member-role-select" /></label>}
       <label className="org-member-field"><span>Organization membership</span><MenuSelect value={form.membership_active ? "active" : "inactive"} options={membershipOptions} onChange={(value) => updateField("membership_active", value === "active")} ariaLabel="Organization membership status" className="org-member-role-select" /></label>
-      <label className="org-member-field org-member-password-field"><span>New Password <small>(optional)</small></span><span className="org-member-password"><input type={showPassword ? "text" : "password"} autoComplete="new-password" value={form.password} onChange={(event) => updateField("password", event.target.value)} aria-invalid={Boolean(formError && form.password && (form.password.length < 8 || new TextEncoder().encode(form.password).length > 72))} /><button type="button" aria-label={showPassword ? "Hide new password" : "Show new password"} onClick={() => setShowPassword((visible) => !visible)}>{showPassword ? <EyeOff size={18} /> : <Eye size={18} />}</button></span><small className="org-member-hint">Leave blank to keep the existing password. Use 8–72 UTF-8 bytes.</small></label>
       {formError && <p className="org-member-form-error" role="alert">{formError}</p>}
     </form>}
   </Modal>;
@@ -894,7 +887,7 @@ function UserDirectory({ view, user, onAddMember, onReloadReady, onQuotaChange }
         <label className="org-date-control"><CalendarDays size={15} /><span className="org-visually-hidden">Joined to date</span><input aria-label="Joined to" type="date" value={endDate} min={startDate || undefined} onChange={(event) => setEndDate(event.target.value)} /></label>
         <button type="button" className="org-clear-filters" onClick={clearFilters}>Clear filters</button>
       </div>
-      {error ? <div className="org-users-state org-users-state--error"><span><CircleAlert size={21} /></span><h3>Couldn’t load users</h3><p>{error}</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={reload}>Retry</button></div> : loading ? <div className="org-users-loading"><LoaderCircle size={21} /><span>Loading organization records…</span><div className="org-users-skeleton" /></div> : !hasUsers ? <div className="org-users-state"><span>{view === "student" ? <GraduationCap size={22} /> : view === "teacher" ? <BookOpen size={22} /> : <Users size={22} />}</span><h3>{view === "student" ? "No students yet" : view === "teacher" ? "No teachers yet" : "No organization users yet"}</h3><p>{view === "student" ? "Student records will appear here when they are available in this directory." : view === "teacher" ? "Teacher records will appear here when they are available in this directory." : "Add a teacher or student to start building your directory."}</p>{view === "employee" && <button className="org-dashboard-button org-dashboard-button--primary" onClick={() => onAddMember("TEACHER")}><Plus size={16} />Add Member</button>}</div> : filteredUsers.length === 0 ? <div className="org-users-state"><span><Search size={21} /></span><h3>No users match your filters.</h3><p>Try another search or clear the selected filters.</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={clearFilters}>Clear filters</button></div> : <TableShell><DataTable keyField="mapping_id" columns={columns} data={filteredUsers} customStyles={TABLE_STYLES} pagination paginationPerPage={10} paginationRowsPerPageOptions={[5, 10, 20, 50]} paginationResetDefaultPage={paginationReset} paginationComponent={OrganizationPagination} responsive highlightOnHover persistTableHead /></TableShell>}
+      {error ? <div className="org-users-state org-users-state--error"><span><CircleAlert size={21} /></span><h3>Couldn’t load users</h3><p>{error}</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={reload}>Retry</button></div> : loading ? <p className="org-users-loading" role="status">Loading organization users…</p> : !hasUsers ? <div className="org-users-state"><span>{view === "student" ? <GraduationCap size={22} /> : view === "teacher" ? <BookOpen size={22} /> : <Users size={22} />}</span><h3>{view === "student" ? "No students yet" : view === "teacher" ? "No teachers yet" : "No organization users yet"}</h3><p>{view === "student" ? "Student records will appear here when they are available in this directory." : view === "teacher" ? "Teacher records will appear here when they are available in this directory." : "Add a teacher or student to start building your directory."}</p>{view === "employee" && <button className="org-dashboard-button org-dashboard-button--primary" onClick={() => onAddMember("TEACHER")}><Plus size={16} />Add Member</button>}</div> : filteredUsers.length === 0 ? <div className="org-users-state"><span><Search size={21} /></span><h3>No users match your filters.</h3><p>Try another search or clear the selected filters.</p><button className="org-dashboard-button org-dashboard-button--secondary" onClick={clearFilters}>Clear filters</button></div> : <TableShell><DataTable keyField="mapping_id" columns={columns} data={filteredUsers} customStyles={TABLE_STYLES} pagination paginationPerPage={10} paginationRowsPerPageOptions={[5, 10, 20, 50]} paginationResetDefaultPage={paginationReset} paginationComponent={OrganizationPagination} responsive highlightOnHover persistTableHead /></TableShell>}
     </section>
     {modalMode && selected && <MemberActionModal key={`${modalMode}-${selected.user_id || selected.mapping_id || "member"}`} mode={modalMode} member={selected} tenantId={tenantId} user={user} onCompleted={reload} onClose={() => { setModalMode(null); setSelected(null); }} />}
     {bulkOpen && <BulkMemberModal tenantAvailable={Boolean(tenantId)} onCompleted={reload} onClose={() => setBulkOpen(false)} />}
@@ -903,7 +896,7 @@ function UserDirectory({ view, user, onAddMember, onReloadReady, onQuotaChange }
 
 export default function OrganizationDashboard() {
   const { user } = useAuthState();
-  const { view: routeView } = useParams();
+  const { view: routeView, tab: routeTab } = useParams();
   const navigate = useNavigate();
   const [modalRole, setModalRole] = useState(null);
   const [reloadUsers, setReloadUsers] = useState(() => () => {});
@@ -912,7 +905,7 @@ export default function OrganizationDashboard() {
   const firstName = (user?.name || "Organization Admin").trim().split(/\s+/)[0];
 
   return <div className="organization-dashboard"><div className="org-dashboard-container">
-    {view === "teacher" || view === "student" ? <RoleDirectoryEmptyState view={view} organizationName={user?.activeTenantName || "Your organization"} /> : view ? <UserDirectory view={view} user={user} onAddMember={setModalRole} onReloadReady={setReloadUsers} onQuotaChange={setQuota} /> : <section className="org-dashboard-welcome">
+    {routeView === "settings" ? <UserSettings /> : routeView === "taxonomy" ? <Suspense fallback={<p className="org-users-loading" role="status">Loading taxonomy…</p>}><TaxonomySection initialTab={routeTab || "subjects"} taxonomyBasePath={`${ORGANIZATION_DASHBOARD}/taxonomy`} showCategories={false} /></Suspense> : view === "teacher" || view === "student" ? <RoleDirectoryEmptyState view={view} organizationName={user?.activeTenantName || "Your organization"} /> : view ? <UserDirectory view={view} user={user} onAddMember={setModalRole} onReloadReady={setReloadUsers} onQuotaChange={setQuota} /> : <section className="org-dashboard-welcome">
       <div className="org-dashboard-welcome-copy">
         <span className="org-dashboard-eyebrow"><Building2 size={14} aria-hidden="true" /> ORGANIZATION WORKSPACE</span>
         <h1>Organization Dashboard</h1>
@@ -924,7 +917,7 @@ export default function OrganizationDashboard() {
         <button className="org-dashboard-button org-dashboard-button--secondary" onClick={() => navigate("/organization/dashboard/employee")}>View Employees <Users size={16} aria-hidden="true" /></button>
       </div>
     </section>}
-    {!view && <section className="org-dashboard-lower-grid">
+    {!view && !["taxonomy", "settings"].includes(routeView) && <section className="org-dashboard-lower-grid">
       <article className="org-info-panel"><div className="org-panel-title"><span className="org-panel-icon"><Users size={18} aria-hidden="true" /></span><div><h2>Employee directory</h2><p>View organization accounts, subscription capacity, and member activity.</p></div></div><button className="org-text-action" onClick={() => navigate("/organization/dashboard/employee")}>Open employee directory <span aria-hidden="true">→</span></button></article>
       <aside className="org-info-panel org-quick-panel"><div className="org-panel-title"><span className="org-panel-icon"><ShieldCheck size={18} aria-hidden="true" /></span><div><h2>Quick actions</h2><p>Common organization tasks.</p></div></div><div className="org-shortcuts">
         <button className="org-shortcut" onClick={() => setModalRole("TEACHER")}><span className="org-shortcut-icon"><BookOpen size={18} aria-hidden="true" /></span><span className="org-shortcut-copy"><strong>Add a teacher</strong><small>Create a teacher account for your team.</small></span><Plus size={16} aria-hidden="true" /></button>

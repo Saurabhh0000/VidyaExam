@@ -66,8 +66,8 @@ body {
   font-family: var(--font-body);
   color: var(--color-text);
   background: #ffffff;
-  font-size: 15px;
-  line-height: 1.65;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-body);
 }
 
 body,
@@ -111,29 +111,35 @@ p {
 
 h1,
 h2,
-h3 {
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-heading);
   color: var(--color-navy);
-  line-height: 1.15;
-  letter-spacing: -0.04em;
+  line-height: var(--line-height-tight);
+  letter-spacing: var(--letter-spacing-heading);
+  margin-bottom: var(--heading-margin-end);
 }
 
 h1 {
-  font-size: clamp(2.7rem, 5.2vw, 4.35rem);
-  font-weight: 800;
+  font-size: var(--font-size-display);
+  font-weight: var(--font-weight-bold);
 }
 
 h2 {
-  font-size: clamp(2rem, 3.8vw, 3.05rem);
-  font-weight: 750;
+  font-size: clamp(var(--font-size-2xl), 3vw, var(--font-size-4xl));
+  font-weight: var(--font-weight-bold);
 }
 
 h3 {
-  font-size: 1.2rem;
-  font-weight: 700;
+  font-size: var(--font-size-xl);
+  font-weight: var(--font-weight-semibold);
 }
 
 p {
   color: var(--color-muted);
+  margin-bottom: var(--paragraph-spacing);
 }
 
 .container {

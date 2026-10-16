@@ -1,5 +1,3 @@
-import Loader from "../../../shared/components/ui/Loader";
-
 /** Primary button: same width/height while loading, so nothing shifts. */
 export default function SubmitButton({ busy, label, busyLabel }) {
   return (
@@ -9,10 +7,7 @@ export default function SubmitButton({ busy, label, busyLabel }) {
       disabled={busy}
       aria-busy={busy}>
       {busy ? (
-        <>
-          <Loader variant="button" size="sm" label={busyLabel} />
-          <span>{busyLabel}…</span>
-        </>
+        <span>{busyLabel}…</span>
       ) : (
         label
       )}

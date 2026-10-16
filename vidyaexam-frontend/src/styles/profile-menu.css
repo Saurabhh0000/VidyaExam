@@ -251,8 +251,6 @@
 .site-header .menu-item--danger:hover:not(:disabled),
 .site-header .menu-item--danger:focus-visible { background: #fef3f2; }
 .site-header .menu-item--danger:disabled { opacity: 0.7; cursor: progress; }
-.site-header .profile-logout-spinner { animation: hdr-spin 0.8s linear infinite; }
-@keyframes hdr-spin { to { transform: rotate(360deg); } }
 
 /* ── Tablet: avatar-only trigger so nav links are never crowded ── */
 @media (min-width: 961px) and (max-width: 1100px) {
@@ -298,5 +296,4 @@
 
 @media (prefers-reduced-motion: reduce) {
   .site-header .profile-menu { transform: none; }
-  .site-header .profile-logout-spinner { animation: none; }
 }

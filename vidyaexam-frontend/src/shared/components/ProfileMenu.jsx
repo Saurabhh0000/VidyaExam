@@ -9,13 +9,12 @@ import {
   GraduationCap,
   History,
   LayoutDashboard,
-  LoaderCircle,
   LogOut,
   Settings,
   TrendingUp,
   UserRound,
   Users,
-  FolderTree,
+  ListTree,
   Layers,
   Library,
   FileText,
@@ -38,7 +37,7 @@ export const MENU_ICONS = {
   student: GraduationCap,
   building: Building2,
   analytics: ChartNoAxesCombined,
-  taxonomy: FolderTree,
+  taxonomy: ListTree,
   category: Layers,
   subject: Library,
   topic: FileText,
@@ -290,15 +289,7 @@ export default function ProfileMenu({
               disabled={loggingOut}
               aria-busy={loggingOut}
               onClick={onLogout}>
-              {loggingOut ? (
-                <LoaderCircle
-                  size={18}
-                  className="profile-logout-spinner"
-                  aria-hidden="true"
-                />
-              ) : (
-                <LogOut size={18} aria-hidden="true" />
-              )}
+              <LogOut size={18} aria-hidden="true" />
               {loggingOut ? "Signing out..." : "Sign out"}
             </button>
           </>

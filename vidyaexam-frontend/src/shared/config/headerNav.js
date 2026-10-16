@@ -7,10 +7,12 @@ import {
 export const ROLE_NAV = {
   STUDENT: {
     label: "Student",
-    // Real route. The profile menu adds "My Dashboard" from this, and the logo links here.
+    // Keep the main student routes together in the workspace navigation.
     dashboard: STUDENT_DASHBOARD,
-    // No `nav`: a "Dashboard" link here would duplicate the menu's "My Dashboard"
-    // (the mobile drawer shows both lists together).
+    nav: [
+      { label: "Dashboard", to: STUDENT_DASHBOARD, icon: "dashboard", end: true },
+      { label: "Settings", to: `${STUDENT_DASHBOARD}/settings`, icon: "settings", end: true },
+    ],
   },
   ADMIN: {
     label: "Administrator",
@@ -20,6 +22,16 @@ export const ROLE_NAV = {
       { label: "Employee", to: `${ORGANIZATION_DASHBOARD}/employee`, icon: "users" },
       { label: "Teacher", to: `${ORGANIZATION_DASHBOARD}/teacher`, icon: "teacher" },
       { label: "Student", to: `${ORGANIZATION_DASHBOARD}/student`, icon: "student" },
+      {
+        label: "Taxonomy",
+        to: `${ORGANIZATION_DASHBOARD}/taxonomy`,
+        icon: "taxonomy",
+        children: [
+          { label: "Subjects", to: `${ORGANIZATION_DASHBOARD}/taxonomy/subjects`, icon: "subject" },
+          { label: "Topics", to: `${ORGANIZATION_DASHBOARD}/taxonomy/topics`, icon: "topic" },
+        ],
+      },
+      { label: "Settings", to: `${ORGANIZATION_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },
   SUPER_ADMIN: {

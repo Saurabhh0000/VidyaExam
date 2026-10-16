@@ -329,7 +329,6 @@ export default function TenantsSection() {
             >
               <RefreshCw
                 size={16}
-                className={isRefreshing || status === "loading" ? "sa-spin" : ""}
                 aria-hidden="true"
               />
             </button>
@@ -355,11 +354,7 @@ export default function TenantsSection() {
 
         {/* Content Area */}
         {status === "loading" && (
-          <div className="sa-tenants-loading" aria-label="Loading organizations" aria-busy="true">
-            <div className="sa-plan-skeleton" />
-            <div className="sa-plan-skeleton" />
-            <div className="sa-plan-skeleton" />
-          </div>
+          <p className="sa-loading-message" role="status">Loading organizations…</p>
         )}
 
         {status === "error" && (

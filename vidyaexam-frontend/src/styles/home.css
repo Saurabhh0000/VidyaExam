@@ -1,7 +1,7 @@
 /* VidyaExam homepage. Requires variables.css. Header and Footer have their own stylesheets.
    Hover/lift uses the individual `translate` property so it never fights the `transform`
    used by reveal and parallax. */
-.home { background: var(--bg); color: var(--navy); font-family: "Inter", "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; line-height: 1.6; overflow-x: clip; }
+.home { background: var(--bg); color: var(--navy); font-family: var(--font-family-base); line-height: var(--line-height-body); overflow-x: clip; }
 .home *, .home *::before, .home *::after { box-sizing: border-box; }
 .home h1, .home h2, .home h3, .home p, .home ul, .home ol { margin: 0; padding: 0; }
 .home ul, .home ol { list-style: none; }
@@ -16,9 +16,9 @@
 .hm-section--navy::after { content: ""; position: absolute; inset: 0; pointer-events: none; background: radial-gradient(640px 320px at 0% 0%, rgba(15,118,110,.35), transparent 70%); }
 .hm-section--cta { padding-top: 0; }
 .hm-head { max-width: 720px; margin-bottom: clamp(28px, 5vw, 56px); }
-.home h1 { font-size: clamp(2.4rem, 5.8vw, 4.5rem); line-height: 1.03; letter-spacing: -0.035em; font-weight: 800; max-width: 14ch; }
-.home h2 { font-size: clamp(1.8rem, 4vw, 3rem); line-height: 1.1; letter-spacing: -0.025em; font-weight: 750; }
-.home h3 { font-size: 1.15rem; line-height: 1.3; font-weight: 700; letter-spacing: -0.01em; }
+.home h1 { font-size: clamp(2rem, 5vw, 3.5rem); line-height: var(--line-height-tight); letter-spacing: var(--letter-spacing-heading); font-weight: var(--font-weight-bold); max-width: 14ch; }
+.home h2 { font-size: clamp(1.75rem, 3.4vw, 2.5rem); line-height: var(--line-height-tight); letter-spacing: var(--letter-spacing-heading); font-weight: var(--font-weight-bold); }
+.home h3 { font-size: var(--font-size-lg); line-height: var(--line-height-heading); font-weight: var(--font-weight-semibold); letter-spacing: -0.01em; }
 .hm-lead { color: var(--muted); font-size: clamp(1rem, 1.5vw, 1.125rem); margin-top: 16px; max-width: 56ch; }
 .hm-accent { color: var(--teal); }
 .hm-accent-light { color: #5fd0c3; }

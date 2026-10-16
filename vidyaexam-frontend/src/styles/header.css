@@ -14,7 +14,7 @@
   --sidebar-rail-w: 72px;
   --sidebar-drawer-w: 288px;
   /* Point this at your app font variable if you have one. */
-  --hdr-font: var(--font-sans, "Plus Jakarta Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif);
+  --hdr-font: var(--font-family-base);
 }
 
 .site-header,
@@ -416,7 +416,7 @@
 }
 
 .sidebar-chevron.is-open {
-  transform: rotate(180deg);
+  transform: rotate(90deg);
   opacity: 1;
 }
 

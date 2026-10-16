@@ -1,4 +1,34 @@
 :root {
+  /* Shared VidyaExam typography */
+  --font-heading: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-family-base: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --font-body: var(--font-family-base);
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.8125rem;
+  --font-size-base: 0.9375rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.125rem;
+  --font-size-xl: 1.25rem;
+  --font-size-2xl: 1.5rem;
+  --font-size-3xl: 1.875rem;
+  --font-size-4xl: 2.25rem;
+  --font-size-display: clamp(2rem, 4vw, 3.5rem);
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+  --line-height-tight: 1.2;
+  --line-height-heading: 1.35;
+  --line-height-body: 1.6;
+  --line-height-compact: 1.4;
+  --letter-spacing-heading: -0.025em;
+  --text-primary: #172b4d;
+  --text-secondary: #475569;
+  --text-muted: #64748b;
+  --heading-margin-end: 0.75em;
+  --paragraph-spacing: 1em;
+
   --navy: #172b4d;
   --navy-dark: #10213b;
   --teal: #0f766e;
@@ -22,4 +52,14 @@
   --pad: clamp(16px, 5vw, 32px);
   --section-y: clamp(56px, 9vw, 112px);
   --header-h: 68px;
+  --font-sans: var(--font-family-base);
+  --color-text: var(--text-primary);
+  --color-muted: var(--text-muted);
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-dark);
+  --color-teal: var(--teal);
+  --color-teal-dark: var(--teal-dark);
+  --color-teal-light: var(--teal-light);
+  --container-width: var(--max);
+  --section-space: var(--section-y);
 }

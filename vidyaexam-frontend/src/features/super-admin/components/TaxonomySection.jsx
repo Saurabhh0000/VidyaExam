@@ -27,6 +27,7 @@ import CreateCategoryModal from "./taxonomy/CreateCategoryModal";
 import CreateSubjectModal from "./taxonomy/CreateSubjectModal";
 import CreateTopicModal from "./taxonomy/CreateTopicModal";
 import { SUPER_ADMIN_DASHBOARD } from "../../../app/roleRoutes";
+import "../styles/super-admin-dashboard.css";
 
 const TABS = [
   { id: "categories", label: "Exam Categories", icon: FolderGit2 },
@@ -34,7 +35,7 @@ const TABS = [
   { id: "topics", label: "Topics", icon: Layers },
 ];
 
-export default function TaxonomySection({ initialTab }) {
+export default function TaxonomySection({ initialTab, taxonomyBasePath = `${SUPER_ADMIN_DASHBOARD}/taxonomy`, showCategories = true }) {
   const { tab } = useParams();
   const navigate = useNavigate();
   const { user } = useAuthState();
@@ -42,14 +43,14 @@ export default function TaxonomySection({ initialTab }) {
   // Active tab state (synced with route /taxonomy/categories | subjects | topics)
   const activeTab = useMemo(() => {
     const rawTab = tab || initialTab || "categories";
-    if (["categories", "subjects", "topics"].includes(rawTab)) {
+    if ((showCategories || rawTab !== "categories") && ["categories", "subjects", "topics"].includes(rawTab)) {
       return rawTab;
     }
-    return "categories";
-  }, [tab, initialTab]);
+    return showCategories ? "categories" : "subjects";
+  }, [tab, initialTab, showCategories]);
 
   const handleTabChange = (newTab) => {
-    navigate(`${SUPER_ADMIN_DASHBOARD}/taxonomy/${newTab}`);
+    navigate(`${taxonomyBasePath}/${newTab}`);
   };
 
   const {
@@ -167,12 +168,13 @@ export default function TaxonomySection({ initialTab }) {
   const canCreateSubjectOrTopic = ["SUPER_ADMIN", "ADMIN", "TEACHER"].includes(
     userRole
   );
+  const visibleTabs = showCategories ? TABS : TABS.filter((item) => item.id !== "categories");
 
   return (
-    <div className="sa-taxonomy-section">
+    <div className={`sa-taxonomy-section${showCategories ? "" : " sa-taxonomy-section--organization"}`}>
       {/* Top Stat Highlights */}
       <section className="sa-tenants-stats-bar" aria-label="Taxonomy metrics">
-        <button
+        {showCategories && <button
           type="button"
           className={`sa-tenant-stat-card ${activeTab === "categories" ? "is-selected-card" : ""}`}
           onClick={() => handleTabChange("categories")}
@@ -188,7 +190,7 @@ export default function TaxonomySection({ initialTab }) {
             </strong>
             <span className="sa-tstat-meta">Platform Master</span>
           </div>
-        </button>
+        </button>}
 
         <button
           type="button"
@@ -232,7 +234,7 @@ export default function TaxonomySection({ initialTab }) {
         {/* Navigation Tabs Header */}
         <div className="sa-taxonomy-tabs-header">
           <nav className="sa-taxonomy-tabs" aria-label="Taxonomy tabs">
-            {TABS.map((tabItem) => {
+            {visibleTabs.map((tabItem) => {
               const TabIcon = tabItem.icon;
               const isActive = activeTab === tabItem.id;
               return (
@@ -411,7 +413,6 @@ export default function TaxonomySection({ initialTab }) {
             >
               <RefreshCw
                 size={16}
-                className={isRefreshing ? "sa-spin-icon" : ""}
                 aria-hidden="true"
               />
             </button>
@@ -447,11 +448,7 @@ export default function TaxonomySection({ initialTab }) {
           {activeTab === "categories" && (
             <>
               {categoriesStatus === "loading" ? (
-                <div
-                  className="sa-plan-skeleton"
-                  style={{ minHeight: "280px" }}
-                  aria-label="Loading categories"
-                />
+                <p className="sa-loading-message" role="status">Loading categories…</p>
               ) : viewMode === "table" ? (
                 <CategoriesTable categories={filteredCategories} />
               ) : (
@@ -463,11 +460,7 @@ export default function TaxonomySection({ initialTab }) {
           {activeTab === "subjects" && (
             <>
               {subjectsStatus === "loading" ? (
-                <div
-                  className="sa-plan-skeleton"
-                  style={{ minHeight: "280px" }}
-                  aria-label="Loading subjects"
-                />
+                <p className="sa-loading-message" role="status">Loading subjects…</p>
               ) : viewMode === "table" ? (
                 <SubjectsTable subjects={filteredSubjects} />
               ) : (
@@ -479,11 +472,7 @@ export default function TaxonomySection({ initialTab }) {
           {activeTab === "topics" && (
             <>
               {topicsStatus === "loading" ? (
-                <div
-                  className="sa-plan-skeleton"
-                  style={{ minHeight: "280px" }}
-                  aria-label="Loading topics"
-                />
+                <p className="sa-loading-message" role="status">Loading topics…</p>
               ) : viewMode === "table" ? (
                 <TopicsTable topics={filteredTopics} />
               ) : (
