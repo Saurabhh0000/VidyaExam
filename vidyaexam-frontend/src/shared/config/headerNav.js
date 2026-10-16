@@ -33,6 +33,16 @@ export const ROLE_NAV = {
           { label: "Topics", to: `${ORGANIZATION_DASHBOARD}/taxonomy/topics`, icon: "topic" },
         ],
       },
+      {
+        label: "Master",
+        to: `${ORGANIZATION_DASHBOARD}/master`,
+        icon: "master",
+        children: [
+          { label: "Batches", to: `${ORGANIZATION_DASHBOARD}/master/batches`, icon: "batch" },
+          { label: "Exams", to: `${ORGANIZATION_DASHBOARD}/master/exams`, icon: "exam" },
+          { label: "Sections", to: `${ORGANIZATION_DASHBOARD}/master/sections`, icon: "section" },
+        ],
+      },
       { label: "Settings", to: `${ORGANIZATION_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },
@@ -55,6 +65,16 @@ export const ROLE_NAV = {
           { label: "Categories", to: `${SUPER_ADMIN_DASHBOARD}/taxonomy/categories`, icon: "category", roles: ["SUPER_ADMIN"] },
           { label: "Subjects", to: `${SUPER_ADMIN_DASHBOARD}/taxonomy/subjects`, icon: "subject", roles: ["SUPER_ADMIN", "ADMIN", "TEACHER"] },
           { label: "Topics", to: `${SUPER_ADMIN_DASHBOARD}/taxonomy/topics`, icon: "topic", roles: ["SUPER_ADMIN", "ADMIN", "TEACHER"] },
+        ],
+      },
+      {
+        label: "Master",
+        to: `${SUPER_ADMIN_DASHBOARD}/master`,
+        icon: "master",
+        children: [
+          { label: "Batches", to: `${SUPER_ADMIN_DASHBOARD}/master/batches`, icon: "batch" },
+          { label: "Exams", to: `${SUPER_ADMIN_DASHBOARD}/master/exams`, icon: "exam" },
+          { label: "Sections", to: `${SUPER_ADMIN_DASHBOARD}/master/sections`, icon: "section" },
         ],
       },
       { label: "Reports & Analytics", to: `${SUPER_ADMIN_DASHBOARD}/analytics`, icon: "analytics", end: true },

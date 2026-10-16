@@ -1987,6 +1987,7 @@
   padding: 18px 20px;
   background: linear-gradient(180deg, #ffffff 0%, #fbfefd 100%);
   border-bottom: 1px solid var(--sa-border);
+  border-radius: 16px 16px 0 0;
   flex-wrap: wrap;
 }
 
@@ -2103,7 +2104,7 @@
   align-items: center;
   gap: 14px;
   margin: 0 0 10px;
-  padding: 16px 20px 0;
+  padding: 16px 20px 10px;
 }
 .sa-taxonomy-section .sa-toolbar-left { display: flex; align-items: center; flex: 1 1 620px; min-width: 0; gap: 12px; }
 .sa-taxonomy-section .sa-search-wrap { flex: 1 1 300px; min-width: 220px; max-width: 520px; }

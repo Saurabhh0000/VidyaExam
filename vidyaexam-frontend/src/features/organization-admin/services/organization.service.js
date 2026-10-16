@@ -46,6 +46,7 @@ export async function createOrganizationMember({
   mobile_no,
   password,
   role_name,
+  batch_id,
 }) {
   const tenantId = getTenantId();
 
@@ -59,13 +60,19 @@ export async function createOrganizationMember({
     throw new Error("Choose Teacher or Student before submitting.");
   }
 
-  // Pick only the documented API fields so UI-only values never leak through.
+  if (role_name === "STUDENT" && !batch_id) {
+    throw new Error("Please select a batch for the student.");
+  }
+
   const body = {
     full_name: full_name.trim(),
     email: email.trim(),
     mobile_no: mobile_no.trim(),
     password,
     role_name,
+    ...(role_name === "STUDENT"
+      ? { batch_id: Number(batch_id) }
+      : {}),
   };
 
   const response = await axios.post(

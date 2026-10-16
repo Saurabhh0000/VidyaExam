@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import toast from "../../../shared/components/ui/toast";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import MasterWorkspaceSection from "../../../shared/components/MasterWorkspaceSection";
+import BatchesPage from "../../batches/pages/BatchesPage";
 import useAuthState from "../../auth/utils/useAuthState";
 import { SUPER_ADMIN_DASHBOARD } from "../../../app/roleRoutes";
 import usePlans from "../../../shared/hooks/usePlans";
@@ -39,6 +41,7 @@ const SECTIONS = {
   students: { title: "Students", description: "Platform-wide student accounts and organization membership." },
   subscriptions: { title: "Subscriptions & Plans", description: "View the active individual and tenant plans configured for VidyaExam." },
   taxonomy: { title: "Taxonomy & Curriculum", description: "Manage platform exam categories, curriculum subjects, and syllabus topics." },
+  master: { title: "Master", description: "Manage batches, exams, and sections." },
   analytics: { title: "Reports & Analytics", description: "Platform activity and growth reporting." },
   settings: { title: "Platform Settings", description: "Platform-level configuration and operational settings." },
   questions: { title: "Question Bank", description: "Create, organize, and review platform and tenant questions." },
@@ -346,7 +349,7 @@ export default function SuperAdminDashboard() {
           <Overview user={user} />
         ) : sectionInfo ? (
           <>
-            {activeSection !== "questions" && <header className="sa-page-heading">
+            {!['questions', 'master'].includes(activeSection) && <header className="sa-page-heading">
               <p className="sa-eyebrow">SUPER ADMIN WORKSPACE</p>
               <h1>{sectionInfo.title}</h1>
               <p>{sectionInfo.description}</p>
@@ -369,6 +372,8 @@ export default function SuperAdminDashboard() {
               >
                 <TaxonomySection />
               </Suspense>
+            ) : activeSection === "master" ? (
+              tab === "batches" || !tab ? <BatchesPage /> : <MasterWorkspaceSection page={tab} />
             ) : activeSection === "teachers" ? (
               <Suspense
                 fallback={<BrandLoader variant="content" message="Loading teachers…" />}
