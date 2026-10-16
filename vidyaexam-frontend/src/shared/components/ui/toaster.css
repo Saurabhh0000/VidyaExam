@@ -14,8 +14,9 @@
 [data-sonner-toaster][data-x-position="right"] {
   right: max(16px, env(safe-area-inset-right)) !important;
   left: auto !important;
-  width: min(420px, calc(100vw - 32px)) !important;
-  max-width: calc(100vw - 32px) !important;
+  width: fit-content !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
+  align-items: flex-end !important;
   box-sizing: border-box !important;
 }
 
@@ -31,8 +32,9 @@
   align-items: center !important;
   gap: 12px !important;
 
-  width: 360px !important;
-  max-width: calc(100vw - 32px) !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
   min-height: 68px !important;
   box-sizing: border-box !important;
   padding: 16px 42px 16px 16px !important;
@@ -64,7 +66,9 @@
 .vidya-toast-success {
   --toast-accent: #16a34a;
   --toast-tint: #effcf4;
-  width: min(420px, calc(100vw - 32px)) !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
   min-height: 62px !important;
   padding: 12px 46px 12px 14px !important;
   gap: 12px !important;
@@ -134,7 +138,9 @@
 .vidya-toast-warning,
 .vidya-toast-info,
 .vidya-toast-loading {
-  width: min(420px, calc(100vw - 32px)) !important;
+  width: fit-content !important;
+  min-width: 0 !important;
+  max-width: min(420px, calc(100vw - 32px)) !important;
   min-height: 62px !important;
   padding: 12px 46px 12px 14px !important;
   gap: 12px !important;
@@ -203,10 +209,12 @@
 
 .vidya-toast [data-content] {
   display: flex !important;
-  flex: 1 1 auto !important;
+  flex: 0 1 auto !important;
   flex-direction: column !important;
   gap: 3px !important;
   min-width: 0 !important;
+  width: max-content !important;
+  max-width: min(300px, calc(100vw - 120px)) !important;
   padding-top: 1px !important;
 }
 
@@ -296,11 +304,15 @@
     right: max(12px, env(safe-area-inset-right)) !important;
     width: auto !important;
     max-width: none !important;
+    align-items: flex-end !important;
+    box-sizing: border-box !important;
   }
 
   .vidya-toast {
-    width: 100% !important;
+    width: fit-content !important;
+    min-width: 0 !important;
     max-width: 100% !important;
+    margin-left: auto !important;
     min-height: 62px !important;
     padding: 13px 40px 13px 12px !important;
     gap: 10px !important;
@@ -309,7 +321,9 @@
   }
 
   .vidya-toast-success {
-    width: 100% !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     min-height: 58px !important;
     padding: 11px 46px 11px 12px !important;
     gap: 10px !important;
@@ -320,7 +334,9 @@
   .vidya-toast-warning,
   .vidya-toast-info,
   .vidya-toast-loading {
-    width: 100% !important;
+    width: fit-content !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
     min-height: 58px !important;
     padding: 11px 46px 11px 12px !important;
     gap: 10px !important;
@@ -354,6 +370,10 @@
   .vidya-toast [data-title],
   .vidya-toast-title {
     font-size: 13px !important;
+  }
+
+  .vidya-toast [data-content] {
+    max-width: min(300px, calc(100vw - 112px)) !important;
   }
 
   .vidya-toast-error [data-title],

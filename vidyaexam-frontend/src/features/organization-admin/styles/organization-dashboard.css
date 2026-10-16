@@ -181,6 +181,7 @@
 .org-member-field input:focus,
 .org-member-field select:focus { outline: 3px solid rgba(15, 118, 110, 0.14); border-color: #0f766e; }
 .org-member-field input[aria-invalid="true"] { border-color: #d92d20; }
+
 .org-member-role-trigger {
   display: flex;
   align-items: center;
@@ -236,6 +237,29 @@
 .org-member-role-options [role="option"]:focus-visible { color: #0f625b; background: #edf8f6; outline: none; }
 .org-member-role-options [role="option"][aria-selected="true"] { color: #0f625b; background: #f0f9f7; font-weight: 700; }
 .org-member-role-options [role="option"] svg { color: #0f766e; }
+.org-member-batch-select { width: 100%; }
+.org-member-modal .org-member-batch-select .org-member-role-trigger {
+  min-height: 48px;
+  padding: 10px 13px;
+  background: #fff;
+  border: 1px solid #d7e1e5;
+  border-radius: 11px;
+}
+.org-member-modal .org-member-batch-select .org-member-role-trigger:hover:not(:disabled) { border-color: #aebfc9; }
+.org-member-modal .org-member-batch-select .org-member-role-trigger:focus-visible {
+  outline: 3px solid rgba(15, 118, 110, 0.14);
+  border-color: #0f766e;
+}
+.org-member-modal .org-member-batch-select .org-menu-select-options {
+  position: static;
+  max-height: 144px;
+  margin-top: 7px;
+  overflow-y: auto;
+  box-shadow: 0 8px 20px rgba(23, 43, 77, 0.08);
+  animation: org-role-options-in 120ms ease-out;
+}
+.org-member-batch-select .org-member-role-options { z-index: 1200; }
+.org-member-batch-select .org-member-role-trigger:disabled { color: #8492a4; background: #f7fafb; cursor: not-allowed; }
 @keyframes org-role-options-in {
   from { opacity: 0; transform: translateY(-3px); }
   to { opacity: 1; transform: translateY(0); }
@@ -416,6 +440,7 @@
 .org-bulk-dropzone input[type="file"] { display: none; }
 .org-bulk-dropzone .org-dashboard-button { min-height: 36px; margin-top: 2px; font-size: .75rem; }
 .org-bulk-file-error { margin: 10px 0 0; padding: 9px 11px; color: #a52a22; background: #fff4f2; border: 1px solid #f3d2ce; border-radius: 9px; font-size: .75rem; }
+.org-bulk-batch-note { margin: 8px 0 11px; padding: 9px 11px; color: #52637a; background: #f0f8f7; border: 1px solid #d5ebe6; border-radius: 9px; font-size: .74rem; line-height: 1.45; }
 .org-bulk-summary { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; margin: 14px 0 11px; }
 .org-bulk-summary > div { display: grid; gap: 1px; padding: 9px 11px; background: #f6f9fa; border: 1px solid #e5ebee; border-radius: 9px; }
 .org-bulk-summary strong { color: var(--org-navy); font-size: 1.05rem; }

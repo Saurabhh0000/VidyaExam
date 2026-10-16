@@ -17,6 +17,7 @@ import TenantsCards from "./TenantsCards";
 import TenantDetailsModal from "./TenantDetailsModal";
 import { TenantSelect } from "./TenantControls";
 import toast from "../../../shared/components/ui/toast";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 
 export default function TenantsSection() {
   const { status, tenants, count, errorKind, errorMessage, retry, refresh } =
@@ -353,9 +354,7 @@ export default function TenantsSection() {
         )}
 
         {/* Content Area */}
-        {status === "loading" && (
-          <p className="sa-loading-message" role="status">Loading organizations…</p>
-        )}
+        {status === "loading" && <BrandLoader variant={tenants.length ? "section" : "content"} className={tenants.length ? "ve-brand-loader--compact" : ""} message={tenants.length ? "Refreshing organizations…" : "Loading organizations…"} />}
 
         {status === "error" && (
           <div className="sa-tenants-error" role="alert">
@@ -371,7 +370,7 @@ export default function TenantsSection() {
           </div>
         )}
 
-        {status === "ready" && (
+        {(status === "ready" || (status === "loading" && tenants.length > 0)) && (
           <>
             {filteredTenants.length === 0 ? (
               <div className="sa-inline-empty sa-tenants-empty">

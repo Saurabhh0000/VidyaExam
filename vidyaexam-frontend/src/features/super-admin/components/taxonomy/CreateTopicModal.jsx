@@ -36,12 +36,16 @@ export default function CreateTopicModal({
     setError("");
 
     if (!subjectId) {
-      setError("Please select a subject.");
+      const message = "Please select a subject.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
     const name = topicName.trim();
     if (!name) {
-      setError("Topic Name is required.");
+      const message = "Topic Name is required.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
 
@@ -54,7 +58,9 @@ export default function CreateTopicModal({
       toast.success("Topic created successfully");
       handleClose();
     } catch (err) {
-      setError(err?.message || "Failed to create topic");
+      const message = err?.message || "Failed to create topic";
+      setError(message);
+      toast.error("Unable to create topic", { description: message });
     } finally {
       setLoading(false);
     }

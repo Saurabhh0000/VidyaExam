@@ -18,6 +18,10 @@ import {
   Layers,
   Library,
   FileText,
+  Database,
+  Boxes,
+  ClipboardList,
+  PanelsTopLeft,
 } from "lucide-react";
 import AppLink from "./AppLink";
 import useMediaQuery from "../hooks/useMediaQuery";
@@ -38,6 +42,10 @@ export const MENU_ICONS = {
   building: Building2,
   analytics: ChartNoAxesCombined,
   taxonomy: ListTree,
+  master: Database,
+  batch: Boxes,
+  exam: ClipboardList,
+  section: PanelsTopLeft,
   category: Layers,
   subject: Library,
   topic: FileText,

@@ -30,11 +30,15 @@ export default function CreateCategoryModal({ isOpen, onClose, onSubmit }) {
     const code = categoryCode.trim().toUpperCase().replace(/\s+/g, "_");
 
     if (!name) {
-      setError("Category Name is required.");
+      const message = "Category Name is required.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
     if (!code) {
-      setError("Category Code is required.");
+      const message = "Category Code is required.";
+      setError(message);
+      toast.warning("Please review the form", { description: message });
       return;
     }
 
@@ -48,7 +52,9 @@ export default function CreateCategoryModal({ isOpen, onClose, onSubmit }) {
       toast.success("Category created successfully");
       handleClose();
     } catch (err) {
-      setError(err?.message || "Failed to create category");
+      const message = err?.message || "Failed to create category";
+      setError(message);
+      toast.error("Unable to create category", { description: message });
     } finally {
       setLoading(false);
     }

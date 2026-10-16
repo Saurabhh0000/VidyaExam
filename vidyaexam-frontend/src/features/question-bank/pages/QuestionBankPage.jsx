@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Modal from "../../../shared/components/ui/Modal";
 import toast from "../../../shared/components/ui/toast";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../hooks/useQuestionBankData";
 import {
@@ -17,6 +18,11 @@ import {
 import "../styles/question-bank.css";
 
 const DIFFICULTIES = ["EASY", "MEDIUM", "HARD"];
+const QUESTION_TYPES = [
+  { value: "SINGLE_CHOICE", label: "Single choice" },
+  { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
+  { value: "NUMERICAL", label: "Numerical" },
+];
 const PAGE_SIZES = [5, 10, 20, 50];
 const optionKey = (index) => {
   let value = index + 1;
@@ -35,10 +41,21 @@ const questionSortValue = (item, key) => key === "category_name"
   ? [item.category_name, item.subject_name].filter(Boolean).join(" ")
   : item?.[key] ?? "";
 
-function DropdownSelect({ value, onChange, options, ariaLabel, className = "" }) {
+function DropdownSelect({ value, onChange, options, ariaLabel, className = "", disabled = false, ariaInvalid = false }) {
   const [open, setOpen] = useState(false);
+  const [openUp, setOpenUp] = useState(false);
   const wrapperRef = useRef(null);
   const selected = options.find((option) => String(option.value) === String(value)) || options[0];
+
+  const openMenu = () => {
+    if (disabled) return;
+    const rect = wrapperRef.current?.getBoundingClientRect();
+    if (rect) {
+      const estimatedMenuHeight = Math.min(options.length * 48 + 14, 260);
+      setOpenUp(window.innerHeight - rect.bottom < estimatedMenuHeight + 12 && rect.top > estimatedMenuHeight);
+    }
+    setOpen(true);
+  };
 
   useEffect(() => {
     if (!open) return undefined;
@@ -56,8 +73,8 @@ function DropdownSelect({ value, onChange, options, ariaLabel, className = "" })
     };
   }, [open]);
 
-  return <div className={`qb-select${open ? " is-open" : ""} ${className}`} ref={wrapperRef}>
-    <button type="button" className="qb-select-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label={ariaLabel} onClick={() => setOpen((current) => !current)} onKeyDown={(event) => { if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); setOpen(true); } }}>
+  return <div className={`qb-select${open ? " is-open" : ""}${openUp ? " opens-up" : ""} ${className}`} ref={wrapperRef}>
+    <button type="button" className="qb-select-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label={ariaLabel} aria-invalid={ariaInvalid || undefined} disabled={disabled} onClick={() => open ? setOpen(false) : openMenu()} onKeyDown={(event) => { if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); openMenu(); } }}>
       <span>{selected?.label ?? "Select an option"}</span><ChevronDown size={17} aria-hidden="true" />
     </button>
     {open && <div className="qb-select-menu" role="listbox" aria-label={ariaLabel}>
@@ -140,43 +157,65 @@ function optionRows(options) {
 function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, submitting, canCreate, onCancel, onSubmit }) {
   const editing = Boolean(initial?.question_id);
   const [topicId, setTopicId] = useState(asText(initial?.topic_id));
-  const [topicQuery, setTopicQuery] = useState(asText(initial?.topic_name));
-  const [topicOpen, setTopicOpen] = useState(false);
   const [questionType, setQuestionType] = useState(initial?.question_type || "SINGLE_CHOICE");
   const [difficulty, setDifficulty] = useState(initial?.difficulty_level || "MEDIUM");
   const [questionText, setQuestionText] = useState(asText(initial?.question_text));
   const [explanation, setExplanation] = useState(asText(initial?.explanation));
+  const [numericalAnswer, setNumericalAnswer] = useState(asText(initial?.numerical_answer ?? initial?.correct_answer));
   const [marks, setMarks] = useState(asText(initial?.default_marks ?? "1"));
   const [negativeMarks, setNegativeMarks] = useState(asText(initial?.default_negative_marks ?? "0"));
   const [options, setOptions] = useState(() => optionRows(initial?.options).length
     ? optionRows(initial.options)
     : [{ option_key: "A", option_text: "", is_correct: true }, { option_key: "B", option_text: "", is_correct: false }]);
   const [errors, setErrors] = useState({});
-  const matchingTopics = topics.filter((topic) => {
-    const text = `${asTopicName(topic)} ${topic.subject_name || ""} ${topic.category_name || ""}`.toLocaleLowerCase();
-    return !topicQuery.trim() || text.includes(topicQuery.trim().toLocaleLowerCase());
-  });
+  const topicOptions = [
+    { value: "", label: topicsStatus === "loading" ? "Loading topics…" : "Select a topic" },
+    ...topics.map((topic) => ({
+      value: asTopicId(topic),
+      label: [asTopicName(topic), topic.subject_name].filter(Boolean).join(" · "),
+    })),
+  ];
 
   const changeOption = (index, key, value) => {
     setOptions((current) => current.map((option, position) => position === index ? { ...option, [key]: value } : option));
   };
   const validate = () => {
     const next = {};
-    if (!topicId) next.topicId = "Choose a topic.";
+    if (!topicId || (!editing && !topics.some((topic) => asTopicId(topic) === topicId))) next.topicId = "Choose a valid topic.";
     if (!questionText.trim()) next.questionText = "Enter the question.";
+    else if (questionText.trim().length > 5000) next.questionText = "Question cannot exceed 5,000 characters.";
+    if (explanation.length > 5000) next.explanation = "Explanation cannot exceed 5,000 characters.";
     if (!DIFFICULTIES.includes(difficulty)) next.difficulty = "Choose a valid difficulty.";
-    if (!questionType) next.questionType = "Choose a question type.";
-    if (marks === "" || !Number.isFinite(Number(marks)) || Number(marks) < 0) next.marks = "Marks must be a non-negative number.";
+    if (!QUESTION_TYPES.some((type) => type.value === questionType)) next.questionType = "Choose a valid question type.";
+    if (marks === "" || !Number.isFinite(Number(marks)) || Number(marks) <= 0) next.marks = "Marks must be a number greater than 0.";
     if (negativeMarks === "" || !Number.isFinite(Number(negativeMarks)) || Number(negativeMarks) < 0) next.negativeMarks = "Negative marks must be a non-negative number.";
-    if (!options.length || options.some((option) => !option.option_text.trim())) next.options = "Every answer option needs text.";
-    if (options.filter((option) => option.is_correct).length !== 1) next.correct = "Select exactly one correct answer.";
+    else if (Number.isFinite(Number(marks)) && Number(marks) > 0 && Number(negativeMarks) > Number(marks)) next.negativeMarks = "Negative marks cannot exceed marks.";
+    if (questionType === "NUMERICAL") {
+      if (!numericalAnswer.trim()) next.numericalAnswer = "Enter the correct numerical answer.";
+      else if (!Number.isFinite(Number(numericalAnswer))) next.numericalAnswer = "Enter a valid number.";
+    } else {
+      if (options.length < 2) next.options = "Add at least two answer options.";
+      else if (options.some((option) => !option.option_text.trim())) next.options = "Every answer option needs text.";
+      const correctCount = options.filter((option) => option.is_correct).length;
+      if (questionType === "SINGLE_CHOICE" && correctCount !== 1) next.correct = "Select exactly one correct answer.";
+      if (questionType === "MULTIPLE_CHOICE" && correctCount < 1) next.correct = "Select at least one correct answer.";
+    }
     setErrors(next);
-    return Object.keys(next).length === 0;
+    return next;
   };
   const submit = (event) => {
     event.preventDefault();
-    if (!validate()) return;
-    const optionPayload = options.map((option, index) => ({
+    const validationErrors = validate();
+    if (Object.keys(validationErrors).length > 0) {
+      const messages = Object.values(validationErrors);
+      const visibleMessages = messages.slice(0, 3).join(" ");
+      const remainingCount = messages.length - 3;
+      toast.warning("Please review the question form", {
+        description: `${visibleMessages}${remainingCount > 0 ? ` And ${remainingCount} more issue${remainingCount === 1 ? "" : "s"}.` : ""}`,
+      });
+      return;
+    }
+    const optionPayload = questionType === "NUMERICAL" ? [] : options.map((option, index) => ({
       option_key: optionKey(index),
       option_text: option.option_text.trim(),
       is_correct: Boolean(option.is_correct),
@@ -188,6 +227,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
       default_marks: Number(marks),
       default_negative_marks: Number(negativeMarks),
       options: optionPayload,
+      ...(questionType === "NUMERICAL" ? { numerical_answer: Number(numericalAnswer), correct_answer: Number(numericalAnswer) } : {}),
     };
     if (!editing) {
       payload.topic_id = topicId;
@@ -204,82 +244,94 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {editing ? (
             <input value={initial?.topic_name || asTopicName(topics.find((topic) => asTopicId(topic) === topicId))} readOnly aria-readonly="true" />
           ) : (
-            <div className="qb-topic-picker">
-              <input
-                role="combobox"
-                aria-autocomplete="list"
-                aria-expanded={topicOpen}
-                aria-controls="qb-topic-options"
-                aria-invalid={Boolean(errors.topicId)}
-                autoComplete="off"
-                value={topicQuery}
-                disabled={topicsStatus !== "ready"}
-                placeholder={topicsStatus === "loading" ? "Loading topics…" : "Search and select a topic"}
-                onFocus={() => setTopicOpen(true)}
-                onBlur={() => setTimeout(() => setTopicOpen(false), 120)}
-                onChange={(event) => { setTopicQuery(event.target.value); setTopicId(""); setTopicOpen(true); }}
-              />
-              {topicOpen && topicsStatus === "ready" && <div id="qb-topic-options" className="qb-topic-options" role="listbox" aria-label="Available topics">
-                {matchingTopics.length ? matchingTopics.map((topic) => <button type="button" role="option" aria-selected={topicId === asTopicId(topic)} key={asTopicId(topic)} onMouseDown={(event) => event.preventDefault()} onClick={() => { setTopicId(asTopicId(topic)); setTopicQuery(`${asTopicName(topic)}${topic.subject_name ? ` · ${topic.subject_name}` : ""}`); setTopicOpen(false); }}>{asTopicName(topic)}{topic.subject_name ? ` · ${topic.subject_name}` : ""}</button>) : <p>No matching topics.</p>}
-              </div>}
-            </div>
+            <DropdownSelect
+              className="qb-form-select"
+              value={topicId}
+              onChange={setTopicId}
+              options={topicOptions}
+              ariaLabel="Topic"
+              ariaInvalid={Boolean(errors.topicId)}
+              disabled={topicsStatus !== "ready" || !topics.length}
+            />
           )}
           {errors.topicId && <small className="qb-field-error">{errors.topicId}</small>}
+          {topicsStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact qb-topic-loader" message="Loading available topics…" />}
           {topicsStatus === "error" && <small className="qb-field-error">{topicsError} <button type="button" className="qb-inline-action" onClick={onRetryTopics}>Retry</button></small>}
           {topicsStatus === "ready" && !topics.length && !editing && <small className="qb-field-hint">No topics are available yet. Add a topic in Taxonomy first.</small>}
         </label>
         <label className="qb-field">
           <span>Question type <b>*</b></span>
-          <select value={questionType} onChange={(event) => setQuestionType(event.target.value)} disabled={editing}>
-            <option value="SINGLE_CHOICE">Single choice</option>
-          </select>
+          <DropdownSelect
+            className="qb-form-select"
+            value={questionType}
+            onChange={setQuestionType}
+            options={QUESTION_TYPES}
+            ariaLabel="Question type"
+            ariaInvalid={Boolean(errors.questionType)}
+            disabled={editing}
+          />
+          {errors.questionType && <small className="qb-field-error">{errors.questionType}</small>}
           {editing && <small className="qb-field-hint">Question type cannot be changed by the documented update API.</small>}
         </label>
         <label className="qb-field">
           <span>Difficulty <b>*</b></span>
-          <select value={difficulty} onChange={(event) => setDifficulty(event.target.value)} aria-invalid={Boolean(errors.difficulty)}>
-            {DIFFICULTIES.map((value) => <option key={value} value={value}>{value.charAt(0) + value.slice(1).toLowerCase()}</option>)}
-          </select>
+          <DropdownSelect
+            className="qb-form-select"
+            value={difficulty}
+            onChange={setDifficulty}
+            options={DIFFICULTIES.map((value) => ({ value, label: value.charAt(0) + value.slice(1).toLowerCase() }))}
+            ariaLabel="Difficulty"
+            ariaInvalid={Boolean(errors.difficulty)}
+          />
           {errors.difficulty && <small className="qb-field-error">{errors.difficulty}</small>}
         </label>
         <label className="qb-field qb-field--wide">
           <span>Question <b>*</b></span>
-          <textarea rows="3" value={questionText} onChange={(event) => setQuestionText(event.target.value)} placeholder="Write your question" aria-invalid={Boolean(errors.questionText)} />
+          <textarea rows="3" maxLength={5000} value={questionText} onChange={(event) => setQuestionText(event.target.value)} placeholder="Write your question" aria-invalid={Boolean(errors.questionText)} />
           {errors.questionText && <small className="qb-field-error">{errors.questionText}</small>}
         </label>
         <label className="qb-field qb-field--wide">
           <span>Explanation <small>(optional)</small></span>
-          <textarea rows="2" value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer" />
+          <textarea rows="2" maxLength={5000} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer" aria-invalid={Boolean(errors.explanation)} />
+          {errors.explanation && <small className="qb-field-error">{errors.explanation}</small>}
         </label>
         <label className="qb-field">
           <span>Default marks <b>*</b></span>
-          <input type="number" min="0" step="any" value={marks} onChange={(event) => setMarks(event.target.value)} aria-invalid={Boolean(errors.marks)} />
+          <input type="number" min="0.01" step="any" required value={marks} onChange={(event) => setMarks(event.target.value)} aria-invalid={Boolean(errors.marks)} />
           {errors.marks && <small className="qb-field-error">{errors.marks}</small>}
         </label>
         <label className="qb-field">
           <span>Negative marks <b>*</b></span>
-          <input type="number" min="0" step="any" value={negativeMarks} onChange={(event) => setNegativeMarks(event.target.value)} aria-invalid={Boolean(errors.negativeMarks)} />
+          <input type="number" min="0" max={marks || undefined} step="any" required value={negativeMarks} onChange={(event) => setNegativeMarks(event.target.value)} aria-invalid={Boolean(errors.negativeMarks)} />
           {errors.negativeMarks && <small className="qb-field-error">{errors.negativeMarks}</small>}
         </label>
       </div>
 
+      {questionType === "NUMERICAL" ? (
+        <label className="qb-field qb-field--wide">
+          <span>Correct numerical answer <b>*</b></span>
+          <input type="number" step="any" value={numericalAnswer} onChange={(event) => setNumericalAnswer(event.target.value)} placeholder="Enter the correct number" aria-invalid={Boolean(errors.numericalAnswer)} />
+          {errors.numericalAnswer && <small className="qb-field-error">{errors.numericalAnswer}</small>}
+        </label>
+      ) : (
       <fieldset className="qb-options-editor">
         <legend>Answer options <b>*</b></legend>
-        <p>Select the radio button beside the correct answer.</p>
+        <p>{questionType === "MULTIPLE_CHOICE" ? "Select every correct answer." : "Select the radio button beside the correct answer."}</p>
         {options.map((option, index) => (
           <div className="qb-option-editor-row" key={`${index}-${option.option_key}`}>
             <label className="qb-correct-choice" aria-label={`Mark option ${optionKey(index)} correct`}>
-              <input type="radio" name="qb-correct-option" checked={option.is_correct} onChange={() => setOptions((current) => current.map((item, i) => ({ ...item, is_correct: i === index })))} />
+              <input type={questionType === "MULTIPLE_CHOICE" ? "checkbox" : "radio"} name="qb-correct-option" checked={option.is_correct} onChange={() => setOptions((current) => current.map((item, i) => i !== index ? item : { ...item, is_correct: questionType === "MULTIPLE_CHOICE" ? !item.is_correct : true }))} />
               <span>{optionKey(index)}</span>
             </label>
-            <input aria-label={`Option ${optionKey(index)} text`} value={option.option_text} onChange={(event) => changeOption(index, "option_text", event.target.value)} placeholder={`Option ${optionKey(index)}`} />
-            <button type="button" className="qb-icon-button" onClick={() => setOptions((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, option_key: optionKey(i) })))} disabled={options.length === 1} aria-label={`Remove option ${optionKey(index)}`}><X size={16} /></button>
+            <input aria-label={`Option ${optionKey(index)} text`} maxLength={1000} value={option.option_text} onChange={(event) => changeOption(index, "option_text", event.target.value)} placeholder={`Option ${optionKey(index)}`} />
+            <button type="button" className="qb-icon-button" onClick={() => setOptions((current) => current.filter((_, i) => i !== index).map((item, i) => ({ ...item, option_key: optionKey(i) })))} disabled={options.length <= 2} aria-label={`Remove option ${optionKey(index)}`}><X size={16} /></button>
           </div>
         ))}
         {errors.options && <small className="qb-field-error">{errors.options}</small>}
         {errors.correct && <small className="qb-field-error">{errors.correct}</small>}
         <button type="button" className="qb-text-button" onClick={() => setOptions((current) => [...current, { option_key: optionKey(current.length), option_text: "", is_correct: false }])}><Plus size={16} /> Add option</button>
       </fieldset>
+      )}
 
       <div className="qb-modal-actions">
         <button type="button" className="qb-button qb-button--secondary" onClick={onCancel} disabled={submitting}>Cancel</button>
@@ -332,6 +384,12 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const [bulkFileName, setBulkFileName] = useState("");
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
+  const [bulkTopicId, setBulkTopicId] = useState("");
+  const [bulkQuestionType, setBulkQuestionType] = useState("SINGLE_CHOICE");
+  const [bulkDifficulty, setBulkDifficulty] = useState("MEDIUM");
+  const [bulkMarks, setBulkMarks] = useState("1");
+  const [bulkNegativeMarks, setBulkNegativeMarks] = useState("1");
+  const [bulkSettingsErrors, setBulkSettingsErrors] = useState({});
   const [sort, setSort] = useState({ key: "created_at", direction: "desc" });
   const handledQueryAction = useRef("");
   const bulkFileRef = useRef(null);
@@ -391,7 +449,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
       setDetailState({ status: "error", mode: "view", error: getApiErrorMessage(requestError, requestError.message || "Question details could not be loaded."), item });
     }
   }, []);
-  const manageQuestion = useCallback((item) => role === "SUPER_ADMIN" || (getCreatorId(item) != null && String(getCreatorId(item)) === String(user?.userId)), [role, user?.userId]);
+  const manageQuestion = useCallback((item) => role === "SUPER_ADMIN" || role === "ADMIN" || (getCreatorId(item) != null && String(getCreatorId(item)) === String(user?.userId)), [role, user?.userId]);
   useEffect(() => {
     if (status !== "ready") return;
     const params = new URLSearchParams(location.search);
@@ -641,32 +699,48 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
       toast.error("CSV file is too large", { description: "Choose a CSV file smaller than 2 MB." });
       return;
     }
+    const settingsErrors = validateBulkSettings();
+    if (Object.keys(settingsErrors).length > 0) {
+      toast.warning("Please review the upload settings", {
+        description: Object.values(settingsErrors).slice(0, 3).join(" "),
+      });
+      return;
+    }
     try {
       const table = parseCsv((await file.text()).replace(/^\uFEFF/, ""));
       if (table.length < 2) throw new Error("The CSV needs a header row and at least one question row.");
       const headers = table[0].map((value) => value.trim().toLowerCase().replaceAll(" ", "_"));
-      const required = ["question_text", "difficulty_level", "correct_option"];
+      const required = ["question_text"];
       const missing = required.filter((name) => !headers.includes(name));
-      if (!headers.includes("topic_id") && !headers.includes("topic_name")) missing.push("topic_id or topic_name");
       if (missing.length) throw new Error(`Missing required columns: ${missing.join(", ")}. Download the sample CSV for the expected format.`);
-      const topicByName = new Map(topics.map((item) => [asTopicName(item).trim().toLowerCase(), asTopicId(item)]));
       const parsed = table.slice(1).map((cells, index) => {
         const row = Object.fromEntries(headers.map((header, column) => [header, (cells[column] || "").trim()]));
         const issues = [];
-        const topicIdValue = row.topic_id || topicByName.get((row.topic_name || "").toLowerCase()) || "";
+        const topicIdValue = bulkTopicId;
         if (!topicIdValue || !topics.some((item) => asTopicId(item) === String(topicIdValue))) issues.push("Unknown or missing topic");
         if (!row.question_text) issues.push("Question text is required");
-        const level = (row.difficulty_level || "").toUpperCase();
+        const questionType = bulkQuestionType;
+        if (!QUESTION_TYPES.some((item) => item.value === questionType)) issues.push("Question type must be SINGLE_CHOICE, MULTIPLE_CHOICE, or NUMERICAL");
+        const level = bulkDifficulty;
         if (!DIFFICULTIES.includes(level)) issues.push("Difficulty must be Easy, Medium, or Hard");
         const optionKeys = headers.filter((header) => /^option_[a-z]$/.test(header)).sort();
         const options = optionKeys.map((key) => ({ option_key: key.slice(-1).toUpperCase(), option_text: row[key] || "" })).filter((option) => option.option_text);
-        if (options.length < 2) issues.push("At least two non-empty option_a/option_b fields are required");
-        const correctKey = (row.correct_option || "").toUpperCase();
-        if (!options.some((option) => option.option_key === correctKey)) issues.push("Correct option must match a non-empty option column");
-        const marks = row.default_marks === undefined || row.default_marks === "" ? 1 : Number(row.default_marks);
-        const negativeMarks = row.default_negative_marks === undefined || row.default_negative_marks === "" ? 0 : Number(row.default_negative_marks);
-        if (!Number.isFinite(marks) || marks < 0) issues.push("default_marks must be a non-negative number");
+        const correctKeys = (row.correct_option || "").toUpperCase().split(/[|;,\s]+/).filter(Boolean);
+        if (questionType === "SINGLE_CHOICE" || questionType === "MULTIPLE_CHOICE") {
+          if (options.length < 2) issues.push("At least two non-empty option columns are required");
+          if (questionType === "SINGLE_CHOICE" && correctKeys.length !== 1) issues.push("Single choice questions need exactly one correct_option (for example, A)");
+          if (questionType === "MULTIPLE_CHOICE" && correctKeys.length < 1) issues.push("Multiple choice questions need one or more correct_option values separated by | (for example, A|C)");
+          if (new Set(correctKeys).size !== correctKeys.length) issues.push("correct_option contains duplicate answer keys");
+          if (correctKeys.some((key) => !options.some((option) => option.option_key === key))) issues.push("Every correct option must match a non-empty option column");
+        }
+        const numericalAnswer = row.numerical_answer || row.correct_answer || "";
+        if (questionType === "NUMERICAL" && !numericalAnswer) issues.push("Numerical questions need a numerical_answer value");
+        else if (questionType === "NUMERICAL" && !Number.isFinite(Number(numericalAnswer))) issues.push("numerical_answer must be a valid number");
+        const marks = Number(bulkMarks);
+        const negativeMarks = Number(bulkNegativeMarks);
+        if (!Number.isFinite(marks) || marks <= 0) issues.push("default_marks must be a number greater than 0");
         if (!Number.isFinite(negativeMarks) || negativeMarks < 0) issues.push("default_negative_marks must be a non-negative number");
+        else if (Number.isFinite(marks) && marks > 0 && negativeMarks > marks) issues.push("default_negative_marks cannot exceed default_marks");
         if (index >= 100) issues.push("Maximum upload is 100 questions at a time");
         return {
           rowNumber: index + 2,
@@ -674,13 +748,14 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
           payload: {
             tenant_id: role === "SUPER_ADMIN" ? null : tenantId,
             topic_id: topicIdValue,
-            question_type: "SINGLE_CHOICE",
+            question_type: questionType,
             difficulty_level: level,
             question_text: row.question_text,
             explanation: row.explanation || "",
             default_marks: marks,
             default_negative_marks: negativeMarks,
-            options: options.map((option) => ({ ...option, is_correct: option.option_key === correctKey })),
+            options: questionType === "NUMERICAL" ? [] : options.map((option) => ({ ...option, is_correct: correctKeys.includes(option.option_key) })),
+            ...(questionType === "NUMERICAL" ? { numerical_answer: numericalAnswer, correct_answer: numericalAnswer } : {}),
           },
         };
       });
@@ -695,11 +770,25 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
     }
   };
   const downloadBulkTemplate = () => {
-    const header = ["topic_id", "topic_name", "question_text", "difficulty_level", "option_a", "option_b", "option_c", "option_d", "correct_option", "default_marks", "default_negative_marks", "explanation"];
-    const sample = ["", "Topic name", "Enter your question", "MEDIUM", "First answer", "Second answer", "", "", "A", "1", "0", "Optional explanation"];
+    const isNumerical = bulkQuestionType === "NUMERICAL";
+    const header = isNumerical
+      ? ["question_text", "numerical_answer", "explanation"]
+      : ["question_text", "option_a", "option_b", "option_c", "option_d", "correct_option", "explanation"];
+    const sample = isNumerical
+      ? ["What is 6 multiplied by 7?", "42", "The product is 42"]
+      : bulkQuestionType === "MULTIPLE_CHOICE"
+        ? ["Select all correct answers", "Correct answer one", "Other answer", "Correct answer two", "", "A|C", "Explain why both answers are correct"]
+        : ["Single choice sample question", "First answer", "Second answer", "", "", "A", "Optional explanation"];
     downloadFile(`${header.join(",")}\r\n${sample.map(csvCell).join(",")}`, "text/csv;charset=utf-8", "vidyaexam-question-template.csv");
   };
   const submitBulk = async () => {
+    const settingsErrors = validateBulkSettings();
+    if (Object.keys(settingsErrors).length > 0) {
+      toast.warning("Please review the upload settings", {
+        description: Object.values(settingsErrors).slice(0, 3).join(" "),
+      });
+      return;
+    }
     const validRows = bulkRows.filter((item) => !item.error);
     if (!validRows.length) {
       toast.error("No valid questions to import", { description: "Fix the highlighted CSV rows and upload the file again." });
@@ -733,7 +822,19 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
     setBulkRows([]);
     setBulkResult(null);
     setBulkFileName("");
+    setBulkSettingsErrors({});
     setBulkOpen(true);
+  };
+  const validateBulkSettings = () => {
+    const next = {};
+    if (!bulkTopicId || !topics.some((item) => asTopicId(item) === bulkTopicId)) next.topic = "Choose a valid topic.";
+    if (!QUESTION_TYPES.some((item) => item.value === bulkQuestionType)) next.questionType = "Choose a valid question type.";
+    if (!DIFFICULTIES.includes(bulkDifficulty)) next.difficulty = "Choose a valid difficulty level.";
+    if (bulkMarks.trim() === "" || !Number.isFinite(Number(bulkMarks)) || Number(bulkMarks) <= 0) next.marks = "Enter a marks value greater than 0.";
+    if (bulkNegativeMarks.trim() === "" || !Number.isFinite(Number(bulkNegativeMarks)) || Number(bulkNegativeMarks) < 0) next.negativeMarks = "Enter a non-negative negative marks value.";
+    else if (Number.isFinite(Number(bulkMarks)) && Number(bulkMarks) > 0 && Number(bulkNegativeMarks) > Number(bulkMarks)) next.negativeMarks = "Negative marks cannot exceed marks.";
+    setBulkSettingsErrors(next);
+    return next;
   };
   const heading = <header className={`qb-heading${compact ? " qb-heading--compact" : ""}`}><div><span className="qb-eyebrow"><FileQuestion size={15} /> QUESTION WORKSPACE</span><h1>Question Bank</h1><p>Create, organize, and review questions for your exam content.</p></div><div className="qb-heading-actions">
     <button type="button" className="qb-button qb-button--primary" onClick={() => { setFormInitial(null); setFormOpen(true); }} disabled={role !== "SUPER_ADMIN" && !tenantId}><Plus size={17} /> Create question</button>
@@ -764,18 +865,19 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         </div>
         <button type="button" className="qb-count" onClick={refresh} disabled={status === "loading"} aria-label="Refresh questions"><BookOpen size={15} />{status === "ready" ? count : "—"}</button>
       </div></div>
+      {status === "loading" && questions.length > 0 && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing questions…" />}
       <div className="qb-filters">
         <label className="qb-search"><Search size={17} /><span className="qb-sr-only">Search questions</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search question text, topic, subject…" /><button type="button" onClick={() => setSearch("")} aria-label="Clear search" hidden={!search}><X size={15} /></button></label>
         <DropdownSelect value={category} onChange={(value) => { setCategory(value); setSubject("ALL"); }} ariaLabel="Filter by category" options={[{ value: "ALL", label: "All categories" }, ...categories.map((value) => ({ value, label: value }))]} />
         <DropdownSelect value={subject} onChange={setSubject} ariaLabel="Filter by subject" options={[{ value: "ALL", label: "All subjects" }, ...subjects.map((value) => ({ value, label: value }))]} />
         <DropdownSelect value={topic} onChange={setTopic} ariaLabel="Filter by topic" options={[{ value: "ALL", label: "All topics" }, ...topics.map((item) => ({ value: asTopicId(item), label: asTopicName(item) }))]} />
-        <DropdownSelect value={type} onChange={setType} ariaLabel="Filter by question type" options={[{ value: "ALL", label: "All types" }, { value: "SINGLE_CHOICE", label: "Single choice" }]} />
+        <DropdownSelect value={type} onChange={setType} ariaLabel="Filter by question type" options={[{ value: "ALL", label: "All types" }, ...QUESTION_TYPES]} />
         <DropdownSelect value={difficulty} onChange={setDifficulty} ariaLabel="Filter by difficulty" options={[{ value: "ALL", label: "All difficulties" }, ...DIFFICULTIES.map((value) => ({ value, label: value.charAt(0) + value.slice(1).toLowerCase() }))]} />
         {hasFilters && <button type="button" className="qb-clear-button" onClick={clearFilters}>Clear filters</button>}
       </div>
 
       {status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={23} /><h3>Could not load questions</h3><p>{error}</p><button type="button" className="qb-button qb-button--secondary" onClick={refresh}>Try again</button></div>
-        : status === "loading" ? <p className="qb-loading" role="status">Loading questions…</p>
+        : status === "loading" && questions.length === 0 ? <BrandLoader variant="section" message="Loading questions…" />
           : questions.length === 0 ? <div className="qb-state"><span><BookOpen size={23} /></span><h3>No questions yet</h3><p>Create your first question to start building this question bank.</p><button className="qb-button qb-button--primary" type="button" onClick={() => setFormOpen(true)}><Plus size={16} />Create question</button></div>
             : filtered.length === 0 ? <div className="qb-state"><Search size={23} /><h3>No questions match these filters</h3><p>Try a different search or clear the selected filters.</p><button className="qb-button qb-button--secondary" type="button" onClick={clearFilters}>Clear filters</button></div>
               : <>
@@ -791,12 +893,47 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
       <div className="qb-bulk-content">
         {!bulkResult ? <>
           <input ref={bulkFileRef} className="qb-sr-only" type="file" accept=".csv,text/csv" onChange={handleBulkFile} aria-label="Choose questions CSV file" />
-          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Required: <code>topic_id</code> or <code>topic_name</code>, <code>question_text</code>, <code>difficulty_level</code>, <code>option_a</code>, <code>option_b</code>, <code>correct_option</code>. Marks and explanation are optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
+          <div className="qb-bulk-settings" aria-label="Default question settings">
+            <label className="qb-field">
+              <span>Topic <b>*</b></span>
+              <DropdownSelect
+                className="qb-form-select"
+                value={bulkTopicId}
+                onChange={(value) => { setBulkTopicId(value); setBulkSettingsErrors((current) => ({ ...current, topic: "" })); }}
+                options={[{ value: "", label: topicsStatus === "loading" ? "Loading topics…" : "Select a topic" }, ...topics.map((item) => ({ value: asTopicId(item), label: [asTopicName(item), item.subject_name].filter(Boolean).join(" · ") }))]}
+                ariaLabel="Bulk upload default topic"
+                ariaInvalid={Boolean(bulkSettingsErrors.topic)}
+                disabled={topicsStatus !== "ready" || !topics.length || bulkRows.length > 0 || bulkSubmitting}
+              />
+              {bulkSettingsErrors.topic && <small className="qb-field-error">{bulkSettingsErrors.topic}</small>}
+            </label>
+            <label className="qb-field">
+              <span>Question type</span>
+              <DropdownSelect className="qb-form-select" value={bulkQuestionType} onChange={(value) => { setBulkQuestionType(value); setBulkSettingsErrors((current) => ({ ...current, questionType: "" })); }} options={QUESTION_TYPES} ariaLabel="Bulk upload default question type" ariaInvalid={Boolean(bulkSettingsErrors.questionType)} disabled={bulkRows.length > 0 || bulkSubmitting} />
+              {bulkSettingsErrors.questionType && <small className="qb-field-error">{bulkSettingsErrors.questionType}</small>}
+            </label>
+            <label className="qb-field">
+              <span>Difficulty level</span>
+              <DropdownSelect className="qb-form-select" value={bulkDifficulty} onChange={(value) => { setBulkDifficulty(value); setBulkSettingsErrors((current) => ({ ...current, difficulty: "" })); }} options={DIFFICULTIES.map((value) => ({ value, label: value.charAt(0) + value.slice(1).toLowerCase() }))} ariaLabel="Bulk upload default difficulty" ariaInvalid={Boolean(bulkSettingsErrors.difficulty)} disabled={bulkRows.length > 0 || bulkSubmitting} />
+              {bulkSettingsErrors.difficulty && <small className="qb-field-error">{bulkSettingsErrors.difficulty}</small>}
+            </label>
+            <label className="qb-field">
+              <span>Marks <b>*</b></span>
+              <input type="number" min="0.01" step="any" required value={bulkMarks} onChange={(event) => { setBulkMarks(event.target.value); setBulkSettingsErrors((current) => ({ ...current, marks: "" })); }} aria-invalid={Boolean(bulkSettingsErrors.marks)} disabled={bulkRows.length > 0 || bulkSubmitting} />
+              {bulkSettingsErrors.marks && <small className="qb-field-error">{bulkSettingsErrors.marks}</small>}
+            </label>
+            <label className="qb-field">
+              <span>Negative marks <b>*</b></span>
+              <input type="number" min="0" max={bulkMarks || undefined} step="any" required value={bulkNegativeMarks} onChange={(event) => { setBulkNegativeMarks(event.target.value); setBulkSettingsErrors((current) => ({ ...current, negativeMarks: "" })); }} aria-invalid={Boolean(bulkSettingsErrors.negativeMarks)} disabled={bulkRows.length > 0 || bulkSubmitting} />
+              {bulkSettingsErrors.negativeMarks && <small className="qb-field-error">{bulkSettingsErrors.negativeMarks}</small>}
+            </label>
+          </div>
+          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Choose topic, type, difficulty, marks, and negative marks above. The CSV contains question text, options, answers, and explanation. Use <code>correct_option</code> as A for single choice or A|C for multiple choice; numerical rows use <code>numerical_answer</code>. Explanation is optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
           <div className="qb-bulk-upload-zone"><span className="qb-bulk-upload-icon"><Upload size={21} /></span><div><strong>{bulkFileName || "Upload your question CSV"}</strong><p>{bulkFileName ? `${bulkRows.length} data rows found` : "CSV only · Maximum file size 2 MB · Up to 100 questions"}</p>{topicsStatus === "loading" && <p>Loading available topics…</p>}{topicsStatus === "error" && <p className="qb-field-error">{topicsError || "Topics could not be loaded. Retry from the Question Bank first."}</p>}</div><button type="button" className="qb-button qb-button--secondary" onClick={() => bulkFileRef.current?.click()} disabled={bulkSubmitting}><FileSpreadsheet size={16} /> {bulkFileName ? "Choose another file" : "Choose CSV"}</button></div>
           {bulkRows.length > 0 && <>
             <div className="qb-bulk-counts"><span className="is-valid">{bulkRows.filter((item) => !item.error).length} valid</span><span className="is-invalid">{bulkRows.filter((item) => item.error).length} invalid</span><span>{bulkRows.length} total</span></div>
             <div className="qb-bulk-preview" role="region" aria-label="CSV validation preview" tabIndex="0">
-              <table><thead><tr><th>Row</th><th>Question</th><th>Topic</th><th>Validation</th></tr></thead><tbody>{bulkRows.map((item) => <tr key={item.rowNumber} className={item.error ? "is-invalid" : "is-valid"}><td>{item.rowNumber}</td><td>{item.payload.question_text || "—"}</td><td>{topics.find((topicItem) => asTopicId(topicItem) === String(item.payload.topic_id)) ? asTopicName(topics.find((topicItem) => asTopicId(topicItem) === String(item.payload.topic_id))) : "—"}</td><td>{item.error || "Ready to upload"}</td></tr>)}</tbody></table>
+              <table><thead><tr><th>Row</th><th>Question type</th><th>Question</th><th>Topic</th><th>Validation</th></tr></thead><tbody>{bulkRows.map((item) => <tr key={item.rowNumber} className={item.error ? "is-invalid" : "is-valid"}><td>{item.rowNumber}</td><td>{item.payload.question_type.replaceAll("_", " ")}</td><td>{item.payload.question_text || "—"}</td><td>{topics.find((topicItem) => asTopicId(topicItem) === String(item.payload.topic_id)) ? asTopicName(topics.find((topicItem) => asTopicId(topicItem) === String(item.payload.topic_id))) : "—"}</td><td>{item.error || "Ready to upload"}</td></tr>)}</tbody></table>
             </div>
           </>}
           <div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => { setBulkOpen(false); setBulkRows([]); setBulkResult(null); setBulkFileName(""); }} disabled={bulkSubmitting}>Cancel</button><button type="button" className="qb-button qb-button--primary" onClick={submitBulk} disabled={bulkSubmitting || !bulkRows.some((item) => !item.error)} aria-busy={bulkSubmitting}><Upload size={16} /> {bulkSubmitting ? "Uploading…" : `Upload ${bulkRows.filter((item) => !item.error).length} questions`}</button></div>
@@ -808,7 +945,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         </>}
       </div>
     </Modal>}
-    {detailState && <Modal isOpen onClose={() => setDetailState(null)} title="Question details" description="Review question content and answer key." size="lg" className="qb-modal"><div className="qb-modal-body">{detailState.status === "loading" ? <p className="qb-loading" role="status">Loading question details…</p> : detailState.status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load question details</h3><p>{detailState.error}</p><button type="button" className="qb-button qb-button--secondary" onClick={() => openDetails(detailState.item)}>Try again</button></div> : <DetailContent question={detailState.question} />}</div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDetailState(null)}>Close</button></div></Modal>}
+    {detailState && <Modal isOpen onClose={() => setDetailState(null)} title="Question details" description="Review question content and answer key." size="lg" className="qb-modal"><div className="qb-modal-body">{detailState.status === "loading" ? <BrandLoader variant="section" message={detailState.mode === "edit" ? "Loading question for editing…" : "Loading question details…"} /> : detailState.status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load question details</h3><p>{detailState.error}</p><button type="button" className="qb-button qb-button--secondary" onClick={() => openDetails(detailState.item)}>Try again</button></div> : <DetailContent question={detailState.question} />}</div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDetailState(null)}>Close</button></div></Modal>}
     {deleteTarget && <Modal isOpen onClose={() => !deleting && setDeleteTarget(null)} title="Delete question?" description="Confirm whether this question should be removed from the question bank." size="sm" className="qb-modal" closeOnEscape={!deleting} closeOnOverlay={!deleting}><div className="qb-delete-copy"><p>Are you sure you want to delete this question?</p><blockquote>{deleteTarget.question_text}</blockquote><small>Questions used by exams may be affected. The backend determines how this record is removed.</small></div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button><button type="button" className="qb-button qb-button--danger" onClick={confirmDelete} disabled={deleting} aria-busy={deleting}>{deleting ? "Deleting…" : "Delete question"}</button></div></Modal>}
   </div>;
 }

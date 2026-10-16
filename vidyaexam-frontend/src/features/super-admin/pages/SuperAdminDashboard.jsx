@@ -17,6 +17,9 @@ import {
   List,
 } from "lucide-react";
 import toast from "../../../shared/components/ui/toast";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import MasterWorkspaceSection from "../../../shared/components/MasterWorkspaceSection";
+import BatchesPage from "../../batches/pages/BatchesPage";
 import useAuthState from "../../auth/utils/useAuthState";
 import { SUPER_ADMIN_DASHBOARD } from "../../../app/roleRoutes";
 import usePlans from "../../../shared/hooks/usePlans";
@@ -38,6 +41,7 @@ const SECTIONS = {
   students: { title: "Students", description: "Platform-wide student accounts and organization membership." },
   subscriptions: { title: "Subscriptions & Plans", description: "View the active individual and tenant plans configured for VidyaExam." },
   taxonomy: { title: "Taxonomy & Curriculum", description: "Manage platform exam categories, curriculum subjects, and syllabus topics." },
+  master: { title: "Master", description: "Manage batches, exams, and sections." },
   analytics: { title: "Reports & Analytics", description: "Platform activity and growth reporting." },
   settings: { title: "Platform Settings", description: "Platform-level configuration and operational settings." },
   questions: { title: "Question Bank", description: "Create, organize, and review platform and tenant questions." },
@@ -96,7 +100,7 @@ function PlansSection() {
   if (status === "loading") {
     return (
       <section aria-label="Loading subscription plans" aria-busy="true">
-        <p className="sa-loading-message">Loading subscription plans…</p>
+        <BrandLoader variant="content" message="Loading subscription plans…" />
       </section>
     );
   }
@@ -137,7 +141,7 @@ function PlansSection() {
         <section className="sa-plan-group" key={group.title}>
           <div className="sa-section-heading"><h2>{group.title}</h2><span>{group.plans.length} active {group.plans.length === 1 ? "plan" : "plans"}</span></div>
           {group.plans.length ? (
-              <Suspense fallback={<p className="sa-loading-message">Loading plans…</p>}>
+              <Suspense fallback={<BrandLoader variant="section" message="Loading plans…" />}>
               <PlanCatalogTable plans={group.plans} title={group.title} view={view} />
             </Suspense>
           ) : (
@@ -175,6 +179,14 @@ function Overview({ user }) {
         </div>
         <span className="sa-welcome-mark" aria-hidden="true"><ShieldCheck size={30} /></span>
       </section>
+
+      {(tenantsStatus === "loading" || usersStatus === "loading") && (
+        <BrandLoader
+          variant="section"
+          className="ve-brand-loader--compact"
+          message={tenantsStatus === "loading" && usersStatus === "loading" ? "Loading platform overview…" : tenantsStatus === "loading" ? "Refreshing organization metrics…" : "Refreshing user metrics…"}
+        />
+      )}
 
       <section className="sa-metrics-grid" aria-label="Platform overview">
         <MetricCard
@@ -337,45 +349,47 @@ export default function SuperAdminDashboard() {
           <Overview user={user} />
         ) : sectionInfo ? (
           <>
-            {activeSection !== "questions" && <header className="sa-page-heading">
+            {!['questions', 'master'].includes(activeSection) && <header className="sa-page-heading">
               <p className="sa-eyebrow">SUPER ADMIN WORKSPACE</p>
               <h1>{sectionInfo.title}</h1>
               <p>{sectionInfo.description}</p>
             </header>}
             {activeSection === "organizations" ? (
               <Suspense
-                fallback={<p className="sa-loading-message">Loading organizations…</p>}
+                fallback={<BrandLoader variant="content" message="Loading organizations…" />}
               >
                 <TenantsSection />
               </Suspense>
             ) : activeSection === "users" ? (
               <Suspense
-                fallback={<p className="sa-loading-message">Loading users…</p>}
+                fallback={<BrandLoader variant="content" message="Loading users…" />}
               >
                 <UsersSection initialRole="ALL" />
               </Suspense>
             ) : activeSection === "taxonomy" ? (
               <Suspense
-                fallback={<p className="sa-loading-message">Loading taxonomy…</p>}
+                fallback={<BrandLoader variant="content" message="Loading taxonomy…" />}
               >
                 <TaxonomySection />
               </Suspense>
+            ) : activeSection === "master" ? (
+              tab === "batches" || !tab ? <BatchesPage /> : <MasterWorkspaceSection page={tab} />
             ) : activeSection === "teachers" ? (
               <Suspense
-                fallback={<p className="sa-loading-message">Loading teachers…</p>}
+                fallback={<BrandLoader variant="content" message="Loading teachers…" />}
               >
                 <UsersSection initialRole="TEACHER" title="Teachers Directory" />
               </Suspense>
             ) : activeSection === "students" ? (
               <Suspense
-                fallback={<p className="sa-loading-message">Loading students…</p>}
+                fallback={<BrandLoader variant="content" message="Loading students…" />}
               >
                 <UsersSection initialRole="STUDENT" title="Students Directory" />
               </Suspense>
             ) : activeSection === "subscriptions" ? (
               <PlansSection />
             ) : activeSection === "questions" ? (
-              <Suspense fallback={<p className="sa-loading-message">Loading question bank…</p>}>
+              <Suspense fallback={<BrandLoader variant="content" message="Loading question bank…" />}>
                 <QuestionBankPage initialCreate={tab === "create"} compact />
               </Suspense>
             ) : (
