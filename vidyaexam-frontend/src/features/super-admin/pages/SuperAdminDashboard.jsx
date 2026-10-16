@@ -29,6 +29,7 @@ const PlanCatalogTable = lazy(() => import("../components/PlanCatalogTable"));
 const TenantsSection = lazy(() => import("../components/TenantsSection"));
 const UsersSection = lazy(() => import("../components/UsersSection"));
 const TaxonomySection = lazy(() => import("../components/TaxonomySection"));
+const QuestionBankPage = lazy(() => import("../../question-bank/pages/QuestionBankPage"));
 
 const SECTIONS = {
   organizations: { title: "Organizations / Tenants", description: "Platform-wide organization directory and tenant administration." },
@@ -39,6 +40,7 @@ const SECTIONS = {
   taxonomy: { title: "Taxonomy & Curriculum", description: "Manage platform exam categories, curriculum subjects, and syllabus topics." },
   analytics: { title: "Reports & Analytics", description: "Platform activity and growth reporting." },
   settings: { title: "Platform Settings", description: "Platform-level configuration and operational settings." },
+  questions: { title: "Question Bank", description: "Create, organize, and review platform and tenant questions." },
 };
 
 function MetricCard({ label, Icon, value = "—", stateLabel, isLive = false }) {
@@ -323,7 +325,7 @@ function Overview({ user }) {
 }
 
 export default function SuperAdminDashboard() {
-  const { section } = useParams();
+  const { section, tab } = useParams();
   const { user } = useAuthState();
   const activeSection = section || "overview";
   const sectionInfo = SECTIONS[activeSection];
@@ -335,11 +337,11 @@ export default function SuperAdminDashboard() {
           <Overview user={user} />
         ) : sectionInfo ? (
           <>
-            <header className="sa-page-heading">
+            {activeSection !== "questions" && <header className="sa-page-heading">
               <p className="sa-eyebrow">SUPER ADMIN WORKSPACE</p>
               <h1>{sectionInfo.title}</h1>
               <p>{sectionInfo.description}</p>
-            </header>
+            </header>}
             {activeSection === "organizations" ? (
               <Suspense
                 fallback={<p className="sa-loading-message">Loading organizations…</p>}
@@ -372,6 +374,10 @@ export default function SuperAdminDashboard() {
               </Suspense>
             ) : activeSection === "subscriptions" ? (
               <PlansSection />
+            ) : activeSection === "questions" ? (
+              <Suspense fallback={<p className="sa-loading-message">Loading question bank…</p>}>
+                <QuestionBankPage initialCreate={tab === "create"} compact />
+              </Suspense>
             ) : (
               <UnavailableSection section={activeSection} />
             )}

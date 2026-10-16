@@ -180,8 +180,8 @@
 .sd-stat:nth-child(3) { --kpi-ink: #d87900; --kpi-bg: #fffcf1; --kpi-border: #ffefbd; --kpi-icon-bg: #fff0c2; }
 .sd-stat:nth-child(4) { --kpi-ink: #dc3030; --kpi-bg: #fff5f5; --kpi-border: #ffdddd; --kpi-icon-bg: #ffe4e4; }
 .sd-stat__icon { display: grid; grid-area: 1 / 1 / 3 / 2; place-items: center; width: 42px; height: 42px; color: var(--kpi-ink); background: var(--kpi-icon-bg); border-radius: 13px; }
-.sd-stat__label { grid-area: 2 / 2; color: #182338; font-size: 0.86rem; font-weight: 700; line-height: 1.35; }
-.sd-stat__value { grid-area: 1 / 2; color: var(--kpi-ink); font-size: 1.25rem; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
+.sd-stat__label { grid-area: 1 / 2; align-self: end; color: #182338; font-size: 0.86rem; font-weight: 700; line-height: 1.35; }
+.sd-stat__value { grid-area: 2 / 2; align-self: start; color: var(--kpi-ink); font-size: 1.25rem; font-weight: 800; line-height: 1.15; overflow-wrap: anywhere; }
 
 /* ── Cards & grid ── */
 .sd-grid { display: grid; gap: 1rem; }
