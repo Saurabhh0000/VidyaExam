@@ -2,6 +2,7 @@ import { useId, useMemo, useState } from "react";
 import { ArrowRight, Check, Minus, RotateCw } from "lucide-react";
 import { routes } from "../config/siteConfig";
 import usePlans from "../hooks/usePlans";
+import BrandLoader from "./ui/BrandLoader";
 import {
   availableIntervals,
   ctaHref,
@@ -180,7 +181,7 @@ export default function PricingSection() {
           aria-labelledby={tabId(category)}
           aria-busy={status === "loading"}
           className="hm-pricing-panel">
-          {status === "loading" && <p className="pricing-loading-message">Loading plans…</p>}
+          {status === "loading" && <BrandLoader variant="section" message="Loading plans…" />}
 
           {status === "error" && (
             <div className="hm-pricing-state" role="alert">

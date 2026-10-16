@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Modal from "../../../shared/components/ui/Modal";
 import toast from "../../../shared/components/ui/toast";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../hooks/useQuestionBankData";
 import {
@@ -225,6 +226,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
             </div>
           )}
           {errors.topicId && <small className="qb-field-error">{errors.topicId}</small>}
+          {topicsStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact qb-topic-loader" message="Loading available topics…" />}
           {topicsStatus === "error" && <small className="qb-field-error">{topicsError} <button type="button" className="qb-inline-action" onClick={onRetryTopics}>Retry</button></small>}
           {topicsStatus === "ready" && !topics.length && !editing && <small className="qb-field-hint">No topics are available yet. Add a topic in Taxonomy first.</small>}
         </label>
@@ -764,6 +766,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         </div>
         <button type="button" className="qb-count" onClick={refresh} disabled={status === "loading"} aria-label="Refresh questions"><BookOpen size={15} />{status === "ready" ? count : "—"}</button>
       </div></div>
+      {status === "loading" && questions.length > 0 && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing questions…" />}
       <div className="qb-filters">
         <label className="qb-search"><Search size={17} /><span className="qb-sr-only">Search questions</span><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search question text, topic, subject…" /><button type="button" onClick={() => setSearch("")} aria-label="Clear search" hidden={!search}><X size={15} /></button></label>
         <DropdownSelect value={category} onChange={(value) => { setCategory(value); setSubject("ALL"); }} ariaLabel="Filter by category" options={[{ value: "ALL", label: "All categories" }, ...categories.map((value) => ({ value, label: value }))]} />
@@ -775,7 +778,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
       </div>
 
       {status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={23} /><h3>Could not load questions</h3><p>{error}</p><button type="button" className="qb-button qb-button--secondary" onClick={refresh}>Try again</button></div>
-        : status === "loading" ? <p className="qb-loading" role="status">Loading questions…</p>
+        : status === "loading" && questions.length === 0 ? <BrandLoader variant="section" message="Loading questions…" />
           : questions.length === 0 ? <div className="qb-state"><span><BookOpen size={23} /></span><h3>No questions yet</h3><p>Create your first question to start building this question bank.</p><button className="qb-button qb-button--primary" type="button" onClick={() => setFormOpen(true)}><Plus size={16} />Create question</button></div>
             : filtered.length === 0 ? <div className="qb-state"><Search size={23} /><h3>No questions match these filters</h3><p>Try a different search or clear the selected filters.</p><button className="qb-button qb-button--secondary" type="button" onClick={clearFilters}>Clear filters</button></div>
               : <>
@@ -808,7 +811,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         </>}
       </div>
     </Modal>}
-    {detailState && <Modal isOpen onClose={() => setDetailState(null)} title="Question details" description="Review question content and answer key." size="lg" className="qb-modal"><div className="qb-modal-body">{detailState.status === "loading" ? <p className="qb-loading" role="status">Loading question details…</p> : detailState.status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load question details</h3><p>{detailState.error}</p><button type="button" className="qb-button qb-button--secondary" onClick={() => openDetails(detailState.item)}>Try again</button></div> : <DetailContent question={detailState.question} />}</div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDetailState(null)}>Close</button></div></Modal>}
+    {detailState && <Modal isOpen onClose={() => setDetailState(null)} title="Question details" description="Review question content and answer key." size="lg" className="qb-modal"><div className="qb-modal-body">{detailState.status === "loading" ? <BrandLoader variant="section" message={detailState.mode === "edit" ? "Loading question for editing…" : "Loading question details…"} /> : detailState.status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load question details</h3><p>{detailState.error}</p><button type="button" className="qb-button qb-button--secondary" onClick={() => openDetails(detailState.item)}>Try again</button></div> : <DetailContent question={detailState.question} />}</div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDetailState(null)}>Close</button></div></Modal>}
     {deleteTarget && <Modal isOpen onClose={() => !deleting && setDeleteTarget(null)} title="Delete question?" description="Confirm whether this question should be removed from the question bank." size="sm" className="qb-modal" closeOnEscape={!deleting} closeOnOverlay={!deleting}><div className="qb-delete-copy"><p>Are you sure you want to delete this question?</p><blockquote>{deleteTarget.question_text}</blockquote><small>Questions used by exams may be affected. The backend determines how this record is removed.</small></div><div className="qb-modal-actions"><button type="button" className="qb-button qb-button--secondary" onClick={() => setDeleteTarget(null)} disabled={deleting}>Cancel</button><button type="button" className="qb-button qb-button--danger" onClick={confirmDelete} disabled={deleting} aria-busy={deleting}>{deleting ? "Deleting…" : "Delete question"}</button></div></Modal>}
   </div>;
 }

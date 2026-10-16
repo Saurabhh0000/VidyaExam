@@ -3,6 +3,7 @@ import { ArrowRight, BookOpen, CircleAlert, FileQuestion, Plus, RefreshCw, Targe
 import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../../question-bank/hooks/useQuestionBankData";
 import { TEACHER_DASHBOARD } from "../../../app/roleRoutes";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import "../../question-bank/styles/question-bank.css";
 
 export default function TeacherDashboard() {
@@ -21,11 +22,11 @@ export default function TeacherDashboard() {
       <article><span className="is-amber"><Target size={19} /></span><div><small>Hard difficulty</small><strong>{status === "ready" ? advanced : "—"}</strong><p>In the fetched question set</p></div></article>
     </section>
     <section className="qb-panel td-recent"><div className="qb-panel-heading"><div><h2>Recent questions</h2><p>Latest questions available to your account.</p></div><button className="qb-button qb-button--secondary" type="button" onClick={refresh} disabled={status === "loading"}><RefreshCw size={15} /> Refresh</button></div>
-      {status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load recent questions</h3><p>{error}</p><button className="qb-button qb-button--secondary" type="button" onClick={refresh}>Try again</button></div> : status === "loading" ? <p className="qb-loading" role="status">Loading questions…</p> : recent.length ? <div className="td-recent-list">{recent.map((question) => {
+      {status === "error" ? <div className="qb-state qb-state--error"><CircleAlert size={22} /><h3>Could not load recent questions</h3><p>{error}</p><button className="qb-button qb-button--secondary" type="button" onClick={refresh}>Try again</button></div> : status === "loading" && !questions.length ? <BrandLoader variant="section" message="Loading recent questions…" /> : <>{status === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing recent questions…" />}{recent.length ? <div className="td-recent-list">{recent.map((question) => {
         const creatorId = question.created_by ?? question.created_by_user_id ?? question.creator_id;
         const canEdit = creatorId != null && String(creatorId) === String(user?.userId);
         return <article key={question.question_id}><span className="td-question-icon"><FileQuestion size={17} /></span><div><strong>{question.question_text || "Question text unavailable"}</strong><p>{question.topic_name || "Topic unavailable"} · {question.difficulty_level || "Difficulty unavailable"} · {question.default_marks ?? "—"} marks</p></div><div className="td-recent-actions"><time>{question.created_at ? new Date(question.created_at).toLocaleDateString() : "—"}</time><Link to={`${TEACHER_DASHBOARD}/questions?viewId=${encodeURIComponent(question.question_id)}`}>View</Link>{canEdit && <Link to={`${TEACHER_DASHBOARD}/questions?editId=${encodeURIComponent(question.question_id)}`}>Edit</Link>}</div></article>;
-      })}</div> : <div className="qb-state"><span><BookOpen size={22} /></span><h3>No questions yet</h3><p>Create your first question to populate the question bank.</p><Link className="qb-button qb-button--primary" to={`${TEACHER_DASHBOARD}/questions/create`}><Plus size={16} />Create question</Link></div>}
+      })}</div> : <div className="qb-state"><span><BookOpen size={22} /></span><h3>No questions yet</h3><p>Create your first question to populate the question bank.</p><Link className="qb-button qb-button--primary" to={`${TEACHER_DASHBOARD}/questions/create`}><Plus size={16} />Create question</Link></div>}</>}
       {status === "ready" && questions.length > 0 && <div className="td-view-all"><Link to={`${TEACHER_DASHBOARD}/questions`}>Browse Question Bank <ArrowRight size={16} /></Link></div>}
     </section>
   </div>;

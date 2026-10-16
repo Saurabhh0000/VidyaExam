@@ -2065,6 +2065,32 @@
   padding: 2px 20px 20px;
 }
 
+.sa-tax-load-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 12px 0;
+  padding: 12px 14px;
+  color: #9b2c26;
+  background: #fff4f2;
+  border: 1px solid #f2d4d0;
+  border-radius: 12px;
+  font-size: .84rem;
+}
+.sa-tax-load-error button {
+  flex: none;
+  padding: 7px 11px;
+  color: #fff;
+  background: #0f766e;
+  border: 0;
+  border-radius: 8px;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+.sa-tax-load-error button:hover { background: #0b625b; }
+
 /* Stat card selected state */
 .sa-tenant-stat-card.is-selected-card {
   border-color: var(--sa-teal);

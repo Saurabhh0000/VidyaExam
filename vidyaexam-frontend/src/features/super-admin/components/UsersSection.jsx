@@ -19,6 +19,7 @@ import UsersCards from "./UsersCards";
 import UserDetailsModal from "./UserDetailsModal";
 import { TenantSelect } from "./TenantControls";
 import toast from "../../../shared/components/ui/toast";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 
 export default function UsersSection({ initialRole = "ALL", title }) {
   const { status, users, counts, errorKind, errorMessage, retry, refresh } =
@@ -334,9 +335,7 @@ export default function UsersSection({ initialRole = "ALL", title }) {
         )}
 
         {/* Content Area */}
-        {status === "loading" && (
-          <p className="sa-loading-message" role="status">Loading users…</p>
-        )}
+        {status === "loading" && <BrandLoader variant={users.length ? "section" : "content"} className={users.length ? "ve-brand-loader--compact" : ""} message={users.length ? "Refreshing users…" : "Loading users…"} />}
 
         {status === "error" && (
           <div className="sa-tenants-error" role="alert">
@@ -352,7 +351,7 @@ export default function UsersSection({ initialRole = "ALL", title }) {
           </div>
         )}
 
-        {status === "ready" && (
+        {(status === "ready" || (status === "loading" && users.length > 0)) && (
           <>
             {filteredUsers.length === 0 ? (
               <div className="sa-inline-empty sa-tenants-empty">

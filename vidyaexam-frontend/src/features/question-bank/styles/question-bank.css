@@ -121,6 +121,8 @@
 .qb-topic-options button { padding: 10px; color: #34465e; background: transparent; border: 0; border-radius: 8px; font: inherit; font-size: .82rem; text-align: left; cursor: pointer; }
 .qb-topic-options button:hover, .qb-topic-options button[aria-selected="true"] { color: #0f766e; background: #eaf7f5; }
 .qb-topic-options p { margin: 0; padding: 10px; color: #728198; font-size: .8rem; }
+.qb-topic-loader { min-height: 70px; padding: 0.35rem 0; }
+.qb-topic-loader .ve-brand-loader__identity { width: min(100%, 13rem); }
 .qb-field input[aria-invalid="true"], .qb-field textarea[aria-invalid="true"], .qb-field select[aria-invalid="true"] { border-color: #c83b32; }
 .qb-field-error { color: #b42318; font-size: .75rem; font-weight: 500; line-height: 1.4; }
 .qb-field-hint { color: #728198; font-size: .75rem; font-weight: 500; line-height: 1.4; }

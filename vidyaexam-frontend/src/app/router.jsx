@@ -16,10 +16,11 @@ import OrganizationDashboard from "../features/organization-admin/pages/Organiza
 import SuperAdminDashboard from "../features/super-admin/pages/SuperAdminDashboard";
 import UserSettings from "../features/account/pages/UserSettings";
 import TeacherDashboard from "../features/teacher/pages/TeacherDashboard";
+import BrandLoader from "../shared/components/ui/BrandLoader";
 const QuestionBankPage = lazy(() => import("../features/question-bank/pages/QuestionBankPage"));
 
 function QuestionBankRoute({ initialCreate = false }) {
-  return <Suspense fallback={<p className="qb-loading" role="status">Loading Question Bank…</p>}><QuestionBankPage initialCreate={initialCreate} /></Suspense>;
+  return <Suspense fallback={<BrandLoader variant="content" message="Loading Question Bank…" />}><QuestionBankPage initialCreate={initialCreate} /></Suspense>;
 }
 
 export default function AppRouter() {

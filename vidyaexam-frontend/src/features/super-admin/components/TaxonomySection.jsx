@@ -28,6 +28,7 @@ import CreateSubjectModal from "./taxonomy/CreateSubjectModal";
 import CreateTopicModal from "./taxonomy/CreateTopicModal";
 import { SUPER_ADMIN_DASHBOARD } from "../../../app/roleRoutes";
 import "../styles/super-admin-dashboard.css";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 
 const TABS = [
   { id: "categories", label: "Exam Categories", icon: FolderGit2 },
@@ -56,11 +57,13 @@ export default function TaxonomySection({ initialTab, taxonomyBasePath = `${SUPE
   const {
     categories,
     categoriesStatus,
+    categoriesError,
     addCategory,
     fetchCategories,
 
     subjects,
     subjectsStatus,
+    subjectsError,
     selectedCategoryId,
     setSelectedCategoryId,
     fetchSubjects,
@@ -68,6 +71,7 @@ export default function TaxonomySection({ initialTab, taxonomyBasePath = `${SUPE
 
     topics,
     topicsStatus,
+    topicsError,
     selectedSubjectId,
     setSelectedSubjectId,
     fetchTopics,
@@ -447,36 +451,69 @@ export default function TaxonomySection({ initialTab, taxonomyBasePath = `${SUPE
         <div className="sa-tax-tab-content">
           {activeTab === "categories" && (
             <>
-              {categoriesStatus === "loading" ? (
-                <p className="sa-loading-message" role="status">Loading categories…</p>
-              ) : viewMode === "table" ? (
-                <CategoriesTable categories={filteredCategories} />
+              {categoriesStatus === "error" && (
+                <div className="sa-tax-load-error" role="alert">
+                  <span>{categoriesError || "Unable to load categories."}</span>
+                  <button type="button" onClick={fetchCategories}>Try again</button>
+                </div>
+              )}
+              {categoriesStatus === "loading" && categories.length === 0 ? (
+                <BrandLoader variant="section" message="Loading categories…" />
               ) : (
-                <CategoryCards categories={filteredCategories} />
+                <>
+                  {categoriesStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing categories…" />}
+                  {viewMode === "table" ? (
+                    <CategoriesTable categories={filteredCategories} />
+                  ) : (
+                    <CategoryCards categories={filteredCategories} />
+                  )}
+                </>
               )}
             </>
           )}
 
           {activeTab === "subjects" && (
             <>
-              {subjectsStatus === "loading" ? (
-                <p className="sa-loading-message" role="status">Loading subjects…</p>
-              ) : viewMode === "table" ? (
-                <SubjectsTable subjects={filteredSubjects} />
+              {subjectsStatus === "error" && (
+                <div className="sa-tax-load-error" role="alert">
+                  <span>{subjectsError || "Unable to load subjects."}</span>
+                  <button type="button" onClick={() => fetchSubjects(selectedCategoryId)}>Try again</button>
+                </div>
+              )}
+              {subjectsStatus === "loading" && subjects.length === 0 ? (
+                <BrandLoader variant="section" message="Loading subjects…" />
               ) : (
-                <SubjectCards subjects={filteredSubjects} />
+                <>
+                  {subjectsStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing subjects…" />}
+                  {viewMode === "table" ? (
+                    <SubjectsTable subjects={filteredSubjects} />
+                  ) : (
+                    <SubjectCards subjects={filteredSubjects} />
+                  )}
+                </>
               )}
             </>
           )}
 
           {activeTab === "topics" && (
             <>
-              {topicsStatus === "loading" ? (
-                <p className="sa-loading-message" role="status">Loading topics…</p>
-              ) : viewMode === "table" ? (
-                <TopicsTable topics={filteredTopics} />
+              {topicsStatus === "error" && (
+                <div className="sa-tax-load-error" role="alert">
+                  <span>{topicsError || "Unable to load topics."}</span>
+                  <button type="button" onClick={() => fetchTopics(selectedSubjectId)}>Try again</button>
+                </div>
+              )}
+              {topicsStatus === "loading" && topics.length === 0 ? (
+                <BrandLoader variant="section" message="Loading topics…" />
               ) : (
-                <TopicCards topics={filteredTopics} />
+                <>
+                  {topicsStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact" message="Refreshing topics…" />}
+                  {viewMode === "table" ? (
+                    <TopicsTable topics={filteredTopics} />
+                  ) : (
+                    <TopicCards topics={filteredTopics} />
+                  )}
+                </>
               )}
             </>
           )}
