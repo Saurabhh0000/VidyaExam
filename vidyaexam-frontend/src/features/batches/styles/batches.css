@@ -219,12 +219,17 @@
   .ve-batch-heading-actions > .ve-batch-button:last-child:nth-child(3) { grid-column: 1 / -1; }
   .ve-batch-panel { padding: 13px; border-radius: 15px; }
   .ve-batches-page.sa-taxonomy-section .ve-batch-panel > .sa-taxonomy-tabs-header { border-radius: 14px 14px 0 0; }
-  .ve-batch-toolbar { display: flex; align-items: stretch; flex-direction: column; gap: 12px; }
-  .ve-batch-toolbar-left { width: 100%; min-width: 0; flex: 1 1 auto; align-items: stretch; flex-direction: column; gap: 10px; }
-  .ve-batch-search { width: 100%; max-width: none; }
-  .ve-batch-filter { width: 100%; min-width: 0; flex: 0 0 44px; }
-  .ve-batch-filter .ve-batch-status-filter { width: 100%; }
-  .ve-batch-toolbar-right { width: 100%; justify-content: flex-end; gap: 9px; }
+  .ve-batch-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; gap: 10px 8px; }
+  .ve-batches-page.sa-taxonomy-section .ve-batch-toolbar { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; align-items: center; }
+  .ve-batch-toolbar-left, .ve-batch-toolbar-right,
+  .ve-batches-page.sa-taxonomy-section .ve-batch-toolbar-left.sa-toolbar-left,
+  .ve-batches-page.sa-taxonomy-section .ve-batch-toolbar-right.sa-toolbar-right { display: contents; }
+  .ve-batch-search { width: 100%; max-width: none; min-height: 44px; height: 44px; flex: 0 0 44px; box-sizing: border-box; }
+  .ve-batch-search { grid-column: 1 / -1; grid-row: 1; }
+  .ve-batch-filter { grid-column: 1; grid-row: 2; width: auto; min-width: 0; flex: initial; }
+  .ve-batch-filter .ve-batch-status-filter { flex: 1 1 0; width: auto; min-width: 0; }
+  .ve-batch-toolbar-right > .ve-batch-view-toggle { grid-column: 2; grid-row: 2; }
+  .ve-batch-toolbar-right > .ve-batch-refresh { grid-column: 3; grid-row: 2; }
   .ve-batch-grid { grid-template-columns: minmax(0, 1fr); }
   .ve-batch-scope { margin: 22px 14px 10px; }
   .ve-batch-table-wrap { width: calc(100% - 24px); margin: 0 12px; }
