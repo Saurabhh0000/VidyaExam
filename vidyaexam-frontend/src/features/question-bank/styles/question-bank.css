@@ -36,7 +36,8 @@
 .qb-panel-actions { display: flex; align-items: center; gap: 10px; }
 .qb-count:disabled { cursor: wait; opacity: .7; }
 .qb-kpi-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; margin: 0 0 18px; }
-.qb-kpi-card { --qb-kpi-ink: #2458d8; --qb-kpi-bg: #f2f5ff; --qb-kpi-border: #dce5ff; --qb-kpi-icon-bg: #e1ebff; position: relative; isolation: isolate; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto auto; align-content: center; align-items: center; gap: 1px 11px; min-width: 0; min-height: 104px; overflow: hidden; padding: 14px 16px; background: linear-gradient(135deg, var(--qb-kpi-bg), #fff); border: 1px solid var(--qb-kpi-border); border-radius: 15px; }
+.qb-kpi-card { --qb-kpi-ink: #2458d8; --qb-kpi-bg: #f2f5ff; --qb-kpi-border: #dce5ff; --qb-kpi-icon-bg: #e1ebff; position: relative; isolation: isolate; display: grid; grid-template-columns: 44px minmax(0, 1fr); grid-template-rows: auto auto auto; align-content: center; align-items: center; gap: 1px 11px; min-width: 0; min-height: 104px; overflow: hidden; padding: 14px 16px; background: linear-gradient(135deg, var(--qb-kpi-bg), #fff); border: 1px solid var(--qb-kpi-border); border-radius: 15px; transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
+.qb-kpi-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--qb-kpi-ink) 24%, var(--qb-kpi-border)); box-shadow: 0 10px 24px rgb(23 43 77 / 9%); }
 .qb-kpi-card::after { position: absolute; z-index: -1; top: -44px; right: -24px; width: 112px; height: 112px; content: ""; background: var(--qb-kpi-icon-bg); border-radius: 50%; opacity: .5; }
 .qb-kpi-card.is-green { --qb-kpi-ink: #168344; --qb-kpi-bg: #f0fbf4; --qb-kpi-border: #d7f7e2; --qb-kpi-icon-bg: #d9f8e5; }
 .qb-kpi-card.is-amber { --qb-kpi-ink: #b66a00; --qb-kpi-bg: #fffcf1; --qb-kpi-border: #ffefbd; --qb-kpi-icon-bg: #fff0c2; }
@@ -170,13 +171,13 @@
 .qb-bulk-result-cards article.is-invalid { color: #a3322b; background: #fff4f2; border-color: #f2d4d0; }
 .qb-bulk-result-cards strong { font-size: 1.7rem; line-height: 1.1; }
 .qb-bulk-result-cards span { font-size: .8rem; font-weight: 700; }
-.qb-bulk-preview { max-height: min(44vh, 360px); overflow: auto; border: 1px solid #e1e9e9; border-radius: 11px; }
+.qb-bulk-preview { overflow: visible; border: 1px solid #e1e9e9; border-radius: 11px; }
 .qb-bulk-preview table { width: 100%; border-collapse: collapse; text-align: left; }
 .qb-bulk-preview th { position: sticky; top: 0; z-index: 1; padding: 10px; color: #53677f; background: #f2f7f6; font-size: .69rem; letter-spacing: .04em; text-transform: uppercase; }
 .qb-bulk-preview td { max-width: 260px; padding: 9px 10px; color: #45566d; border-top: 1px solid #edf1f1; font-size: .76rem; overflow-wrap: anywhere; }
 .qb-bulk-preview tr.is-invalid td:last-child { color: #b42318; }
 .qb-bulk-preview tr.is-valid td:last-child { color: #087443; }
-.qb-modal-body { max-height: min(60vh, 650px); overflow-y: auto; }
+.qb-modal-body { max-height: none; overflow: visible; }
 .qb-form-select { z-index: 2; }
 .qb-form-select.is-open { z-index: 50; }
 .qb-detail-content { display: grid; gap: 15px; }
@@ -200,7 +201,7 @@
 .qb-dates dd { margin: 0; color: #34465e; }
 .qb-delete-copy { display: grid; gap: 10px; color: #475569; font-size: .9rem; }
 .qb-delete-copy p { margin: 0; }
-.qb-delete-copy blockquote { max-height: 90px; margin: 0; overflow: auto; padding: 11px; color: #172b4d; background: #f5f8f8; border-left: 3px solid #0f766e; border-radius: 6px; font-size: .82rem; }
+.qb-delete-copy blockquote { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; padding: 11px; color: #172b4d; background: #f5f8f8; border-left: 3px solid #0f766e; border-radius: 6px; font-size: .82rem; }
 .qb-delete-copy small { color: #748297; line-height: 1.5; }
 .td-welcome { align-items: center; padding: clamp(22px, 4vw, 36px); background: linear-gradient(125deg, #eff9f7, #fff 75%); border: 1px solid #d9eae6; border-radius: 20px; }
 .td-welcome > div:first-child { max-width: 680px; }

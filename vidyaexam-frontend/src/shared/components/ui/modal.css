@@ -47,6 +47,7 @@
 
 .ve-modal-header {
   display: flex;
+  flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
@@ -100,17 +101,22 @@
 }
 
 .ve-modal-content {
+  flex: 1 1 auto;
   min-height: 0;
+  min-width: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding: 24px 26px;
   color: #334155;
   font-size: 14px;
   line-height: 1.7;
   overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .ve-modal-footer {
   display: flex;
+  flex: 0 0 auto;
   flex-wrap: wrap;
   align-items: center;
   justify-content: flex-end;
@@ -195,13 +201,14 @@
 @media (max-width: 640px) {
   .ve-modal-overlay {
     align-items: center;
-    padding: 14px;
+    padding: max(10px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(10px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
   }
 
   .ve-modal {
-    max-height: 90vh;
-    max-height: 90dvh;
-    border-radius: 16px;
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    max-height: calc(100dvh - max(20px, env(safe-area-inset-top) + env(safe-area-inset-bottom)));
+    border-radius: 15px;
   }
 
   .ve-modal-header {
@@ -223,6 +230,29 @@
 
   .ve-modal-footer .ve-modal-btn {
     flex: 1;
+  }
+
+  .ve-modal-content :where(input, select, textarea, button) {
+    max-width: 100%;
+  }
+
+  .ve-modal-content :where(input, select, textarea) {
+    min-width: 0;
+  }
+
+  .ve-modal-content :where(button, [role="button"]) svg {
+    flex: 0 0 auto;
+  }
+
+  /* Keep long labels and metadata readable instead of forcing modal overflow. */
+  .ve-modal :where(.sa-user-role-badge, .sa-code-badge, .sa-status-pill, .org-role-badge, .org-status-badge, .qb-detail-tags > span) {
+    max-width: 100%;
+    white-space: normal;
+    overflow-wrap: anywhere;
+  }
+
+  .ve-modal .qb-detail-tags {
+    flex-wrap: wrap;
   }
 }
 
