@@ -35,7 +35,7 @@
   clip: rect(0 0 0 0);
   white-space: nowrap;
 }
-.ve-acct__options { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.ve-acct__options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.6rem; }
 .ve-acct__option { position: relative; display: block; min-width: 0; }
 .ve-acct__option input {
   position: absolute;
@@ -52,6 +52,7 @@
   gap: 0.35rem;
   height: 100%;
   padding: 0.7rem 0.8rem;
+  color: var(--ve-navy);
   background: #fff;
   border: 1px solid var(--ve-border);
   border-radius: 0.75rem;
@@ -62,13 +63,15 @@
   background: var(--ve-teal-light);
   border-color: var(--ve-teal);
   box-shadow: 0 0 0 1px var(--ve-teal);
+  color: var(--ve-navy);
 }
+.ve-acct__option input:checked + .ve-acct__card .ve-acct__title { color: var(--ve-navy); }
 .ve-acct__option input:focus-visible + .ve-acct__card {
   outline: 3px solid rgba(15, 118, 110, 0.4);
   outline-offset: 2px;
 }
 .ve-acct__option input:disabled + .ve-acct__card { opacity: 0.7; cursor: not-allowed; }
-.ve-acct__head { display: flex; align-items: center; gap: 0.5rem; }
+.ve-acct__head { display: flex; align-items: center; gap: 0.5rem; min-width: 0; }
 .ve-acct__icon {
   display: grid;
   place-items: center;
@@ -84,7 +87,7 @@
   color: #fff;
   background: var(--ve-teal);
 }
-.ve-acct__title { font-size: 0.9rem; font-weight: 700; }
+.ve-acct__title { flex: 1 1 auto; min-width: 0; font-size: 0.9rem; font-weight: 700; overflow-wrap: anywhere; }
 .ve-acct__check {
   display: grid;
   place-items: center;
@@ -99,7 +102,7 @@
   transition: opacity 0.15s, transform 0.15s;
 }
 .ve-acct__option input:checked + .ve-acct__card .ve-acct__check { opacity: 1; transform: none; }
-.ve-acct__text { color: var(--ve-muted); font-size: 0.75rem; line-height: 1.4; }
+.ve-acct__text { display: block; min-width: 0; color: var(--ve-muted); font-size: 0.75rem; line-height: 1.4; overflow-wrap: anywhere; }
 
 /* ───────── Fields (select, textarea, hint, error) ───────── */
 .ve-form select,
@@ -168,7 +171,8 @@
   display: grid;
   gap: 0.9rem;
   padding: 1rem;
-  background: rgba(255, 255, 255, 0.6);
+  color: var(--ve-navy);
+  background: #f7fafc;
   border: 1px solid var(--ve-border);
   border-radius: 0.85rem;
 }
@@ -179,6 +183,7 @@
   align-items: center;
   gap: 0.6rem;
   margin: 0;
+  color: var(--ve-navy);
   font-size: 0.95rem;
   font-weight: 700;
   letter-spacing: -0.01em;
@@ -217,4 +222,38 @@
   .ve-acct__options { gap: 0.45rem; }
   .ve-acct__card { padding: 0.6rem; }
   .ve-section { padding: 0.8rem; }
+}
+
+@media (max-width: 767px) {
+  .ve-auth:has(.ve-reg) {
+    min-height: 100vh;
+    min-height: 100dvh;
+    overflow-x: clip;
+    overflow-y: visible;
+  }
+
+  .ve-auth__panel:has(.ve-reg) {
+    align-items: flex-start;
+    min-height: 100vh;
+    min-height: 100dvh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .ve-auth__card:has(.ve-reg) {
+    margin-block: auto;
+    padding-block: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .ve-acct__options { gap: 0.5rem; }
+  .ve-acct__card { align-content: center; min-width: 0; min-height: 3.75rem; padding: 0.7rem; }
+  .ve-acct__head { display: grid; grid-template-columns: minmax(0, 1fr) 1.1rem; align-items: center; gap: 0.5rem; }
+  .ve-acct__icon { display: none; }
+  .ve-acct__title { grid-column: 1; text-align: left; }
+  .ve-acct__check { grid-column: 2; margin-left: 0; justify-self: end; }
+  .ve-acct__text { display: none; }
+  .ve-section { padding: 0.85rem; gap: 0.75rem; }
+  .ve-section__title { align-items: center; line-height: 1.35; }
+  .ve-section__step { flex: 0 0 1.5rem; }
+  .ve-section .ve-field label { color: var(--ve-navy); }
 }
