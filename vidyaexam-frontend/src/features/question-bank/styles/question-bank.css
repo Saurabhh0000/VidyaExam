@@ -256,6 +256,7 @@
   .qb-table, .qb-table tbody { display: block; width: 100%; }
   .qb-table tr { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0 12px; margin: 12px 0; padding: 11px; border: 1px solid #e1e9e9; border-radius: 12px; }
   .qb-table td { display: grid; grid-template-columns: 1fr; gap: 5px; min-width: 0; max-width: none; padding: 8px 3px; border: 0; overflow-wrap: anywhere; }
+  .qb-table td .qb-difficulty { justify-self: start; width: fit-content; max-width: 100%; }
   .qb-table td::before { content: attr(data-label); color: #7a899b; font-size: .65rem; font-weight: 800; letter-spacing: .05em; text-transform: uppercase; }
   .qb-table td:first-child { grid-column: 1 / -1; min-width: 0; max-width: none; }
   .qb-table td:first-child strong { -webkit-line-clamp: 3; }
