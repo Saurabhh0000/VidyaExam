@@ -450,7 +450,7 @@
 .org-bulk-progress { display: grid; gap: 6px; margin: 0 0 10px; color: #52637a; font-size: .7rem; }
 .org-bulk-progress > div { height: 6px; overflow: hidden; background: #e8efee; border-radius: 99px; }
 .org-bulk-progress i { display: block; height: 100%; background: var(--org-teal); border-radius: inherit; transition: width 150ms ease; }
-.org-bulk-table-wrap { max-height: min(34vh, 290px); overflow: auto; border: 1px solid #e1e9e8; border-radius: 10px; }
+.org-bulk-table-wrap { overflow: visible; border: 1px solid #e1e9e8; border-radius: 10px; }
 .org-bulk-table { width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-family: var(--font-family-base); font-size: .7rem; }
 .org-bulk-table th { position: sticky; top: 0; z-index: 1; padding: 9px 10px; color: #52637a; background: #f5f9f8; border-bottom: 1px solid #e2eae9; font-size: .64rem; font-weight: 750; white-space: nowrap; }
 .org-bulk-table td { max-width: 220px; padding: 8px 10px; color: #344963; border-bottom: 1px solid #edf1f2; overflow-wrap: anywhere; }

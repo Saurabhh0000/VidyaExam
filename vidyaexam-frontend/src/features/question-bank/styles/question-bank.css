@@ -170,13 +170,13 @@
 .qb-bulk-result-cards article.is-invalid { color: #a3322b; background: #fff4f2; border-color: #f2d4d0; }
 .qb-bulk-result-cards strong { font-size: 1.7rem; line-height: 1.1; }
 .qb-bulk-result-cards span { font-size: .8rem; font-weight: 700; }
-.qb-bulk-preview { max-height: min(44vh, 360px); overflow: auto; border: 1px solid #e1e9e9; border-radius: 11px; }
+.qb-bulk-preview { overflow: visible; border: 1px solid #e1e9e9; border-radius: 11px; }
 .qb-bulk-preview table { width: 100%; border-collapse: collapse; text-align: left; }
 .qb-bulk-preview th { position: sticky; top: 0; z-index: 1; padding: 10px; color: #53677f; background: #f2f7f6; font-size: .69rem; letter-spacing: .04em; text-transform: uppercase; }
 .qb-bulk-preview td { max-width: 260px; padding: 9px 10px; color: #45566d; border-top: 1px solid #edf1f1; font-size: .76rem; overflow-wrap: anywhere; }
 .qb-bulk-preview tr.is-invalid td:last-child { color: #b42318; }
 .qb-bulk-preview tr.is-valid td:last-child { color: #087443; }
-.qb-modal-body { max-height: min(60vh, 650px); overflow-y: auto; }
+.qb-modal-body { max-height: none; overflow: visible; }
 .qb-form-select { z-index: 2; }
 .qb-form-select.is-open { z-index: 50; }
 .qb-detail-content { display: grid; gap: 15px; }
@@ -200,7 +200,7 @@
 .qb-dates dd { margin: 0; color: #34465e; }
 .qb-delete-copy { display: grid; gap: 10px; color: #475569; font-size: .9rem; }
 .qb-delete-copy p { margin: 0; }
-.qb-delete-copy blockquote { max-height: 90px; margin: 0; overflow: auto; padding: 11px; color: #172b4d; background: #f5f8f8; border-left: 3px solid #0f766e; border-radius: 6px; font-size: .82rem; }
+.qb-delete-copy blockquote { margin: 0; overflow-wrap: anywhere; white-space: pre-wrap; padding: 11px; color: #172b4d; background: #f5f8f8; border-left: 3px solid #0f766e; border-radius: 6px; font-size: .82rem; }
 .qb-delete-copy small { color: #748297; line-height: 1.5; }
 .td-welcome { align-items: center; padding: clamp(22px, 4vw, 36px); background: linear-gradient(125deg, #eff9f7, #fff 75%); border: 1px solid #d9eae6; border-radius: 20px; }
 .td-welcome > div:first-child { max-width: 680px; }
