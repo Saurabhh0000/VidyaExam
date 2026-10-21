@@ -4,6 +4,7 @@ import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../../question-bank/hooks/useQuestionBankData";
 import { TEACHER_DASHBOARD } from "../../../app/roleRoutes";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import "../../question-bank/styles/question-bank.css";
 
 export default function TeacherDashboard() {
@@ -15,7 +16,7 @@ export default function TeacherDashboard() {
   const recent = [...questions].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
 
   return <div className="teacher-dashboard qb-page">
-    <section className="td-welcome"><div><span className="qb-eyebrow"><BookOpen size={15} /> TEACHER WORKSPACE</span><h1>Welcome back, {firstName}</h1><p>Build and manage the questions that help your learners prepare with confidence.</p></div><div className="qb-heading-actions"><Link className="qb-button qb-button--secondary" to={`${TEACHER_DASHBOARD}/questions`}>Open Question Bank <ArrowRight size={16} /></Link><Link className="qb-button qb-button--primary" to={`${TEACHER_DASHBOARD}/questions/create`}><Plus size={17} /> Create question</Link></div></section>
+    <PageHeader className="td-page-header" eyebrow="TEACHER WORKSPACE" title={`Welcome back, ${firstName}`} description="Build and manage the questions that help your learners prepare with confidence." icon={BookOpen} actions={<div className="qb-page-header-actions"><Link className="qb-button qb-button--secondary" to={`${TEACHER_DASHBOARD}/questions`}>Open Question Bank <ArrowRight size={16} /></Link><Link className="qb-button qb-button--primary" to={`${TEACHER_DASHBOARD}/questions/create`}><Plus size={17} /> Create question</Link></div>} />
     <section className="td-metrics" aria-label="Question overview">
       <article><span><FileQuestion size={19} /></span><div><small>Questions in available results</small><strong>{status === "ready" ? count : status === "loading" ? "…" : "—"}</strong><p>From the question bank API</p></div></article>
       <article><span className="is-mint"><Target size={19} /></span><div><small>Medium difficulty</small><strong>{status === "ready" ? medium : "—"}</strong><p>In the fetched question set</p></div></article>

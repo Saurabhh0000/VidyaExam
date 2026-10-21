@@ -1,4 +1,5 @@
 import { Boxes, ClipboardList, PanelsTopLeft } from "lucide-react";
+import PageHeader from "./ui/PageHeader";
 import { useLocation, useNavigate } from "react-router-dom";
 import "./master-workspace-section.css";
 import "../../features/super-admin/styles/super-admin-dashboard.css";
@@ -68,11 +69,13 @@ export default function MasterWorkspaceSection({ page = "batches" }) {
       <div className="sa-content-panel sa-taxonomy-panel master-workspace__panel">
         <MasterWorkspaceTabs page={page} />
         <div className="sa-tax-tab-content">
-          <header className="master-workspace__heading">
-            <span className="master-workspace__eyebrow">MASTER DATA</span>
-            <h1 id="master-workspace-title">{current.label}</h1>
-            <p>{current.description}</p>
-          </header>
+          <PageHeader
+            className="master-workspace__page-header"
+            eyebrow="MASTER DATA"
+            title={current.label}
+            description={current.description}
+            icon={Icon}
+          />
           <div className="master-workspace__empty sa-table-empty" role="status">
             <span className="master-workspace__icon"><Icon size={24} aria-hidden="true" /></span>
             <h2>{current.label} management is ready for setup</h2>

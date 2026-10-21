@@ -5,30 +5,6 @@
   color: #172b4d;
 }
 
-.master-workspace__heading {
-  display: grid;
-  gap: 7px;
-}
-
-.master-workspace__eyebrow {
-  color: #0f766e;
-  font-size: .72rem;
-  font-weight: 800;
-  letter-spacing: .12em;
-}
-
-.master-workspace__heading h1 {
-  margin: 0;
-  font-size: clamp(1.6rem, 3vw, 2.2rem);
-  letter-spacing: -.035em;
-}
-
-.master-workspace__heading p {
-  margin: 0;
-  color: #64748b;
-  line-height: 1.6;
-}
-
 .master-workspace__stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 13px; }
 .master-workspace__stat { display: flex; align-items: center; gap: 13px; min-width: 0; padding: 17px; color: #172b4d; text-align: left; background: linear-gradient(135deg, #f1faf8, #fff); border: 1px solid #dcebe8; border-radius: 16px; cursor: pointer; transition: border-color 140ms ease, box-shadow 140ms ease, background-color 140ms ease; }
 .master-workspace__stat:hover, .master-workspace__stat.is-active { border-color: #8fc9bf; box-shadow: 0 5px 16px rgb(15 118 110 / 9%); }

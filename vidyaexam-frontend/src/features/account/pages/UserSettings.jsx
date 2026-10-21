@@ -8,6 +8,7 @@ import {
   UserRound,
 } from "lucide-react";
 import useAuthState from "../../auth/utils/useAuthState";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import "../styles/user-settings.css";
 
 function displayRole(role) {
@@ -38,14 +39,13 @@ export default function UserSettings() {
   const memberships = user?.memberships || [];
 
   return <main className="user-settings-page">
-    <header className="user-settings-heading">
-      <span className="user-settings-heading-icon"><Settings2 size={20} aria-hidden="true" /></span>
-      <div>
-        <p>ACCOUNT &amp; PREFERENCES</p>
-        <h1>Settings</h1>
-        <span>Review your account and organization information.</span>
-      </div>
-    </header>
+    <PageHeader
+      className="user-settings-page-header"
+      eyebrow="ACCOUNT & PREFERENCES"
+      title="Settings"
+      description="Review your account and organization information."
+      icon={Settings2}
+    />
 
     <section className="user-settings-card" aria-labelledby="user-settings-profile-title">
       <div className="user-settings-card-heading">

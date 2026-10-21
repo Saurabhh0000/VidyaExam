@@ -55,6 +55,7 @@ import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import MasterWorkspaceSection from "../../../shared/components/MasterWorkspaceSection";
 import BatchesPage from "../../batches/pages/BatchesPage";
 import UserSettings from "../../account/pages/UserSettings";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import "../styles/organization-dashboard.css";
 
 const TaxonomySection = lazy(
@@ -2254,15 +2255,13 @@ function RoleDirectoryEmptyState({ view, organizationName }) {
   const label = isStudent ? "students" : "teachers";
   return (
     <div className="org-users-page">
-      <section className="org-users-heading">
-        <div>
-          <span className="org-dashboard-eyebrow">
-            <Building2 size={14} /> ORGANIZATION WORKSPACE
-          </span>
-          <h1>{isStudent ? "Students" : "Teachers"}</h1>
-          <p>{organizationName}</p>
-        </div>
-      </section>
+      <PageHeader
+        className="org-role-directory-page-header"
+        eyebrow="ORGANIZATION WORKSPACE"
+        title={isStudent ? "Students" : "Teachers"}
+        description={organizationName}
+        icon={isStudent ? GraduationCap : BookOpen}
+      />
       <section className="org-users-table-panel">
         <div className="org-role-directory-empty" role="status">
           <span>
@@ -2551,22 +2550,14 @@ function UserDirectory({
   const hasUsers = sourceUsers.length > 0;
   return (
     <div className="org-users-page">
-      <section className="org-users-heading">
-        <div>
-          <span className="org-dashboard-eyebrow">
-            <Building2 size={14} /> ORGANIZATION WORKSPACE
-          </span>
-          <h1>Organization Users</h1>
-          <p>
-            Manage your organization's administrators, teachers, and students in
-            one place.
-          </p>
-          <span className="org-users-org-name">
-            <Building2 size={15} />
-            {organizationName}
-          </span>
-        </div>
-        <div className="org-users-heading-actions">
+      <PageHeader
+        className="org-directory-page-header"
+        eyebrow="ORGANIZATION WORKSPACE"
+        title="Organization Users"
+        description="Manage your organization's administrators, teachers, and students in one place."
+        icon={Building2}
+        meta={<><Building2 size={15} aria-hidden="true" />{organizationName}</>}
+        actions={<div className="org-users-page-header-actions">
           <button
             className="org-dashboard-button org-dashboard-button--secondary"
             onClick={handleCsv}>
@@ -2595,8 +2586,8 @@ function UserDirectory({
             <UploadCloud size={17} />
             Add Bulk
           </button>
-        </div>
-      </section>
+        </div>}
+      />
       <section
         className="org-user-summary-grid"
         aria-label="Organization summary">
@@ -2905,22 +2896,14 @@ export default function OrganizationDashboard() {
             onQuotaChange={setQuota}
           />
         ) : (
-          <section className="org-dashboard-welcome">
-            <div className="org-dashboard-welcome-copy">
-              <span className="org-dashboard-eyebrow">
-                <Building2 size={14} aria-hidden="true" /> ORGANIZATION
-                WORKSPACE
-              </span>
-              <h1>Organization Dashboard</h1>
-              <h2>
-                Welcome back, <span>{firstName}</span>.
-              </h2>
-              <p>
-                {user?.activeTenantName ? `${user.activeTenantName} · ` : ""}
-                Manage your organization workspace and member access.
-              </p>
-            </div>
-            <div className="org-dashboard-welcome-actions">
+          <PageHeader
+            className="org-overview-page-header"
+            eyebrow="ORGANIZATION WORKSPACE"
+            title="Organization Dashboard"
+            description={`${user?.activeTenantName ? `${user.activeTenantName} · ` : ""}Manage your organization workspace and member access.`}
+            icon={Building2}
+            meta={<span>Welcome back, {firstName}.</span>}
+            actions={<div className="org-dashboard-page-header-actions">
               <button
                 className="org-dashboard-button org-dashboard-button--primary"
                 onClick={() => setModalRole("TEACHER")}>
@@ -2932,8 +2915,8 @@ export default function OrganizationDashboard() {
                 onClick={() => navigate("/organization/dashboard/employee")}>
                 View Employees <Users size={16} aria-hidden="true" />
               </button>
-            </div>
-          </section>
+            </div>}
+          />
         )}
         {!view && !["taxonomy", "settings", "master"].includes(routeView) && (
           <section className="org-dashboard-lower-grid">
