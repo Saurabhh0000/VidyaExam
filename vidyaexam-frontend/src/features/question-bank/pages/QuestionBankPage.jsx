@@ -10,6 +10,7 @@ import {
 import Modal from "../../../shared/components/ui/Modal";
 import toast from "../../../shared/components/ui/toast";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../hooks/useQuestionBankData";
 import {
@@ -836,10 +837,10 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
     setBulkSettingsErrors(next);
     return next;
   };
-  const heading = <header className={`qb-heading${compact ? " qb-heading--compact" : ""}`}><div><span className="qb-eyebrow"><FileQuestion size={15} /> QUESTION WORKSPACE</span><h1>Question Bank</h1><p>Create, organize, and review questions for your exam content.</p></div><div className="qb-heading-actions">
+  const heading = <PageHeader className={compact ? "qb-page-header qb-page-header--compact" : "qb-page-header"} eyebrow="QUESTION WORKSPACE" title="Question Bank" description="Create, organize, and review questions for your exam content." icon={FileQuestion} actions={<div className="qb-page-header-actions">
     <button type="button" className="qb-button qb-button--primary" onClick={() => { setFormInitial(null); setFormOpen(true); }} disabled={role !== "SUPER_ADMIN" && !tenantId}><Plus size={17} /> Create question</button>
     <button type="button" className="qb-button qb-button--secondary" onClick={openBulkModal} disabled={role !== "SUPER_ADMIN" && !tenantId}><Upload size={16} /> Add questions in bulk</button>
-  </div></header>;
+  </div>} />;
   const metrics = [
     { label: "Total questions", value: status === "ready" ? count : "—", tone: "navy", note: "Available in this bank", icon: BookOpen },
     { label: "Easy", value: status === "ready" ? difficultyCounts.EASY : "—", tone: "green", note: "In loaded results", icon: CircleAlert },

@@ -21,20 +21,9 @@
   width: 100%;
   max-width: 72rem;
   margin: 0 auto;
-  padding: 1.25rem 1rem 3rem;
+  padding: 1.125rem 1rem 3rem;
 }
-@media (min-width: 768px) { .sd { gap: 1.5rem; padding: 2rem 1.5rem 4rem; } }
-
-/* ── Welcome ── */
-.sd-welcome__title {
-  margin: 0 0 0.3rem;
-  font-size: clamp(var(--font-size-2xl), 4vw, var(--font-size-3xl));
-  font-weight: var(--font-weight-bold);
-  line-height: var(--line-height-tight);
-  letter-spacing: var(--letter-spacing-heading);
-  overflow-wrap: anywhere;
-}
-.sd-welcome__sub { margin: 0; color: var(--sd-muted); font-size: 1rem; }
+@media (min-width: 768px) { .sd { gap: 1.5rem; padding: 1.25rem 1.5rem 4rem; } }
 
 /* ── Hero slider ── */
 .sd-hero {

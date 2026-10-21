@@ -1,7 +1,6 @@
 import { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import {
-  Activity,
   ArrowRight,
   Building2,
   CreditCard,
@@ -26,6 +25,7 @@ import usePlans from "../../../shared/hooks/usePlans";
 import useTenants from "../hooks/useTenants";
 import useUsers from "../hooks/useUsers";
 import { formatTenantType } from "../utils/tenantFormatters";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import "../styles/super-admin-dashboard.css";
 
 const PlanCatalogTable = lazy(() => import("../components/PlanCatalogTable"));
@@ -170,15 +170,17 @@ function Overview({ user }) {
 
   return (
     <>
-      <section className="sa-welcome">
-        <div className="sa-welcome-copy">
-          <span className="sa-eyebrow"><Activity size={14} aria-hidden="true" /> PLATFORM ADMINISTRATION</span>
-          <h1>Super Admin Dashboard</h1>
-          <p>Manage organizations, users, subscriptions, and the VidyaExam platform from one place.</p>
-          <div className="sa-welcome-meta"><span>Welcome{user?.name ? `, ${user.name}` : ""}</span><span aria-hidden="true">·</span><time>{today}</time></div>
-        </div>
-        <span className="sa-welcome-mark" aria-hidden="true"><ShieldCheck size={30} /></span>
-      </section>
+      <PageHeader
+        className="sa-overview-page-header"
+        eyebrow="PLATFORM ADMINISTRATION"
+        title="Super Admin Dashboard"
+        description="Manage organizations, users, subscriptions, and the VidyaExam platform from one place."
+        icon={ShieldCheck}
+        meta={[
+          <span key="welcome">Welcome{user?.name ? `, ${user.name}` : ""}</span>,
+          <time key="today">{today}</time>,
+        ]}
+      />
 
       {(tenantsStatus === "loading" || usersStatus === "loading") && (
         <BrandLoader
@@ -349,11 +351,13 @@ export default function SuperAdminDashboard() {
           <Overview user={user} />
         ) : sectionInfo ? (
           <>
-            {!['questions', 'master'].includes(activeSection) && <header className="sa-page-heading">
-              <p className="sa-eyebrow">SUPER ADMIN WORKSPACE</p>
-              <h1>{sectionInfo.title}</h1>
-              <p>{sectionInfo.description}</p>
-            </header>}
+            {!['questions', 'master'].includes(activeSection) && <PageHeader
+              className="sa-section-page-header"
+              eyebrow="SUPER ADMIN WORKSPACE"
+              title={sectionInfo.title}
+              description={sectionInfo.description}
+              icon={activeSection === "organizations" ? Building2 : activeSection === "users" ? Users : activeSection === "teachers" ? UserRound : activeSection === "students" ? GraduationCap : activeSection === "subscriptions" ? CreditCard : activeSection === "analytics" ? ChartNoAxesCombined : Settings2}
+            />}
             {activeSection === "organizations" ? (
               <Suspense
                 fallback={<BrandLoader variant="content" message="Loading organizations…" />}
@@ -397,10 +401,11 @@ export default function SuperAdminDashboard() {
             )}
           </>
         ) : (
-          <section className="sa-content-panel sa-unavailable-panel">
-            <h1>Dashboard section not found</h1>
-            <Link className="sa-button sa-button--primary" to={SUPER_ADMIN_DASHBOARD}>Back to dashboard</Link>
-          </section>
+          <PageHeader
+            className="sa-section-page-header"
+            title="Dashboard section not found"
+            actions={<Link className="sa-button sa-button--primary" to={SUPER_ADMIN_DASHBOARD}>Back to dashboard</Link>}
+          />
         )}
       </div>
     </div>

@@ -1,0 +1,38 @@
+.dashboard-breadcrumb {
+  position: sticky;
+  top: var(--hdr-h, 72px);
+  z-index: 80;
+  width: 100%;
+  margin: 0;
+  padding: 12px max(20px, calc((100% - 1440px) / 2)) 11px;
+  color: #73849a;
+  font-size: .76rem;
+  line-height: 1.4;
+  background: linear-gradient(100deg, #eaf7f5 0%, #f1f6fc 52%, #f6faf9 100%);
+  border-bottom: 1px solid rgb(15 118 110 / 8%);
+}
+.dashboard-breadcrumb ol { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.dashboard-breadcrumb li { display: inline-flex; min-width: 0; align-items: center; gap: 7px; }
+.dashboard-breadcrumb li > svg { flex: none; color: #7f9aa8; }
+.dashboard-breadcrumb a { display: inline-flex; min-width: 0; align-items: center; gap: 6px; color: #50677b; text-decoration: none; transition: color .15s ease; }
+.dashboard-breadcrumb a:hover { color: #0f766e; }
+.dashboard-breadcrumb a:focus-visible { outline: 2px solid #0f766e; outline-offset: 3px; border-radius: 3px; }
+.dashboard-breadcrumb li > span[aria-current="page"] { color: #075e58; font-weight: 750; }
+
+@media (max-width: 600px) {
+  .dashboard-breadcrumb { padding: 10px 16px; font-size: .7rem; }
+  .dashboard-breadcrumb ol, .dashboard-breadcrumb li { gap: 5px; }
+  .dashboard-breadcrumb li:not(:last-child) a { white-space: nowrap; }
+  .dashboard-breadcrumb li:last-child { min-width: 0; }
+  .dashboard-breadcrumb li:last-child > span { overflow-wrap: anywhere; }
+}
+
+/* The question bank is nested inside the super-admin dashboard; avoid stacking
+   both page containers' top padding below the breadcrumb. */
+.super-admin-dashboard:has(.qb-page) { padding-top: 14px; }
+.super-admin-dashboard:has(.qb-page) .qb-page { padding-top: 10px; }
+.dashboard-breadcrumb + main .qb-page { padding-top: 18px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-breadcrumb a { transition: none; }
+}

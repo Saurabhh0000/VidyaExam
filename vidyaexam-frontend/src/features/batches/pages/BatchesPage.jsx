@@ -25,6 +25,7 @@ import {
 
 import Modal from "../../../shared/components/ui/Modal";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 import { MasterWorkspaceStats, MasterWorkspaceTabs } from "../../../shared/components/MasterWorkspaceSection";
 import { TenantPagination, TenantSelect } from "../../super-admin/components/TenantControls";
 import useAuthState from "../../auth/utils/useAuthState";
@@ -1090,23 +1091,15 @@ export default function BatchesPage() {
 
   return (
     <main className="ve-batches-page sa-taxonomy-section sa-master-section">
-      <header className="ve-batches-heading">
-        <div>
-          <span className="ve-batches-eyebrow">
-            <Boxes size={15} aria-hidden="true" />
-            MASTER DATA
-          </span>
-
-          <h1>Batches / Classes</h1>
-
-          <p>
-            {isSuperAdmin
-              ? "Review and manage batches across VidyaExam organizations."
-              : "Create and manage batches for your organization."}
-          </p>
-        </div>
-
-        <div className="ve-batch-heading-actions">
+      <PageHeader
+        className="ve-batches-page-header"
+        eyebrow="MASTER DATA"
+        title="Batches / Classes"
+        description={isSuperAdmin
+          ? "Review and manage batches across VidyaExam organizations."
+          : "Create and manage batches for your organization."}
+        icon={Boxes}
+        actions={<div className="ve-batches-page-header-actions">
           <button
             type="button"
             className="ve-batch-button ve-batch-button--secondary"
@@ -1125,8 +1118,8 @@ export default function BatchesPage() {
             Export PDF
           </button>
 
-        </div>
-      </header>
+        </div>}
+      />
 
       <MasterWorkspaceStats page="batches" batchCount={total} />
 
