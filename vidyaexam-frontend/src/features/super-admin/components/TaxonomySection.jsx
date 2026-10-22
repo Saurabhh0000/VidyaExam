@@ -29,6 +29,7 @@ import CreateTopicModal from "./taxonomy/CreateTopicModal";
 import { SUPER_ADMIN_DASHBOARD } from "../../../app/roleRoutes";
 import "../styles/super-admin-dashboard.css";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
+import PageHeader from "../../../shared/components/ui/PageHeader";
 
 const TABS = [
   { id: "categories", label: "Exam Categories", icon: FolderGit2 },
@@ -176,6 +177,7 @@ export default function TaxonomySection({ initialTab, taxonomyBasePath = `${SUPE
 
   return (
     <div className={`sa-taxonomy-section${showCategories ? "" : " sa-taxonomy-section--organization"}`}>
+      <PageHeader eyebrow="CURRICULUM WORKSPACE" title="Taxonomy & Curriculum" description="Organize exam categories, curriculum subjects, and syllabus topics." icon={FolderGit2} />
       {/* Top Stat Highlights */}
       <section className="sa-tenants-stats-bar" aria-label="Taxonomy metrics">
         {showCategories && <button

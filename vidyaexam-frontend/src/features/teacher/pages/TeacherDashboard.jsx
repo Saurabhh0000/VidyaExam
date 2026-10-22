@@ -15,7 +15,7 @@ export default function TeacherDashboard() {
   const advanced = questions.filter((question) => question.difficulty_level === "HARD").length;
   const recent = [...questions].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0)).slice(0, 5);
 
-  return <div className="teacher-dashboard qb-page">
+  return <div className="teacher-dashboard qb-page teacher-workspace-page">
     <PageHeader className="td-page-header" eyebrow="TEACHER WORKSPACE" title={`Welcome back, ${firstName}`} description="Build and manage the questions that help your learners prepare with confidence." icon={BookOpen} actions={<div className="qb-page-header-actions"><Link className="qb-button qb-button--secondary" to={`${TEACHER_DASHBOARD}/questions`}>Open Question Bank <ArrowRight size={16} /></Link><Link className="qb-button qb-button--primary" to={`${TEACHER_DASHBOARD}/questions/create`}><Plus size={17} /> Create question</Link></div>} />
     <section className="td-metrics" aria-label="Question overview">
       <article><span><FileQuestion size={19} /></span><div><small>Questions in available results</small><strong>{status === "ready" ? count : status === "loading" ? "…" : "—"}</strong><p>From the question bank API</p></div></article>

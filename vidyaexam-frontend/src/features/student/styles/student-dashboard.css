@@ -188,6 +188,24 @@
 .sd-empty__icon { display: grid; place-items: center; width: 3rem; height: 3rem; margin-bottom: 0.4rem; color: var(--sd-teal); background: var(--sd-teal-light); border-radius: 50%; }
 .sd-empty__heading { margin: 0; font-weight: 600; }
 
+.sd-exam-summary { display: grid; align-content: start; gap: .9rem; }
+.sd-exam-summary__heading { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.sd-exam-summary__heading .sd-card__title { margin: 0; }
+.sd-exam-summary__count { flex: none; padding: 5px 9px; color: var(--sd-teal); background: var(--sd-teal-light); border-radius: 999px; font-size: .72rem; font-weight: 750; }
+.sd-exam-summary__message { margin: 0; padding: 1rem .5rem; color: var(--sd-muted); text-align: center; font-size: .85rem; }
+.sd-exam-summary__list { display: grid; }
+.sd-exam-summary__list article { display: grid; grid-template-columns: 36px minmax(0, 1fr); align-items: center; gap: 10px; padding: 11px 0; border-top: 1px solid #edf2f1; }
+.sd-exam-summary__icon { display: grid; place-items: center; width: 34px; height: 34px; color: var(--sd-teal); background: var(--sd-teal-light); border-radius: 10px; }
+.sd-exam-summary__list strong { display: block; color: var(--sd-navy); font-size: .86rem; line-height: 1.35; overflow-wrap: anywhere; }
+.sd-exam-summary__list p { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; margin: 4px 0 0; color: var(--sd-muted); font-size: .73rem; }
+.sd-exam-summary__empty { display: grid; justify-items: center; gap: 8px; padding: 1rem .5rem; color: var(--sd-muted); text-align: center; }
+.sd-exam-summary__empty > svg { color: var(--sd-teal); }
+.sd-exam-summary__empty p { max-width: 32rem; margin: 0; font-size: .84rem; line-height: 1.5; }
+.sd-exam-summary__empty.is-error > svg { color: #b42318; }
+.sd-exam-summary__empty button { display: inline-flex; align-items: center; gap: 6px; min-height: 34px; padding: 0 10px; color: var(--sd-teal); background: #fff; border: 1px solid var(--sd-border); border-radius: 8px; font: inherit; font-size: .76rem; font-weight: 700; cursor: pointer; }
+.sd-exam-summary__link { display: inline-flex; align-items: center; justify-self: start; gap: 6px; min-height: 36px; padding: 0 11px; color: #fff; background: var(--sd-teal); border-radius: 9px; font-size: .78rem; font-weight: 700; text-decoration: none; }
+.sd-exam-summary__link:hover { background: var(--sd-teal-dark); }
+
 .sd-features { display: grid; gap: 0.6rem; margin: 0; padding: 0; list-style: none; }
 .sd-features li { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 0.65rem; font-size: 0.92rem; font-weight: 500; }
 .sd-features small { color: var(--sd-muted); font-size: 0.78rem; }

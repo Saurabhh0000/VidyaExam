@@ -6,6 +6,7 @@ import {
   useSyncExternalStore,
 } from "react";
 import { Link } from "react-router-dom";
+import { STUDENT_DASHBOARD } from "../../../app/roleRoutes";
 import {
   CalendarCheck,
   ChevronLeft,
@@ -33,8 +34,8 @@ function useReducedMotion() {
 
 /**
  * `to` is the CTA destination. It is null on purpose: no mock-test, results or
- * exam pages exist yet. Set it (e.g. to: "/student/mock-tests") when they do and
- * the button appears. `note` comes only from the real subscription flags.
+ * Exam discovery is available through the student's My Exams page. `note`
+ * comes only from the real subscription flags.
  */
 function buildSlides(subscription) {
   const f = subscription?.features ?? null;
@@ -77,7 +78,7 @@ function buildSlides(subscription) {
       title: "Prepare consistently",
       text: "Short, regular sessions beat last-minute cramming. Make practice a daily habit.",
       note: null,
-      to: null,
+      to: `${STUDENT_DASHBOARD}/exams`,
       cta: "Explore exams",
     },
   ];

@@ -38,7 +38,9 @@ export default function UserSettings() {
   const { user, subscription } = useAuthState();
   const memberships = user?.memberships || [];
 
-  return <main className="user-settings-page">
+  const teacherMode = String(user?.role || "").toUpperCase() === "TEACHER";
+
+  return <main className={`user-settings-page${teacherMode ? " teacher-workspace-page" : ""}`}>
     <PageHeader
       className="user-settings-page-header"
       eyebrow="ACCOUNT & PREFERENCES"

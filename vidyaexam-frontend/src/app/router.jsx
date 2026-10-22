@@ -11,6 +11,7 @@ import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 
 import RequireRole from "./RequireRole";
 import StudentDashboard from "../features/student/pages/StudentDashboard";
+import MyExamsPage from "../features/student/pages/MyExamsPage";
 import { STUDENT_DASHBOARD, SUPER_ADMIN_DASHBOARD, TEACHER_DASHBOARD } from "./roleRoutes";
 import OrganizationDashboard from "../features/organization-admin/pages/OrganizationDashboard";
 import SuperAdminDashboard from "../features/super-admin/pages/SuperAdminDashboard";
@@ -18,6 +19,10 @@ import UserSettings from "../features/account/pages/UserSettings";
 import TeacherDashboard from "../features/teacher/pages/TeacherDashboard";
 import BrandLoader from "../shared/components/ui/BrandLoader";
 const QuestionBankPage = lazy(() => import("../features/question-bank/pages/QuestionBankPage"));
+const ExamsPage = lazy(() => import("../features/exams/pages/ExamsPage"));
+const ExamSectionsPage = lazy(() => import("../features/exams/pages/ExamsPage").then((module) => ({ default: module.ExamSectionsPage })));
+const StudentExamAttemptPage = lazy(() => import("../features/student/pages/StudentExamAttemptPage"));
+const StudentExamResultPage = lazy(() => import("../features/student/pages/StudentExamResultPage"));
 
 function QuestionBankRoute({ initialCreate = false }) {
   return <Suspense fallback={<BrandLoader variant="content" message="Loading Question Bank…" />}><QuestionBankPage initialCreate={initialCreate} /></Suspense>;
@@ -52,6 +57,24 @@ export default function AppRouter() {
           }
         />
         <Route
+          path={`${STUDENT_DASHBOARD}/exams`}
+          element={
+            <RequireRole role="STUDENT">
+              <MainLayout>
+                <MyExamsPage />
+              </MainLayout>
+            </RequireRole>
+          }
+        />
+        <Route
+          path={`${STUDENT_DASHBOARD}/exams/:examId/attempt/:attemptId`}
+          element={<RequireRole role="STUDENT"><MainLayout><Suspense fallback={<BrandLoader variant="content" message="Preparing your exam…" />}><StudentExamAttemptPage /></Suspense></MainLayout></RequireRole>}
+        />
+        <Route
+          path={`${STUDENT_DASHBOARD}/exams/result/:attemptId`}
+          element={<RequireRole role="STUDENT"><MainLayout><Suspense fallback={<BrandLoader variant="content" message="Loading your result…" />}><StudentExamResultPage /></Suspense></MainLayout></RequireRole>}
+        />
+        <Route
           path={`${STUDENT_DASHBOARD}/settings`}
           element={
             <RequireRole role="STUDENT">
@@ -72,6 +95,14 @@ export default function AppRouter() {
         <Route
           path={`${TEACHER_DASHBOARD}/questions`}
           element={<RequireRole role="TEACHER"><MainLayout><QuestionBankRoute /></MainLayout></RequireRole>}
+        />
+        <Route
+          path={`${TEACHER_DASHBOARD}/exams`}
+          element={<RequireRole role="TEACHER"><MainLayout><Suspense fallback={<BrandLoader variant="content" message="Loading exams…" />}><ExamsPage /></Suspense></MainLayout></RequireRole>}
+        />
+        <Route
+          path={`${TEACHER_DASHBOARD}/exams/sections`}
+          element={<RequireRole role="TEACHER"><MainLayout><Suspense fallback={<BrandLoader variant="content" message="Loading exam sections…" />}><ExamSectionsPage /></Suspense></MainLayout></RequireRole>}
         />
         <Route
           path={TEACHER_DASHBOARD}

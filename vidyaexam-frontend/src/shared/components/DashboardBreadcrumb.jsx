@@ -47,7 +47,7 @@ function getCrumbs(pathname) {
   const tab = parts[3];
 
   if (parts[0] === "student") {
-    if (section) crumbs.push({ label: labels[section] || section });
+    if (section) crumbs.push({ label: section === "exams" ? "My Exams" : labels[section] || section });
     return crumbs;
   }
 

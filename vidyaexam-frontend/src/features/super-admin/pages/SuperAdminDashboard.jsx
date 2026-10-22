@@ -351,7 +351,7 @@ export default function SuperAdminDashboard() {
           <Overview user={user} />
         ) : sectionInfo ? (
           <>
-            {!['questions', 'master'].includes(activeSection) && <PageHeader
+            {!['questions', 'master', 'taxonomy'].includes(activeSection) && <PageHeader
               className="sa-section-page-header"
               eyebrow="SUPER ADMIN WORKSPACE"
               title={sectionInfo.title}
