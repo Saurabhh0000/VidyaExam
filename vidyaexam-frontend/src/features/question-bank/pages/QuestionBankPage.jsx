@@ -13,6 +13,7 @@ import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import PageHeader from "../../../shared/components/ui/PageHeader";
 import useAuthState from "../../auth/utils/useAuthState";
 import useQuestionBankData from "../hooks/useQuestionBankData";
+import { getBatches, getBatchErrorMessage } from "../../batches/services/batches.service";
 import {
   createQuestion, deleteQuestion, getApiErrorMessage, getQuestionById, updateQuestion,
 } from "../services/question.service";
@@ -38,6 +39,8 @@ const optionKey = (index) => {
 const asText = (value) => value == null ? "" : String(value);
 const asTopicId = (topic) => String(topic?.topic_id ?? topic?.id ?? "");
 const asTopicName = (topic) => topic?.topic_name ?? topic?.name ?? "Unnamed topic";
+const asBatchId = (batch) => String(batch?.batch_id ?? batch?.batchId ?? batch?.id ?? "");
+const asBatchName = (batch) => batch?.batch_name ?? batch?.name ?? batch?.batch_code ?? "Unnamed batch";
 const questionSortValue = (item, key) => key === "category_name"
   ? [item.category_name, item.subject_name].filter(Boolean).join(" ")
   : item?.[key] ?? "";
@@ -155,9 +158,10 @@ function optionRows(options) {
   }));
 }
 
-function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, submitting, canCreate, onCancel, onSubmit }) {
+function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, batches, batchesStatus, batchesError, onRetryBatches, submitting, canCreate, onCancel, onSubmit }) {
   const editing = Boolean(initial?.question_id);
   const [topicId, setTopicId] = useState(asText(initial?.topic_id));
+  const [batchId, setBatchId] = useState(asText(initial?.batch_id));
   const [questionType, setQuestionType] = useState(initial?.question_type || "SINGLE_CHOICE");
   const [difficulty, setDifficulty] = useState(initial?.difficulty_level || "MEDIUM");
   const [questionText, setQuestionText] = useState(asText(initial?.question_text));
@@ -176,6 +180,13 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
       label: [asTopicName(topic), topic.subject_name].filter(Boolean).join(" · "),
     })),
   ];
+  const batchOptions = [
+    { value: "", label: batchesStatus === "loading" ? "Loading batches…" : "Select a batch" },
+    ...batches.map((batch) => ({ value: asBatchId(batch), label: [asBatchName(batch), batch.batch_code].filter(Boolean).join(" · ") })),
+  ];
+  if (editing && batchId && !batches.some((batch) => asBatchId(batch) === batchId)) {
+    batchOptions.push({ value: batchId, label: initial?.batch_name || `Batch ${batchId}` });
+  }
 
   const changeOption = (index, key, value) => {
     setOptions((current) => current.map((option, position) => position === index ? { ...option, [key]: value } : option));
@@ -183,6 +194,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
   const validate = () => {
     const next = {};
     if (!topicId || (!editing && !topics.some((topic) => asTopicId(topic) === topicId))) next.topicId = "Choose a valid topic.";
+    if (!batchId || !batchOptions.some((batch) => batch.value === batchId)) next.batchId = "Choose a valid batch.";
     if (!questionText.trim()) next.questionText = "Enter the question.";
     else if (questionText.trim().length > 5000) next.questionText = "Question cannot exceed 5,000 characters.";
     if (explanation.length > 5000) next.explanation = "Explanation cannot exceed 5,000 characters.";
@@ -228,6 +240,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
       default_marks: Number(marks),
       default_negative_marks: Number(negativeMarks),
       options: optionPayload,
+      batch_id: batchId,
       ...(questionType === "NUMERICAL" ? { numerical_answer: Number(numericalAnswer), correct_answer: Number(numericalAnswer) } : {}),
     };
     if (!editing) {
@@ -259,6 +272,22 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {topicsStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact qb-topic-loader" message="Loading available topics…" />}
           {topicsStatus === "error" && <small className="qb-field-error">{topicsError} <button type="button" className="qb-inline-action" onClick={onRetryTopics}>Retry</button></small>}
           {topicsStatus === "ready" && !topics.length && !editing && <small className="qb-field-hint">No topics are available yet. Add a topic in Taxonomy first.</small>}
+        </label>
+        <label className="qb-field qb-field--wide">
+          <span>Batch / class <b>*</b></span>
+          <DropdownSelect
+            className="qb-form-select"
+            value={batchId}
+            onChange={(value) => { setBatchId(value); setErrors((current) => ({ ...current, batchId: "" })); }}
+            options={batchOptions}
+            ariaLabel="Batch or class"
+            ariaInvalid={Boolean(errors.batchId)}
+            disabled={batchesStatus !== "ready" || (!batches.length && !editing)}
+          />
+          {errors.batchId && <small className="qb-field-error">{errors.batchId}</small>}
+          {batchesStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact qb-topic-loader" message="Loading available batches…" />}
+          {batchesStatus === "error" && <small className="qb-field-error">{batchesError} <button type="button" className="qb-inline-action" onClick={onRetryBatches}>Retry</button></small>}
+          {batchesStatus === "ready" && !batches.length && <small className="qb-field-hint">Create a batch in Master before adding questions.</small>}
         </label>
         <label className="qb-field">
           <span>Question type <b>*</b></span>
@@ -349,6 +378,7 @@ function DetailContent({ question }) {
     <div className="qb-detail-tags"><span>{question.question_type?.replaceAll("_", " ") || "Question"}</span><span className={`qb-difficulty is-${String(question.difficulty_level || "").toLowerCase()}`}>{question.difficulty_level || "—"}</span><span>{question.default_marks ?? "—"} marks</span><span>{question.default_negative_marks ?? "—"} negative</span></div>
     <h3>{question.question_text || "Question text unavailable"}</h3>
     {question.question_text_hi && <p className="qb-hindi">{question.question_text_hi}</p>}
+    {(question.batch_name || question.batch_code) && <p className="qb-hierarchy">Batch / class: {[question.batch_name, question.batch_code].filter(Boolean).join(" · ")}</p>}
     <p className="qb-hierarchy">{[question.category_name, question.subject_name, question.topic_name].filter(Boolean).join(" · ") || "Topic details unavailable"}</p>
     <div className="qb-detail-options">{options.map((option, index) => <div className={`qb-detail-option${option.is_correct ? " is-correct" : ""}`} key={option.option_id || option.option_key || index}><b>{option.option_key || optionKey(index)}</b><span>{option.option_text || "—"}</span>{option.is_correct && <em>Correct answer</em>}</div>)}</div>
     {question.explanation && <div className="qb-explanation"><strong>Explanation</strong><p>{question.explanation}</p></div>}
@@ -365,6 +395,10 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const role = String(user?.role || "").toUpperCase();
   const tenantId = role === "SUPER_ADMIN" ? null : user?.activeTenantId;
   const { questions, count, topics, status, topicsStatus, error, topicsError, refresh, refreshTopics } = useQuestionBankData(role, tenantId);
+  const [batches, setBatches] = useState([]);
+  const [batchesStatus, setBatchesStatus] = useState("loading");
+  const [batchesError, setBatchesError] = useState("");
+  const [batchesRefresh, setBatchesRefresh] = useState(0);
   const location = useLocation();
   const [search, setSearch] = useState("");
   const [category, setCategory] = useState("ALL");
@@ -386,6 +420,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const [bulkResult, setBulkResult] = useState(null);
   const [bulkSubmitting, setBulkSubmitting] = useState(false);
   const [bulkTopicId, setBulkTopicId] = useState("");
+  const [bulkBatchId, setBulkBatchId] = useState("");
   const [bulkQuestionType, setBulkQuestionType] = useState("SINGLE_CHOICE");
   const [bulkDifficulty, setBulkDifficulty] = useState("MEDIUM");
   const [bulkMarks, setBulkMarks] = useState("1");
@@ -396,6 +431,29 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const bulkFileRef = useRef(null);
 
   useEffect(() => {
+    const controller = new AbortController();
+    if (role !== "SUPER_ADMIN" && !tenantId) {
+      setBatches([]);
+      setBatchesStatus("error");
+      setBatchesError("Select an active organization to load its batches.");
+      return () => controller.abort();
+    }
+    setBatchesStatus("loading");
+    setBatchesError("");
+    getBatches({ signal: controller.signal })
+      .then((result) => {
+        setBatches(Array.isArray(result?.data) ? result.data : []);
+        setBatchesStatus("ready");
+      })
+      .catch((requestError) => {
+        if (requestError?.name === "CanceledError") return;
+        setBatchesError(getBatchErrorMessage(requestError, requestError.message || "Batches could not be loaded."));
+        setBatchesStatus("error");
+      });
+    return () => controller.abort();
+  }, [role, tenantId, batchesRefresh]);
+
+  useEffect(() => {
     if (initialCreate || /\/questions\/create\/?$/.test(location.pathname)) setFormOpen(true);
   }, [initialCreate, location.pathname]);
 
@@ -404,7 +462,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const filtered = useMemo(() => {
     const query = search.trim().toLocaleLowerCase();
     return questions.filter((item) => {
-      const searchMatch = !query || [item.question_text, item.topic_name, item.subject_name, item.category_name].some((value) => String(value || "").toLocaleLowerCase().includes(query));
+      const searchMatch = !query || [item.question_text, item.topic_name, item.subject_name, item.category_name, item.batch_name, item.batch_code].some((value) => String(value || "").toLocaleLowerCase().includes(query));
       return searchMatch && (category === "ALL" || item.category_name === category) && (subject === "ALL" || item.subject_name === subject) && (topic === "ALL" || String(item.topic_id) === topic) && (type === "ALL" || item.question_type === type) && (difficulty === "ALL" || item.difficulty_level === difficulty);
     });
   }, [questions, search, category, subject, topic, type, difficulty]);
@@ -719,6 +777,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         const issues = [];
         const topicIdValue = bulkTopicId;
         if (!topicIdValue || !topics.some((item) => asTopicId(item) === String(topicIdValue))) issues.push("Unknown or missing topic");
+        if (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId))) issues.push("Choose a valid batch");
         if (!row.question_text) issues.push("Question text is required");
         const questionType = bulkQuestionType;
         if (!QUESTION_TYPES.some((item) => item.value === questionType)) issues.push("Question type must be SINGLE_CHOICE, MULTIPLE_CHOICE, or NUMERICAL");
@@ -748,6 +807,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
           error: issues.join("; "),
           payload: {
             tenant_id: role === "SUPER_ADMIN" ? null : tenantId,
+            batch_id: bulkBatchId,
             topic_id: topicIdValue,
             question_type: questionType,
             difficulty_level: level,
@@ -823,12 +883,14 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
     setBulkRows([]);
     setBulkResult(null);
     setBulkFileName("");
+    setBulkBatchId("");
     setBulkSettingsErrors({});
     setBulkOpen(true);
   };
   const validateBulkSettings = () => {
     const next = {};
     if (!bulkTopicId || !topics.some((item) => asTopicId(item) === bulkTopicId)) next.topic = "Choose a valid topic.";
+    if (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId))) next.batch = "Choose a valid batch.";
     if (!QUESTION_TYPES.some((item) => item.value === bulkQuestionType)) next.questionType = "Choose a valid question type.";
     if (!DIFFICULTIES.includes(bulkDifficulty)) next.difficulty = "Choose a valid difficulty level.";
     if (bulkMarks.trim() === "" || !Number.isFinite(Number(bulkMarks)) || Number(bulkMarks) <= 0) next.marks = "Enter a marks value greater than 0.";
@@ -882,14 +944,14 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
           : questions.length === 0 ? <div className="qb-state"><span><BookOpen size={23} /></span><h3>No questions yet</h3><p>Create your first question to start building this question bank.</p><button className="qb-button qb-button--primary" type="button" onClick={() => setFormOpen(true)}><Plus size={16} />Create question</button></div>
             : filtered.length === 0 ? <div className="qb-state"><Search size={23} /><h3>No questions match these filters</h3><p>Try a different search or clear the selected filters.</p><button className="qb-button qb-button--secondary" type="button" onClick={clearFilters}>Clear filters</button></div>
               : <>
-                <div className="qb-table-wrap"><table className="qb-table"><thead><tr><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("question_text")}>Question <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("category_name")}>Category / subject <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("topic_name")}>Topic <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("question_type")}>Type <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("difficulty_level")}>Difficulty <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("default_marks")}>Marks <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("created_at")}>Created <ArrowUpDown size={13} /></button></th><th>Actions</th></tr></thead><tbody>
-                  {visibleQuestions.map((item) => <tr key={item.question_id}><td data-label="Question"><strong>{item.question_text || "Question text unavailable"}</strong></td><td data-label="Category / subject">{[item.category_name, item.subject_name].filter(Boolean).join(" · ") || "—"}</td><td data-label="Topic">{item.topic_name || "—"}</td><td data-label="Type">{item.question_type?.replaceAll("_", " ") || "—"}</td><td data-label="Difficulty"><span className={`qb-difficulty is-${String(item.difficulty_level || "").toLowerCase()}`}>{item.difficulty_level || "—"}</span></td><td data-label="Marks">{item.default_marks ?? "—"}<small> / −{item.default_negative_marks ?? "—"}</small></td><td data-label="Created"><span className="qb-date"><CalendarDays size={14} />{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</span></td><td data-label="Actions"><div className="qb-row-actions"><button type="button" title="View question" aria-label="View question" onClick={() => openDetails(item)}><Eye size={16} /></button>{manageQuestion(item) && <><button type="button" title="Edit question" aria-label="Edit question" onClick={() => openEdit(item)}><Pencil size={16} /></button><button type="button" className="is-danger" title="Delete question" aria-label="Delete question" onClick={() => setDeleteTarget(item)}><Trash2 size={16} /></button></>}</div></td></tr>)}
+                <div className="qb-table-wrap"><table className="qb-table"><thead><tr><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("question_text")}>Question <ArrowUpDown size={13} /></button></th><th>Batch / class</th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("category_name")}>Category / subject <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("topic_name")}>Topic <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("question_type")}>Type <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("difficulty_level")}>Difficulty <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("default_marks")}>Marks <ArrowUpDown size={13} /></button></th><th><button type="button" className="qb-sort-button" onClick={() => toggleSort("created_at")}>Created <ArrowUpDown size={13} /></button></th><th>Actions</th></tr></thead><tbody>
+                  {visibleQuestions.map((item) => { const assignedBatch = batches.find((batch) => asBatchId(batch) === String(item.batch_id)); return <tr key={item.question_id}><td data-label="Question"><strong>{item.question_text || "Question text unavailable"}</strong></td><td data-label="Batch / class">{item.batch_name || (assignedBatch ? asBatchName(assignedBatch) : "—")}{item.batch_code ? <small> {item.batch_code}</small> : null}</td><td data-label="Category / subject">{[item.category_name, item.subject_name].filter(Boolean).join(" · ") || "—"}</td><td data-label="Topic">{item.topic_name || "—"}</td><td data-label="Type">{item.question_type?.replaceAll("_", " ") || "—"}</td><td data-label="Difficulty"><span className={`qb-difficulty is-${String(item.difficulty_level || "").toLowerCase()}`}>{item.difficulty_level || "—"}</span></td><td data-label="Marks">{item.default_marks ?? "—"}<small> / −{item.default_negative_marks ?? "—"}</small></td><td data-label="Created"><span className="qb-date"><CalendarDays size={14} />{item.created_at ? new Date(item.created_at).toLocaleDateString() : "—"}</span></td><td data-label="Actions"><div className="qb-row-actions"><button type="button" title="View question" aria-label="View question" onClick={() => openDetails(item)}><Eye size={16} /></button>{manageQuestion(item) && <><button type="button" title="Edit question" aria-label="Edit question" onClick={() => openEdit(item)}><Pencil size={16} /></button><button type="button" className="is-danger" title="Delete question" aria-label="Delete question" onClick={() => setDeleteTarget(item)}><Trash2 size={16} /></button></>}</div></td></tr>; })}
                 </tbody></table></div>
                 <div className="qb-pagination" aria-label="Question bank pagination"><label className="qb-page-size-label"><span>Rows per page</span><DropdownSelect className="qb-page-size-select" value={pageSize} onChange={(value) => setPageSize(Number(value))} ariaLabel="Rows per page" options={PAGE_SIZES.map((value) => ({ value, label: String(value) }))} /></label><span className="qb-page-range" aria-live="polite">{filtered.length ? `${(page - 1) * pageSize + 1}–${Math.min(page * pageSize, filtered.length)} of ${filtered.length}` : "0 questions"}</span><div className="qb-page-navigation"><button type="button" aria-label="First page" disabled={page <= 1} onClick={() => setPage(1)}><ChevronsLeft size={17} /></button><button type="button" aria-label="Previous page" disabled={page <= 1} onClick={() => setPage((value) => value - 1)}><ChevronLeft size={17} /></button><button type="button" aria-label="Next page" disabled={page >= pageCount} onClick={() => setPage((value) => value + 1)}><ChevronRight size={17} /></button><button type="button" aria-label="Last page" disabled={page >= pageCount} onClick={() => setPage(pageCount)}><ChevronsRight size={17} /></button></div></div>
               </>}
     </section>
 
-    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : "Add a question to the question bank for the selected topic."} size="lg" className="qb-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
+    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : "Add a question to the question bank for the selected topic and batch."} size="lg" className="qb-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} batches={batches} batchesStatus={batchesStatus} batchesError={batchesError} onRetryBatches={() => setBatchesRefresh((value) => value + 1)} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
     {bulkOpen && <Modal isOpen onClose={() => { if (!bulkSubmitting) { setBulkOpen(false); setBulkRows([]); setBulkResult(null); setBulkFileName(""); } }} title={bulkResult ? "Bulk upload results" : "Add questions in bulk"} description={bulkResult ? `Upload summary for ${bulkFileName || "your CSV file"}.` : "Upload a CSV, review its contents, then add valid questions to the bank."} size="lg" className="qb-modal qb-bulk-modal" closeOnEscape={!bulkSubmitting} closeOnOverlay={!bulkSubmitting}>
       <div className="qb-bulk-content">
         {!bulkResult ? <>
@@ -907,6 +969,22 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
                 disabled={topicsStatus !== "ready" || !topics.length || bulkRows.length > 0 || bulkSubmitting}
               />
               {bulkSettingsErrors.topic && <small className="qb-field-error">{bulkSettingsErrors.topic}</small>}
+            </label>
+            <label className="qb-field">
+              <span>Batch / class <b>*</b></span>
+              <DropdownSelect
+                className="qb-form-select"
+                value={bulkBatchId}
+                onChange={(value) => { setBulkBatchId(value); setBulkSettingsErrors((current) => ({ ...current, batch: "" })); }}
+                options={[{ value: "", label: batchesStatus === "loading" ? "Loading batches…" : "Select a batch" }, ...batches.map((item) => ({ value: asBatchId(item), label: [asBatchName(item), item.batch_code].filter(Boolean).join(" · ") }))]}
+                ariaLabel="Bulk upload batch or class"
+                ariaInvalid={Boolean(bulkSettingsErrors.batch)}
+                disabled={batchesStatus !== "ready" || !batches.length || bulkRows.length > 0 || bulkSubmitting}
+              />
+              {bulkSettingsErrors.batch && <small className="qb-field-error">{bulkSettingsErrors.batch}</small>}
+              {batchesStatus === "loading" && <small className="qb-field-hint">Loading available batches…</small>}
+              {batchesStatus === "error" && <small className="qb-field-error">{batchesError} <button type="button" className="qb-inline-action" onClick={() => setBatchesRefresh((value) => value + 1)}>Retry</button></small>}
+              {batchesStatus === "ready" && !batches.length && <small className="qb-field-hint">Create a batch in Master before adding questions.</small>}
             </label>
             <label className="qb-field">
               <span>Question type</span>
@@ -929,7 +1007,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               {bulkSettingsErrors.negativeMarks && <small className="qb-field-error">{bulkSettingsErrors.negativeMarks}</small>}
             </label>
           </div>
-          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Choose topic, type, difficulty, marks, and negative marks above. The CSV contains question text, options, answers, and explanation. Use <code>correct_option</code> as A for single choice or A|C for multiple choice; numerical rows use <code>numerical_answer</code>. Explanation is optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
+          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Choose topic, batch, type, difficulty, marks, and negative marks above. The selected batch applies to every question in this upload. The CSV contains question text, options, answers, and explanation. Use <code>correct_option</code> as A for single choice or A|C for multiple choice; numerical rows use <code>numerical_answer</code>. Explanation is optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
           <div className="qb-bulk-upload-zone"><span className="qb-bulk-upload-icon"><Upload size={21} /></span><div><strong>{bulkFileName || "Upload your question CSV"}</strong><p>{bulkFileName ? `${bulkRows.length} data rows found` : "CSV only · Maximum file size 2 MB · Up to 100 questions"}</p>{topicsStatus === "loading" && <p>Loading available topics…</p>}{topicsStatus === "error" && <p className="qb-field-error">{topicsError || "Topics could not be loaded. Retry from the Question Bank first."}</p>}</div><button type="button" className="qb-button qb-button--secondary" onClick={() => bulkFileRef.current?.click()} disabled={bulkSubmitting}><FileSpreadsheet size={16} /> {bulkFileName ? "Choose another file" : "Choose CSV"}</button></div>
           {bulkRows.length > 0 && <>
             <div className="qb-bulk-counts"><span className="is-valid">{bulkRows.filter((item) => !item.error).length} valid</span><span className="is-invalid">{bulkRows.filter((item) => item.error).length} invalid</span><span>{bulkRows.length} total</span></div>
