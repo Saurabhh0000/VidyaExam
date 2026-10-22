@@ -93,11 +93,11 @@ function requireReadScope() {
   const user = getCurrentUser();
   const role = getCurrentRole();
 
-  if (!["ADMIN", "SUPER_ADMIN"].includes(role)) {
+  if (!["ADMIN", "SUPER_ADMIN", "TEACHER"].includes(role)) {
     throw new Error("You do not have permission to view batches.");
   }
 
-  if (role === "ADMIN" && !user?.activeTenantId) {
+  if (role !== "SUPER_ADMIN" && !user?.activeTenantId) {
     throw new Error(
       "No active organization was found. Sign in to your organization again."
     );
