@@ -910,7 +910,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
     { label: "Hard", value: status === "ready" ? difficultyCounts.HARD : "—", tone: "rose", note: "In loaded results", icon: CircleAlert },
   ];
 
-  return <div className={`qb-page${compact ? " qb-page--compact" : ""}`}>
+  return <div className={`qb-page${compact ? " qb-page--compact" : ""}${role === "TEACHER" ? " teacher-workspace-page" : ""}`}>
     {heading}
     <section className="qb-kpi-grid" aria-label="Question bank summary">
       {metrics.map(({ label, value, tone, note, icon: Icon }) => <article className={`qb-kpi-card is-${tone}`} key={label}>

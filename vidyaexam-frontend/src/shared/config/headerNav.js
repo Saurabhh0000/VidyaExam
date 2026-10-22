@@ -12,6 +12,7 @@ export const ROLE_NAV = {
     dashboard: STUDENT_DASHBOARD,
     nav: [
       { label: "Dashboard", to: STUDENT_DASHBOARD, icon: "dashboard", end: true },
+      { label: "My Test", to: `${STUDENT_DASHBOARD}/exams`, icon: "exam", end: true },
       { label: "Settings", to: `${STUDENT_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },
@@ -87,6 +88,7 @@ export const ROLE_NAV = {
     nav: [
       { label: "Dashboard", to: TEACHER_DASHBOARD, icon: "dashboard", end: true },
       { label: "Question Bank", to: `${TEACHER_DASHBOARD}/questions`, icon: "question-bank" },
+      { label: "My Exam", to: `${TEACHER_DASHBOARD}/exams`, icon: "exam", end: true },
       { label: "Settings", to: `${TEACHER_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },

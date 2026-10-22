@@ -71,7 +71,9 @@ export async function createOrganizationMember({
     password,
     role_name,
     ...(role_name === "STUDENT"
-      ? { batch_id: Number(batch_id) }
+      // Batch IDs are UUIDs. Keep them as strings instead of coercing them
+      // to Number (which turns UUIDs into NaN and JSON sends as null).
+      ? { batch_id: String(batch_id).trim() }
       : {}),
   };
 

@@ -2877,9 +2877,9 @@ export default function OrganizationDashboard() {
               <BrandLoader variant="content" message="Loading taxonomy…" />
             }>
             <TaxonomySection
-              initialTab={routeTab || "subjects"}
+              initialTab={routeTab || "categories"}
               taxonomyBasePath={`${ORGANIZATION_DASHBOARD}/taxonomy`}
-              showCategories={false}
+              showCategories
             />
           </Suspense>
         ) : view === "teacher" || view === "student" ? (

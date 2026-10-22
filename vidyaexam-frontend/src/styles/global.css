@@ -1321,3 +1321,31 @@ button:focus-visible {
     transition-duration: 0.01ms !important;
   }
 }
+.teacher-workspace-page {
+  width: min(1440px, calc(100% - 40px));
+  min-width: 0;
+  margin-inline: auto;
+  padding: clamp(16px, 2vw, 24px) 0 56px;
+}
+
+.teacher-workspace-page.qb-page,
+.teacher-workspace-page.ve-exams-page {
+  width: min(1440px, calc(100% - 40px));
+  margin-inline: auto;
+  padding: clamp(16px, 2vw, 24px) 0 56px;
+}
+
+.user-settings-page.teacher-workspace-page {
+  width: min(1440px, calc(100% - 40px));
+  padding: clamp(16px, 2vw, 24px) 0 56px;
+}
+
+@media (max-width: 760px) {
+  .teacher-workspace-page,
+  .teacher-workspace-page.qb-page,
+  .teacher-workspace-page.ve-exams-page,
+  .user-settings-page.teacher-workspace-page {
+    width: min(100% - 28px, 640px);
+    padding-top: 22px;
+  }
+}
