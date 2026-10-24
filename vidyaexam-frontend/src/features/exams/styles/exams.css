@@ -112,11 +112,29 @@
 .ve-exam-state p { max-width: 500px; margin: 0 0 7px; line-height: 1.55; }
 .ve-exam-state.is-error > svg { color: #b42318; }
 .ve-exam-form { display: grid; gap: 16px; }
+.ve-exam-create-stepper { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin: 0; padding: 0 0 4px; list-style: none; }
+.ve-exam-create-stepper li { display: grid; gap: 11px; min-width: 0; padding: 12px 14px; background: #f8fafb; border: 1px solid #e3eaed; border-radius: 14px; transition: background .2s ease, border-color .2s ease, box-shadow .2s ease; }
+.ve-exam-stepper-heading { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.ve-exam-stepper-heading > span { display: grid; flex: none; width: 34px; height: 34px; place-items: center; color: #748398; background: #fff; border: 1px solid #dce6e8; border-radius: 11px; font-size: .8rem; font-weight: 800; }
+.ve-exam-stepper-heading > div { display: grid; gap: 2px; min-width: 0; }
+.ve-exam-stepper-heading small { color: #91a0af; font-size: .58rem; font-weight: 800; letter-spacing: .09em; }
+.ve-exam-stepper-heading strong { min-width: 0; color: #6f7f92; font-size: .76rem; line-height: 1.3; }
+.ve-exam-create-stepper li > i { display: block; height: 5px; overflow: hidden; background: #e7edef; border-radius: 99px; }
+.ve-exam-create-stepper li > i > b { display: block; height: 100%; background: linear-gradient(90deg, #0f766e, #70d5bd); border-radius: inherit; transition: width .28s ease; }
+.ve-exam-create-stepper li.is-current { background: linear-gradient(145deg, #f0fbf9, #fff); border-color: #a8d9d2; box-shadow: 0 5px 16px rgba(15, 118, 110, .08); }
+.ve-exam-create-stepper li.is-complete { background: #f2faf8; border-color: #cbe9e3; }
+.ve-exam-create-stepper li.is-current .ve-exam-stepper-heading > span, .ve-exam-create-stepper li.is-complete .ve-exam-stepper-heading > span { color: #fff; background: #0f766e; border-color: #0f766e; }
+.ve-exam-create-stepper li.is-current .ve-exam-stepper-heading strong, .ve-exam-create-stepper li.is-complete .ve-exam-stepper-heading strong { color: #0f766e; }
 .ve-exam-form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px; }
 .ve-exam-field { display: grid; align-content: start; gap: 7px; min-width: 0; color: #354a64; font-size: .8rem; font-weight: 750; }
+.ve-exam-field.has-error { color: #b42332; }
+.ve-exam-field-error { display: block; color: #b42332 !important; font-size: .72rem; font-weight: 600; line-height: 1.35; }
+.ve-exam-field.has-error :is(input, select, textarea) { border-color: #d92d3a !important; box-shadow: 0 0 0 3px rgba(217, 45, 58, .1); }
 .ve-exam-field > span b, .ve-exam-batch-picker legend b { color: #b42318; }
 .ve-exam-field--wide { grid-column: 1 / -1; }
 .ve-exam-batch-picker { display: grid; gap: 10px; min-width: 0; margin: 0; padding: 13px; border: 1px solid #dce8e6; border-radius: 12px; }
+.ve-exam-batch-picker.has-error { border-color: #d92d3a; box-shadow: 0 0 0 3px rgba(217, 45, 58, .08); }
+.ve-exam-batch-picker.has-error legend { color: #b42332; }
 .ve-exam-batch-picker legend { padding: 0 5px; color: #354a64; font-size: .8rem; font-weight: 750; }
 .ve-exam-batch-search { display: flex; align-items: center; gap: 8px; min-height: 40px; padding: 0 10px; color: #7b8ca2; border: 1px solid #dce7e8; border-radius: 9px; }
 .ve-exam-batch-search input { width: 100%; min-width: 0; border: 0; outline: 0; font: inherit; font-size: .8rem; }
@@ -148,6 +166,8 @@
 .ve-exam-form-error { margin: 0; padding: 9px 11px; color: #a3322b; background: #fff3f1; border: 1px solid #f2d4d0; border-radius: 9px; font-size: .78rem; }
 .ve-exam-modal-actions { display: flex; justify-content: flex-end; gap: 9px; margin-top: 16px; }
 .ve-exam-edit-actions { padding-top: 14px; border-top: 1px solid #e6eeed; }
+.ve-exam-create-step-actions { justify-content: space-between; padding-top: 12px; border-top: 1px solid #e6eeed; }
+.ve-exam-create-step-actions__next { display: flex; align-items: center; gap: 9px; margin-left: auto; }
 .ve-exam-detail { display: grid; gap: 13px; min-width: 0; color: #52657c; font-size: .85rem; line-height: 1.6; }
 .ve-exam-detail-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
 .ve-exam-detail-meta > span:not(.ve-exam-status) { padding: 5px 9px; color: #52657d; background: #f2f8f7; border: 1px solid #e0eeeb; border-radius: 999px; font-size: .74rem; }
@@ -225,6 +245,16 @@
   .ve-exam-attempt-row > .ve-exam-button { grid-column: 1 / -1; }
 }
 @media (max-width: 640px) {
+  .ve-exam-create-stepper { gap: 6px; }
+  .ve-exam-create-stepper li { gap: 8px; padding: 9px 8px; border-radius: 11px; }
+  .ve-exam-stepper-heading { align-items: flex-start; gap: 6px; }
+  .ve-exam-stepper-heading > span { width: 25px; height: 25px; border-radius: 8px; font-size: .66rem; }
+  .ve-exam-stepper-heading small { font-size: .5rem; }
+  .ve-exam-stepper-heading strong { font-size: .62rem; }
+  .ve-exam-create-step-actions { flex-direction: row; }
+  .ve-exam-create-step-actions > .ve-exam-button { width: auto; }
+  .ve-exam-create-step-actions__next { flex: 1; justify-content: flex-end; }
+  .ve-exam-create-step-actions__next .ve-exam-button { width: auto; }
   .ve-exam-setup-heading { align-items: flex-start; }
   .ve-exam-setup-sections > article { grid-template-columns: 30px minmax(0, 1fr); gap: 8px; }
   .ve-exam-setup-sections .ve-exam-button { grid-column: 2; justify-self: start; }

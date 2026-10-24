@@ -263,6 +263,8 @@ export default function Header() {
           id="vidyaexam-navigation-sidebar"
           isOpen={sidebarOpen}
           onToggle={() => setSidebarOpen((prev) => !prev)}
+          onHoverOpen={() => setSidebarOpen(true)}
+          onHoverClose={() => setSidebarOpen(false)}
           onClose={handleCloseSidebar}
           logoSrc={logo}
           homeTo={homeTo}

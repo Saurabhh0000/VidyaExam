@@ -6,13 +6,13 @@
   --sa-muted: #64748b;
   --sa-border: #dce8e6;
   min-height: calc(100vh - 68px);
-  padding: clamp(16px, 2vw, 24px) clamp(16px, 3vw, 40px) 54px;
+  padding: clamp(10px, 1.2vw, 16px) clamp(12px, 2vw, 26px) 32px;
   color: var(--sa-navy);
   background: var(--sa-bg);
 }
 .sa-dashboard-container { width: min(100%, 1440px); margin-inline: auto; }
 .sa-eyebrow { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 11px; color: var(--sa-teal); font-size: .68rem; font-weight: 800; letter-spacing: .11em; }
-.sa-metrics-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; margin-top: 18px; }
+.sa-metrics-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; margin-top: 14px; }
 .sa-metric-card { --kpi-ink: #2458d8; --kpi-bg: #f2f5ff; --kpi-border: #dce5ff; --kpi-icon-bg: #e1ebff; position: relative; isolation: isolate; display: grid; grid-template-columns: 52px minmax(0, 1fr); grid-template-rows: auto auto auto; align-content: center; align-items: center; gap: 2px 12px; min-width: 0; min-height: 132px; overflow: hidden; padding: 17px; background: linear-gradient(135deg, var(--kpi-bg), #fff); border: 1px solid var(--kpi-border); border-radius: 17px; box-shadow: 0 4px 14px rgba(23, 43, 77, .035); transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
 .sa-metric-card:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--kpi-ink) 24%, var(--kpi-border)); box-shadow: 0 10px 24px rgb(23 43 77 / 9%); }
 .sa-metric-card::after { position: absolute; z-index: -1; top: -44px; right: -22px; width: 126px; height: 126px; content: ""; background: var(--kpi-icon-bg); border-radius: 50%; opacity: .5; }
@@ -26,7 +26,7 @@
 .sa-metric-state { grid-area: 3 / 2; display: inline-flex; align-items: center; gap: 5px; min-width: 0; color: #64748b; font-size: .75rem; line-height: 1.4; }
 .sa-metric-state > span { width: 6px; height: 6px; background: #d7a43b; border-radius: 50%; }
 .sa-content-panel { padding: clamp(19px, 2.6vw, 28px); background: #fff; border: 1px solid var(--sa-border); border-radius: 17px; box-shadow: 0 7px 20px rgba(23, 43, 77, .035); }
-.sa-shortcuts { margin-top: 18px; }
+.sa-shortcuts { margin-top: 14px; }
 .sa-panel-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 18px; }
 .sa-panel-heading .sa-eyebrow { margin-bottom: 6px; }
 .sa-panel-heading h2, .sa-section-heading h2, .sa-unavailable-panel h2 { margin: 0; color: var(--sa-navy); font-size: 1.3rem; letter-spacing: -.03em; }
@@ -46,7 +46,7 @@
 .sa-panel-description { margin: 8px 0 0; color: var(--sa-muted); font-size: .86rem; }
 .sa-unavailable-note { display: flex; align-items: flex-start; gap: 10px; width: min(100%, 670px); margin-top: 22px; padding: 14px 16px; color: #53657b; text-align: left; background: #f6faf9; border: 1px dashed #cfddda; border-radius: 12px; font-size: .79rem; line-height: 1.55; }
 .sa-unavailable-note svg { flex: none; margin-top: 1px; color: var(--sa-teal); }
-.sa-plan-groups { display: grid; gap: 22px; }
+.sa-plan-groups { display: grid; gap: 16px; }
 .sa-plan-view-toolbar { display: flex; align-items: center; justify-content: flex-end; gap: 6px; }
 .sa-plan-view-button { display: grid; place-items: center; width: 38px; height: 38px; padding: 0; color: #52637a; background: #fff; border: 1px solid var(--sa-border); border-radius: 10px; cursor: pointer; transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease, box-shadow 140ms ease; }
 .sa-plan-view-button:hover { color: var(--sa-teal); border-color: var(--sa-teal); }
@@ -99,7 +99,7 @@
 @keyframes sa-shimmer { to { background-position: -150% 0; } }
 @media (max-width: 1150px) { .sa-metrics-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 @media (max-width: 760px) {
-  .super-admin-dashboard { min-height: calc(100vh - 60px); padding: 18px 14px 34px; }
+  .super-admin-dashboard { min-height: calc(100vh - 60px); padding: 12px 10px 24px; }
   .sa-metrics-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
   .sa-metric-card { grid-template-columns: 34px minmax(0, 1fr); min-height: 116px; gap: 4px 8px; padding: 12px; }
   .sa-metric-icon { width: 34px; height: 34px; }
