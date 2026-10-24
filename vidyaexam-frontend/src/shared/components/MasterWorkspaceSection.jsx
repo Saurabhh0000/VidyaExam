@@ -29,15 +29,43 @@ const MASTER_PAGES = {
 export function MasterWorkspaceStats({ page = "batches", batchCount, examCount, sectionCount }) {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const [fallbackCounts, setFallbackCounts] = useState({});
   const teacherBase = pathname.match(/^(.*\/teacher\/dashboard)(?:\/.*)?$/)?.[1];
   const masterBase = pathname.match(/^(.*\/master)(?:\/.*)?$/)?.[1] || teacherBase || pathname;
   const teacherMode = Boolean(teacherBase);
+
+  useEffect(() => {
+    const needBatches = !Number.isFinite(batchCount);
+    const needExams = !Number.isFinite(examCount) || !Number.isFinite(sectionCount);
+    if (!needBatches && !needExams) return undefined;
+
+    const controller = new AbortController();
+    Promise.allSettled([
+      needBatches ? getBatches({ signal: controller.signal }) : Promise.resolve(null),
+      needExams ? getExams({ signal: controller.signal }) : Promise.resolve(null),
+    ]).then(([batchResult, examResult]) => {
+      if (controller.signal.aborted) return;
+      setFallbackCounts((current) => ({
+        batches: batchResult.status === "fulfilled" && batchResult.value
+          ? batchResult.value.total
+          : current.batches,
+        exams: examResult.status === "fulfilled" && examResult.value
+          ? examResult.value.total
+          : current.exams,
+        sections: examResult.status === "fulfilled" && examResult.value
+          ? examResult.value.data.reduce((sum, exam) => sum + (Number(exam.total_sections) || 0), 0)
+          : current.sections,
+      }));
+    });
+    return () => controller.abort();
+  }, [batchCount, examCount, sectionCount]);
 
   return (
     <section className="sa-tenants-stats-bar master-workspace__stats" aria-label="Master data overview">
       {Object.entries(MASTER_PAGES).filter(([key]) => !teacherMode || key !== "batches").map(([key, item], index) => {
         const StatIcon = item.Icon;
-        const value = key === "batches" && Number.isFinite(batchCount) ? batchCount : key === "exams" && Number.isFinite(examCount) ? examCount : key === "sections" && Number.isFinite(sectionCount) ? sectionCount : "0";
+        const suppliedValue = key === "batches" ? batchCount : key === "exams" ? examCount : sectionCount;
+        const value = Number.isFinite(suppliedValue) ? suppliedValue : Number.isFinite(fallbackCounts[key]) ? fallbackCounts[key] : "—";
         const target = teacherMode ? `${teacherBase}/exams${key === "sections" ? "/sections" : ""}` : `${masterBase}/${key}`;
         return (
           <button key={key} type="button" className={`sa-tenant-stat-card master-workspace__stat ${page === key ? "is-selected-card" : ""}`} onClick={() => navigate(target)} aria-current={page === key ? "page" : undefined}>
