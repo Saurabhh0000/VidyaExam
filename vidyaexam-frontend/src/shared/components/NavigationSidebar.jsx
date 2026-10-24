@@ -71,6 +71,8 @@ export default function NavigationSidebar({
   id,
   isOpen,
   onToggle,
+  onHoverOpen,
+  onHoverClose,
   onClose,
   logoSrc,
   homeTo,
@@ -180,6 +182,8 @@ export default function NavigationSidebar({
       <aside
         id={id}
         ref={asideRef}
+        onMouseEnter={!isMobile ? onHoverOpen : undefined}
+        onMouseLeave={!isMobile ? onHoverClose : undefined}
         aria-label="Application navigation"
         role={isModal ? "dialog" : undefined}
         aria-modal={isModal ? "true" : undefined}

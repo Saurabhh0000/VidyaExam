@@ -112,6 +112,8 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
     status: initial.status || "DRAFT",
   } : emptyForm());
   const [error, setError] = useState("");
+  const [fieldErrors, setFieldErrors] = useState({});
+  const [createStep, setCreateStep] = useState(1);
   const [batchSearch, setBatchSearch] = useState("");
   const [draftSections, setDraftSections] = useState(() => editing ? [] : [{ section_id: "draft-section-1", section_order: 1, section_name: "Section A", duration_minutes: "", questions: [] }]);
   const [sectionModalOpen, setSectionModalOpen] = useState(false);
@@ -120,36 +122,84 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
   const [draftSectionError, setDraftSectionError] = useState("");
   const [attachQuestionsSectionId, setAttachQuestionsSectionId] = useState("");
   const visibleBatches = batches.filter((batch) => asBatchLabel(batch).toLowerCase().includes(batchSearch.trim().toLowerCase()) || String(batch.batch_code || "").toLowerCase().includes(batchSearch.trim().toLowerCase()));
-  const setField = (key, value) => setForm((current) => ({ ...current, [key]: value }));
-  const toggleBatch = (id) => setForm((current) => ({
-    ...current,
-    batch_ids: current.batch_ids.includes(id) ? current.batch_ids.filter((item) => item !== id) : [...current.batch_ids, id],
-  }));
+  const setField = (key, value) => {
+    setForm((current) => ({ ...current, [key]: value }));
+    setFieldErrors((current) => ({ ...current, [key]: "" }));
+  };
+  const showFieldError = (key) => fieldErrors[key] && <small className="ve-exam-field-error">{fieldErrors[key]}</small>;
+  const fieldClass = (key, base = "ve-exam-field") => `${base}${fieldErrors[key] ? " has-error" : ""}`;
+  const toggleBatch = (id) => {
+    setForm((current) => ({
+      ...current,
+      batch_ids: current.batch_ids.includes(id) ? current.batch_ids.filter((item) => item !== id) : [...current.batch_ids, id],
+    }));
+    setFieldErrors((current) => ({ ...current, batch_ids: "" }));
+  };
 
-  const submit = (event) => {
-    event.preventDefault();
+  const validateExamDetails = () => {
     const duration = Number(form.duration_minutes);
     const totalMarks = Number(form.total_marks);
     const passingMarks = Number(form.passing_marks);
     const maxAttempts = Number(form.max_attempts);
     const start = form.starts_at ? new Date(form.starts_at) : null;
     const end = form.ends_at ? new Date(form.ends_at) : null;
-    const issues = [];
-    if (!form.title.trim()) issues.push("Enter an exam title.");
-    if (!form.category_id || !categories.some((item) => asCategoryId(item) === form.category_id)) issues.push("Select an exam category.");
-    if (!Number.isFinite(duration) || duration < 1) issues.push("Duration must be at least one minute.");
-    if (!Number.isFinite(totalMarks) || totalMarks <= 0) issues.push("Total marks must be greater than zero.");
-    if (!Number.isInteger(maxAttempts) || maxAttempts < 1) issues.push("Maximum attempts must be at least one.");
-    if (form.passing_marks === "" || !Number.isFinite(passingMarks) || passingMarks < 0) issues.push("Enter valid passing marks.");
-    else if (Number.isFinite(totalMarks) && passingMarks > totalMarks) issues.push("Passing marks cannot exceed total marks.");
-    if (!editing && !form.batch_ids.length) issues.push("Select at least one target batch.");
-    if (form.starts_at && (!start || Number.isNaN(start.getTime()))) issues.push("Enter a valid start date and time.");
-    if (form.ends_at && (!end || Number.isNaN(end.getTime()))) issues.push("Enter a valid end date and time.");
-    if (start && end && end <= start) issues.push("The end date and time must be after the start.");
-    if (!STATUSES.includes(form.status)) issues.push("Select a valid exam status.");
-    if (issues.length) {
-      setError(issues[0]);
-      toast.warning("Review the exam details", { description: issues.slice(0, 3).join(" ") });
+    const issue = !form.title.trim() ? ["title", "Enter an exam title."]
+      : !form.category_id || !categories.some((item) => asCategoryId(item) === form.category_id) ? ["category_id", "Select an exam category."]
+        : !Number.isInteger(duration) || duration < 1 ? ["duration_minutes", "Duration must be a whole number of at least one minute."]
+          : !Number.isFinite(totalMarks) || totalMarks <= 0 ? ["total_marks", "Total marks must be greater than zero."]
+            : form.passing_marks === "" || !Number.isFinite(passingMarks) || passingMarks < 0 ? ["passing_marks", "Enter valid passing marks."]
+              : passingMarks > totalMarks ? ["passing_marks", "Passing marks cannot exceed total marks."]
+                : !Number.isInteger(maxAttempts) || maxAttempts < 1 ? ["max_attempts", "Maximum attempts must be at least one."]
+                  : form.starts_at && (!start || Number.isNaN(start.getTime())) ? ["starts_at", "Enter a valid start date and time."]
+                    : form.ends_at && (!end || Number.isNaN(end.getTime())) ? ["ends_at", "Enter a valid end date and time."]
+                      : start && end && end <= start ? ["ends_at", "End date and time must be after the start."]
+                        : null;
+    setFieldErrors((current) => ({ ...current, title: "", category_id: "", duration_minutes: "", total_marks: "", passing_marks: "", max_attempts: "", starts_at: "", ends_at: "", ...(issue ? { [issue[0]]: issue[1] } : {}) }));
+    if (issue) {
+      toast.dismissAll();
+      toast.warning("Review the exam details", { description: issue[1] });
+      return false;
+    }
+    return true;
+  };
+
+  const validateBatchDetails = () => {
+    if (editing || form.batch_ids.length) {
+      setFieldErrors((current) => ({ ...current, batch_ids: "" }));
+      return true;
+    }
+    setFieldErrors((current) => ({ ...current, batch_ids: "Select at least one target batch." }));
+    toast.dismissAll();
+    toast.warning("Select a target batch", { description: "Choose at least one batch before moving to the next step." });
+    return false;
+  };
+
+  const handleCreateNext = () => {
+    const valid = createStep === 1 ? validateExamDetails() : validateBatchDetails();
+    if (!valid) return;
+    setError("");
+    setCreateStep((current) => Math.min(3, current + 1));
+  };
+
+  const submit = (event) => {
+    event.preventDefault();
+    if (!validateExamDetails() || !validateBatchDetails()) {
+      setError("Complete the highlighted fields before continuing.");
+      return;
+    }
+    if (!editing && !draftSections.some((section) => section.questions.length > 0)) {
+      setError("Attach at least one question before creating the exam.");
+      toast.dismissAll();
+      toast.warning("Add questions to the exam", { description: "Attach at least one question to a section before creating the exam." });
+      return;
+    }
+    const duration = Number(form.duration_minutes);
+    const totalMarks = Number(form.total_marks);
+    const passingMarks = Number(form.passing_marks);
+    const maxAttempts = Number(form.max_attempts);
+    if (!STATUSES.includes(form.status)) {
+      setFieldErrors((current) => ({ ...current, status: "Select a valid exam status." }));
+      toast.warning("Select a valid exam status.");
       return;
     }
     setError("");
@@ -175,8 +225,16 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
     event.stopPropagation();
     const sectionName = draftSectionName.trim();
     const duration = draftSectionDuration === "" ? null : Number(draftSectionDuration);
-    if (!sectionName) return setDraftSectionError("Enter a section name.");
-    if (duration !== null && (!Number.isInteger(duration) || duration < 1)) return setDraftSectionError("Duration must be a whole number of minutes.");
+    if (!sectionName) {
+      setDraftSectionError("Enter a section name.");
+      toast.warning("Section name is required.");
+      return;
+    }
+    if (duration !== null && (!Number.isInteger(duration) || duration < 1)) {
+      setDraftSectionError("Duration must be a whole number of minutes.");
+      toast.warning("Enter a valid section duration.");
+      return;
+    }
     setDraftSections((current) => [...current, {
       section_id: `draft-section-${Date.now()}`,
       section_order: current.length + 1,
@@ -184,6 +242,7 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
       duration_minutes: duration,
       questions: [],
     }]);
+    setError("");
     setSectionModalOpen(false);
     setDraftSectionName("");
     setDraftSectionDuration("");
@@ -196,6 +255,7 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
         question_id: asQuestionId(question), question, marks: selection.marks, negative_marks: selection.negative_marks,
       }))] }
       : section));
+    setError("");
     setAttachQuestionsSectionId("");
   };
 
@@ -205,19 +265,27 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
     : section));
 
   return <form id={editing ? "ve-exam-edit-form" : undefined} className="ve-exam-form" onSubmit={submit} noValidate>
+    {!editing && <ol className="ve-exam-create-stepper" aria-label="Exam creation progress">
+      {["Exam details", "Batch details", "Questions & sections"].map((label, index) => <li key={label} className={createStep === index + 1 ? "is-current" : createStep > index + 1 ? "is-complete" : ""} aria-current={createStep === index + 1 ? "step" : undefined}>
+        <div className="ve-exam-stepper-heading"><span>{createStep > index + 1 ? "✓" : index + 1}</span><div><small>STEP 0{index + 1}</small><strong>{label}</strong></div></div>
+        <i aria-hidden="true"><b style={{ width: createStep > index + 1 ? "100%" : createStep === index + 1 ? "58%" : "0%" }} /></i>
+      </li>)}
+    </ol>}
     <div className="ve-exam-form-grid">
-      <label className="ve-exam-field ve-exam-field--wide"><span>Exam title <b>*</b></span><input maxLength={180} value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="e.g. Class 1 Midterm Mathematics" /></label>
-      <label className="ve-exam-field"><span>Category <b>*</b></span><select value={form.category_id} onChange={(event) => setField("category_id", event.target.value)}><option value="">Select a category</option>{categories.map((item) => <option key={asCategoryId(item)} value={asCategoryId(item)}>{asCategoryLabel(item)}</option>)}</select></label>
-      <label className="ve-exam-field"><span>Duration in minutes <b>*</b></span><input type="number" min="1" step="1" value={form.duration_minutes} onChange={(event) => setField("duration_minutes", event.target.value)} /></label>
-      <label className="ve-exam-field"><span>Total marks <b>*</b></span><input type="number" min="0.01" step="any" value={form.total_marks} onChange={(event) => setField("total_marks", event.target.value)} /></label>
-      <label className="ve-exam-field"><span>Passing marks <b>*</b></span><input type="number" min="0" step="any" value={form.passing_marks} onChange={(event) => setField("passing_marks", event.target.value)} /></label>
-      <label className="ve-exam-field"><span>Maximum attempts <b>*</b></span><input type="number" min="1" step="1" value={form.max_attempts} onChange={(event) => setField("max_attempts", event.target.value)} /></label>
-      <label className="ve-exam-field"><span>Starts at</span><input type="datetime-local" value={form.starts_at} onChange={(event) => setField("starts_at", event.target.value)} /></label>
-      <label className="ve-exam-field"><span>Ends at</span><input type="datetime-local" value={form.ends_at} onChange={(event) => setField("ends_at", event.target.value)} /></label>
-      {editing && <label className="ve-exam-field"><span>Status</span><select value={form.status} onChange={(event) => setField("status", event.target.value)}>{STATUSES.map((value) => <option key={value} value={value}>{value.charAt(0) + value.slice(1).toLowerCase()}</option>)}</select></label>}
-      <label className="ve-exam-field ve-exam-field--wide"><span>Description</span><textarea rows="2" maxLength={2000} value={form.description} onChange={(event) => setField("description", event.target.value)} placeholder="What this exam covers" /></label>
-      <label className="ve-exam-field ve-exam-field--wide"><span>Instructions</span><textarea rows="3" maxLength={4000} value={form.instructions} onChange={(event) => setField("instructions", event.target.value)} placeholder="Instructions students should read before starting" /></label>
-      <fieldset className="ve-exam-batch-picker ve-exam-field--wide">
+      {(editing || createStep === 1) && <>
+        <label className={fieldClass("title", "ve-exam-field ve-exam-field--wide")}><span>Exam title <b>*</b></span><input aria-invalid={Boolean(fieldErrors.title)} maxLength={180} value={form.title} onChange={(event) => setField("title", event.target.value)} placeholder="e.g. Class 1 Midterm Mathematics" />{showFieldError("title")}</label>
+        <label className={fieldClass("category_id")}><span>Category <b>*</b></span><select aria-invalid={Boolean(fieldErrors.category_id)} value={form.category_id} onChange={(event) => setField("category_id", event.target.value)}><option value="">Select a category</option>{categories.map((item) => <option key={asCategoryId(item)} value={asCategoryId(item)}>{asCategoryLabel(item)}</option>)}</select>{showFieldError("category_id")}</label>
+        <label className={fieldClass("duration_minutes")}><span>Duration in minutes <b>*</b></span><input aria-invalid={Boolean(fieldErrors.duration_minutes)} type="number" min="1" step="1" value={form.duration_minutes} onChange={(event) => setField("duration_minutes", event.target.value)} />{showFieldError("duration_minutes")}</label>
+        <label className={fieldClass("total_marks")}><span>Total marks <b>*</b></span><input aria-invalid={Boolean(fieldErrors.total_marks)} type="number" min="0.01" step="any" value={form.total_marks} onChange={(event) => setField("total_marks", event.target.value)} />{showFieldError("total_marks")}</label>
+        <label className={fieldClass("passing_marks")}><span>Passing marks <b>*</b></span><input aria-invalid={Boolean(fieldErrors.passing_marks)} type="number" min="0" step="any" value={form.passing_marks} onChange={(event) => setField("passing_marks", event.target.value)} />{showFieldError("passing_marks")}</label>
+        <label className={fieldClass("max_attempts")}><span>Maximum attempts <b>*</b></span><input aria-invalid={Boolean(fieldErrors.max_attempts)} type="number" min="1" step="1" value={form.max_attempts} onChange={(event) => setField("max_attempts", event.target.value)} />{showFieldError("max_attempts")}</label>
+        <label className={fieldClass("starts_at")}><span>Starts at</span><input aria-invalid={Boolean(fieldErrors.starts_at)} type="datetime-local" value={form.starts_at} onChange={(event) => setField("starts_at", event.target.value)} />{showFieldError("starts_at")}</label>
+        <label className={fieldClass("ends_at")}><span>Ends at</span><input aria-invalid={Boolean(fieldErrors.ends_at)} type="datetime-local" value={form.ends_at} onChange={(event) => setField("ends_at", event.target.value)} />{showFieldError("ends_at")}</label>
+        {editing && <label className="ve-exam-field"><span>Status</span><select value={form.status} onChange={(event) => setField("status", event.target.value)}>{STATUSES.map((value) => <option key={value} value={value}>{value.charAt(0) + value.slice(1).toLowerCase()}</option>)}</select>{showFieldError("status")}</label>}
+        <label className="ve-exam-field ve-exam-field--wide"><span>Description</span><textarea rows="2" maxLength={2000} value={form.description} onChange={(event) => setField("description", event.target.value)} placeholder="What this exam covers" /></label>
+        <label className="ve-exam-field ve-exam-field--wide"><span>Instructions</span><textarea rows="3" maxLength={4000} value={form.instructions} onChange={(event) => setField("instructions", event.target.value)} placeholder="Instructions students should read before starting" /></label>
+      </>}
+      {(editing || createStep === 2) && <fieldset className={`ve-exam-batch-picker ve-exam-field--wide${fieldErrors.batch_ids ? " has-error" : ""}`}>
         <legend>{editing ? "Assign to batches" : <>Target batches <b>*</b></>}</legend>
         <label className="ve-exam-batch-search"><Search size={16} aria-hidden="true" /><input value={batchSearch} onChange={(event) => setBatchSearch(event.target.value)} placeholder="Search batches" /></label>
         <div className="ve-exam-batch-list">
@@ -227,9 +295,10 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
           })}
           {!visibleBatches.length && <p>{batches.length ? "No batches match your search." : "No batches are available for the active organization."}</p>}
         </div>
-        <small>{form.batch_ids.length ? `${form.batch_ids.length} batch${form.batch_ids.length === 1 ? "" : "es"} selected.` : "No batches selected: this exam is available to all students in your organization."}</small>
-      </fieldset>
-      {!editing && <div className="ve-exam-create-build-actions ve-exam-field--wide">
+        <small>{form.batch_ids.length ? `${form.batch_ids.length} batch${form.batch_ids.length === 1 ? "" : "es"} selected.` : "Select at least one batch for this exam."}</small>
+        {showFieldError("batch_ids")}
+      </fieldset>}
+      {!editing && createStep === 3 && <div className="ve-exam-create-build-actions ve-exam-field--wide">
         <p>Prepare sections and questions before creating the exam.</p>
         <div className="ve-exam-create-build-controls">
           <button type="button" className="ve-exam-button is-secondary" onClick={() => { setDraftSectionName(`Section ${String.fromCharCode(65 + draftSections.length)}`); setSectionModalOpen(true); }} disabled={submitting}><Plus size={15} />Add section</button>
@@ -251,15 +320,19 @@ function ExamForm({ initial, categories, batches, tenantId, editing, submitting,
       </div>}
     </div>
     {error && <p className="ve-exam-form-error" role="alert">{error}</p>}
-    {!editing && <div className="ve-exam-modal-actions">
+    {!editing && <div className="ve-exam-modal-actions ve-exam-create-step-actions">
       <button type="button" className="ve-exam-button is-secondary" onClick={onCancel} disabled={submitting}>Cancel</button>
-      <button type="submit" className="ve-exam-button is-primary" value={editing ? "save" : "create"} disabled={submitting}>{submitting ? "Saving…" : editing ? "Save changes" : "Create exam"}</button>
+      <div className="ve-exam-create-step-actions__next">
+        {createStep > 1 && <button type="button" className="ve-exam-button is-secondary" onClick={() => setCreateStep((current) => Math.max(1, current - 1))} disabled={submitting}>Back</button>}
+        {createStep < 3
+          ? <button type="button" className="ve-exam-button is-primary" onClick={handleCreateNext}>Save &amp; next</button>
+          : <button type="submit" className="ve-exam-button is-primary" disabled={submitting}>{submitting ? "Creating…" : "Create exam"}</button>}
+      </div>
     </div>}
     {!editing && sectionModalOpen && <Modal isOpen onClose={() => setSectionModalOpen(false)} title="Add section" description="Add a section to the exam you are preparing." size="sm" className="ve-exam-modal">
       <form className="ve-exam-form" onSubmit={stageSection}>
-        <label className="ve-exam-field"><span>Section name <b>*</b></span><input autoFocus maxLength={100} value={draftSectionName} onChange={(event) => setDraftSectionName(event.target.value)} placeholder="e.g. Section B: Chemistry" required /></label>
-        <label className="ve-exam-field"><span>Duration in minutes</span><input type="number" min="1" step="1" value={draftSectionDuration} onChange={(event) => setDraftSectionDuration(event.target.value)} placeholder="Optional" /></label>
-        {draftSectionError && <p className="ve-exam-form-error" role="alert">{draftSectionError}</p>}
+        <label className={`ve-exam-field${draftSectionError && !draftSectionName.trim() ? " has-error" : ""}`}><span>Section name <b>*</b></span><input aria-invalid={Boolean(draftSectionError && !draftSectionName.trim())} autoFocus maxLength={100} value={draftSectionName} onChange={(event) => { setDraftSectionName(event.target.value); setDraftSectionError(""); }} placeholder="e.g. Section B: Chemistry" />{draftSectionError && <small className="ve-exam-field-error">{draftSectionError}</small>}</label>
+        <label className={`ve-exam-field${draftSectionError && draftSectionName.trim() ? " has-error" : ""}`}><span>Duration in minutes</span><input aria-invalid={Boolean(draftSectionError && draftSectionName.trim())} type="number" min="1" step="1" value={draftSectionDuration} onChange={(event) => { setDraftSectionDuration(event.target.value); setDraftSectionError(""); }} placeholder="Optional" />{draftSectionError && draftSectionName.trim() && <small className="ve-exam-field-error">{draftSectionError}</small>}</label>
         <div className="ve-exam-modal-actions"><button type="button" className="ve-exam-button is-secondary" onClick={() => setSectionModalOpen(false)}>Cancel</button><button type="submit" className="ve-exam-button is-primary">Add section</button></div>
       </form>
     </Modal>}
@@ -900,7 +973,7 @@ export default function ExamsPage() {
       {status === "ready" && filtered.length > 0 && viewMode === "grid" && <TenantPagination rowsPerPage={rowsPerPage} rowCount={filtered.length} currentPage={currentPage} onChangePage={setCurrentPage} onChangeRowsPerPage={(size) => setRowsPerPage(size)} paginationRowsPerPageOptions={[5, 10, 20, 50]} portalMenu className="ve-exam-pagination" />}
       <footer className="ve-exam-footer"><span>{filtered.length} matching</span><span>{total} total exams</span></footer>
     </section>
-    {formState && <Modal isOpen onClose={() => !submitting && setFormState(null)} title={formState.mode === "setup" ? "Build your exam" : formState.mode === "edit" ? "Edit exam" : "Create exam"} description={formState.mode === "setup" ? formState.exam.title : formState.mode === "edit" ? "Update exam details, build sections, attach questions, and review student attempts." : "Add exam details, choose sections and questions, then create the exam."} size="lg" className="ve-exam-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}>
+    {formState && <Modal isOpen onClose={() => !submitting && setFormState(null)} title={formState.mode === "setup" ? "Build your exam" : formState.mode === "edit" ? "Edit exam" : "Create exam"} description={formState.mode === "setup" ? formState.exam.title : formState.mode === "edit" ? "Update exam details, build sections, attach questions, and review student attempts." : "Add exam details, choose sections and questions, then create the exam."} size={formState.mode === "edit" ? "lg" : "xl"} className="ve-exam-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}>
       {formState.mode === "setup" ? <ExamSetupPanel exam={formState.exam} newlyCreated onAddSection={() => setSectionTarget(formState.exam)} onAttachQuestions={(sectionId) => setAttachTarget({ ...formState.exam, initialSectionId: sectionId })} onRemoveQuestion={removeAttachedQuestion} removingQuestionId={removingQuestionId} onDone={() => setFormState(null)} />
         : <div className="ve-exam-edit-workspace">
           {categoriesStatus !== "ready" || batchesStatus !== "ready" ? <div className="ve-exam-modal-loading">{categoriesStatus === "error" || batchesStatus === "error" ? <div className="ve-exam-state is-error"><CircleAlert size={22} /><h2>Exam setup data unavailable</h2><p>{categoriesStatus === "error" ? "Exam categories could not be loaded." : "Target batches could not be loaded."}</p><button type="button" className="ve-exam-button is-secondary" onClick={retry}>Retry</button></div> : <BrandLoader variant="section" message="Loading categories and batches…" />}</div>

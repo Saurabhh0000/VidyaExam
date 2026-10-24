@@ -6,7 +6,7 @@
   --org-muted: #64748b;
   --org-border: #dce8e6;
   min-height: calc(100vh - 68px);
-  padding: clamp(16px, 2vw, 24px) clamp(16px, 3vw, 40px) 56px;
+  padding: clamp(10px, 1.2vw, 16px) clamp(12px, 2vw, 26px) 32px;
   color: var(--org-navy);
   background: var(--org-bg);
 }
@@ -39,8 +39,8 @@
 .org-metrics-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px;
-  margin-top: 22px;
+  gap: 12px;
+  margin-top: 15px;
 }
 .org-metric-card {
   display: grid;
@@ -60,7 +60,7 @@
 .org-metric-value { color: var(--org-navy); font-size: 1.7rem; line-height: 1.15; }
 .org-metric-caption { color: #8a97a9; font-size: 0.69rem; }
 
-.org-dashboard-lower-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr); gap: 18px; margin-top: 20px; }
+.org-dashboard-lower-grid { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(300px, 0.75fr); gap: 12px; margin-top: 14px; }
 .org-info-panel,
 .org-directory-panel { min-width: 0; padding: 22px; border: 1px solid var(--org-border); border-radius: 16px; background: #fff; box-shadow: 0 7px 20px rgba(23, 43, 77, 0.035); }
 .org-panel-title { display: flex; align-items: flex-start; gap: 12px; }
@@ -240,7 +240,7 @@
   .org-dashboard-lower-grid { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
-  .organization-dashboard { min-height: calc(100vh - 68px); padding: 20px 14px 36px; }
+  .organization-dashboard { min-height: calc(100vh - 68px); padding: 12px 10px 24px; }
   .org-dashboard-page-header-actions { width: 100%; }
   .org-dashboard-page-header-actions .org-dashboard-button { flex: 1; }
   .org-metrics-grid { gap: 10px; margin-top: 14px; }
@@ -269,11 +269,11 @@
 }
 
 /* Organization users directory */
-.org-users-page { display: grid; gap: 18px; min-width: 0; }
+.org-users-page { display: grid; gap: 13px; min-width: 0; }
 .org-users-page-header-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-wrap: wrap; }
 .org-dashboard-button--bulk { color: #0f766e; background: #e5f5f2; border-color: #c7e8e2; box-shadow: 0 5px 13px rgba(15,118,110,.08); }
 .org-dashboard-button--bulk:hover:not(:disabled) { color: #fff; background: #0f766e; border-color: #0f766e; }
-.org-user-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+.org-user-summary-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; }
 .org-user-summary { --kpi-ink: #2458d8; --kpi-bg: #f2f5ff; --kpi-border: #dce5ff; --kpi-icon-bg: #e1ebff; position: relative; isolation: isolate; display: grid; grid-template-columns: 46px minmax(0, 1fr); align-items: center; gap: 12px; min-width: 0; min-height: 132px; overflow: hidden; padding: 16px; background: linear-gradient(135deg, var(--kpi-bg), #fff); border: 1px solid var(--kpi-border); border-radius: 17px; box-shadow: 0 4px 14px rgba(23,43,77,.035); transition: transform 180ms ease, box-shadow 180ms ease, border-color 180ms ease; }
 .org-user-summary:hover { transform: translateY(-3px); border-color: color-mix(in srgb, var(--kpi-ink) 24%, var(--kpi-border)); box-shadow: 0 10px 24px rgb(23 43 77 / 9%); }
 .org-user-summary::after { position: absolute; z-index: -1; top: -38px; right: -22px; width: 108px; height: 108px; content: ""; background: var(--kpi-icon-bg); border-radius: 50%; opacity: .48; pointer-events: none; }
