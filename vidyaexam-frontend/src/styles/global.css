@@ -1349,3 +1349,18 @@ button:focus-visible {
     padding-top: 22px;
   }
 }
+
+/* Shared table header treatment for data tables and native tables. */
+.rdt_TableHeadRow {
+  background-color: #e8f6f3 !important;
+  border-bottom-color: #c8e8e2 !important;
+}
+.rdt_TableHeadRow .rdt_TableCol {
+  background-color: transparent !important;
+  color: #25415f !important;
+}
+table thead th {
+  background-color: #e8f6f3 !important;
+  border-bottom-color: #c8e8e2 !important;
+  color: #25415f !important;
+}

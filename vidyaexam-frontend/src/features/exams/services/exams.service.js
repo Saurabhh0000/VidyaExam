@@ -51,6 +51,32 @@ export async function getExams({ signal } = {}) {
   };
 }
 
+export async function getExamAttempts(examId, { signal } = {}) {
+  if (!examId) throw new Error("An exam ID is required.");
+  const response = await axios.get(`${EXAMS_PATH}/getExamAttempts/${encodeURIComponent(examId)}`, config({ signal }));
+  const payload = response?.data;
+  assertSuccess(payload, "Student attempts could not be loaded.");
+  const body = payload?.data && !Array.isArray(payload.data) && Array.isArray(payload.data.data)
+    ? payload.data
+    : payload;
+  const data = Array.isArray(body?.data) ? body.data : [];
+  return {
+    data,
+    total: Number.isFinite(Number(body?.total_attempts)) ? Number(body.total_attempts) : data.length,
+  };
+}
+
+export async function grantExamAttempt(examId, studentId, payload) {
+  if (!examId || !studentId) throw new Error("Exam and student IDs are required.");
+  const response = await axios.post(
+    `${EXAMS_PATH}/grantAttempt/${encodeURIComponent(examId)}/${encodeURIComponent(studentId)}`,
+    payload,
+    config(),
+  );
+  assertSuccess(response?.data, "Extra attempts could not be granted.");
+  return response.data?.data ?? response.data;
+}
+
 export async function getExamById(examId, { signal } = {}) {
   if (!examId) throw new Error("An exam ID is required.");
   const response = await axios.get(`${EXAMS_PATH}/getExamById/${encodeURIComponent(examId)}`, config({ signal }));
@@ -121,7 +147,14 @@ export async function getMyExams({ signal } = {}) {
   const nested = payload?.data && !Array.isArray(payload.data) && Array.isArray(payload.data.data) ? payload.data : payload;
   const data = Array.isArray(nested?.data) ? nested.data : [];
   return {
-    data,
+    data: data.map((exam) => ({
+      ...exam,
+      max_attempts: exam.max_attempts ?? nested?.max_attempts ?? payload?.max_attempts,
+      student_extra_attempts: exam.student_extra_attempts ?? nested?.student_extra_attempts ?? payload?.student_extra_attempts,
+      total_allowed_attempts: exam.total_allowed_attempts ?? nested?.total_allowed_attempts ?? payload?.total_allowed_attempts,
+      can_attempt: exam.can_attempt ?? nested?.can_attempt ?? payload?.can_attempt,
+      action_required: exam.action_required ?? nested?.action_required ?? payload?.action_required,
+    })),
     total: Number(nested?.total) || data.length,
     studentBatchesCount: Number.isFinite(Number(nested?.student_batches_count))
       ? Number(nested.student_batches_count)
