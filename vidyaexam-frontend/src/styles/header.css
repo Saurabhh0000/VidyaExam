@@ -12,7 +12,7 @@
   --hdr-h: 68px;
   --hdr-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --sidebar-rail-w: 72px;
-  --sidebar-drawer-w: 288px;
+  --sidebar-drawer-w: 260px;
   /* Point this at your app font variable if you have one. */
   --hdr-font: var(--font-family-base);
 }
@@ -31,13 +31,13 @@
 .app-sidebar button { font: inherit; }
 
 /* ==========================================================================
-   Content offset (desktop only; mobile drawer overlays the page)
+   Keep a fixed rail offset; the expanded sidebar overlays the workspace.
    ========================================================================== */
 @media (min-width: 961px) {
   body.has-sidebar-rail,
   body.has-sidebar-expanded { transition: padding-left 0.28s var(--hdr-ease); }
   body.has-sidebar-rail { padding-left: var(--sidebar-rail-w); }
-  body.has-sidebar-expanded { padding-left: var(--sidebar-drawer-w); }
+  body.has-sidebar-expanded { padding-left: var(--sidebar-rail-w); }
 }
 
 /* ==========================================================================
@@ -820,7 +820,7 @@
   .site-header.is-guest-header .header-right-cluster { margin-left: auto; }
   .site-header.is-guest-header .header-auth-group { display: none; }
   .app-sidebar {
-    width: min(86vw, 340px);
+    width: min(86vw, 320px);
     max-width: 100vw;
   }
   .app-sidebar.is-collapsed {

@@ -2689,3 +2689,14 @@
   border: 1px solid #fecaca;
   color: #b91c1c;
 }
+
+.super-admin-dashboard:has(.master-workspace),
+.super-admin-dashboard:has(.user-settings-page) { padding: 8px 10px 20px; }
+.super-admin-dashboard .user-settings-page { width: min(100%, 1440px); }
+.super-admin-dashboard:has(.master-workspace) { padding: 4px 6px 12px; }
+.super-admin-dashboard:has(.master-workspace) .sa-dashboard-container { width: 100%; }
+@media (max-width: 760px) {
+  .super-admin-dashboard:has(.master-workspace),
+  .super-admin-dashboard:has(.user-settings-page) { padding: 8px 8px 16px; }
+  .super-admin-dashboard:has(.master-workspace) { padding: 4px 6px 12px; }
+}
