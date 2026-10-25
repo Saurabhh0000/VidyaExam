@@ -3,7 +3,7 @@
   gap: 20px;
   width: min(1440px, calc(100% - 40px));
   margin: 0 auto;
-  padding: clamp(16px, 2vw, 24px) 0 56px;
+  padding: clamp(24px, 4vw, 48px) 0 64px;
   color: #172b4d;
 }
 
@@ -228,6 +228,17 @@
   .ve-batch-detail { grid-template-columns: minmax(0, 1fr); }
   .ve-batch-detail .ve-batch-modal-actions { grid-column: auto; }
 }
+
+/* In the super-admin master workspace, match Question Bank's compact
+   dashboard-to-page spacing rather than the standalone page spacing. */
+.super-admin-dashboard:has(.ve-batches-page) { padding-top: 14px; }
+.super-admin-dashboard:has(.ve-batches-page) { padding-right: 8px; padding-bottom: 32px; padding-left: 8px; }
+.super-admin-dashboard:has(.ve-batches-page) .sa-dashboard-container { width: 100%; }
+.super-admin-dashboard:has(.ve-batches-page) .ve-batches-page { width: min(1440px, calc(100% - 24px)); margin-inline: auto; padding: 10px 0 32px; }
+.organization-dashboard:has(.ve-batches-page) { padding-top: 14px; }
+.organization-dashboard:has(.ve-batches-page) { padding-right: 8px; padding-bottom: 32px; padding-left: 8px; }
+.organization-dashboard:has(.ve-batches-page) .org-dashboard-container { width: 100%; }
+.organization-dashboard:has(.ve-batches-page) .ve-batches-page { width: min(1440px, calc(100% - 24px)); margin-inline: auto; padding: 10px 0 32px; }
 
 @media (max-width: 420px) {
   .ve-batch-panel { padding: 10px; }

@@ -484,7 +484,15 @@
 .org-role-directory-empty > span { display: grid; place-items: center; width: 58px; height: 58px; margin-bottom: 15px; color: var(--org-teal); background: var(--org-teal-light); border: 1px solid #cde9e4; border-radius: 17px; }
 .org-role-directory-empty h2 { margin: 0; color: var(--org-navy); font-size: 1.15rem; }
 .org-role-directory-empty p { margin: 7px 0 0; color: var(--org-muted); font-size: .86rem; }
+.organization-dashboard:has(.master-workspace),
+.organization-dashboard:has(.user-settings-page) { padding: 8px 10px 20px; }
+.organization-dashboard .user-settings-page { width: min(100%, 1440px); }
+.organization-dashboard:has(.master-workspace) { padding: 4px 6px 12px; }
+.organization-dashboard:has(.master-workspace) .org-dashboard-container { width: 100%; }
 @media (max-width: 700px) {
+  .organization-dashboard:has(.master-workspace),
+  .organization-dashboard:has(.user-settings-page) { padding: 8px 8px 16px; }
+  .organization-dashboard:has(.master-workspace) { padding: 4px 6px 12px; }
   .org-member-edit-form { grid-template-columns: minmax(0, 1fr); gap: 14px; }
   .org-member-password-field { grid-column: auto; }
   .org-member-action-modal .ve-modal-footer { padding: 13px 18px 18px; }

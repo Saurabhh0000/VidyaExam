@@ -9,6 +9,8 @@
   margin: 0 auto;
   color: var(--settings-navy);
 }
+.organization-dashboard .user-settings-page,
+.super-admin-dashboard .user-settings-page { gap: 12px; }
 .user-settings-card { padding: clamp(17px, 2.5vw, 24px); background: #fff; border: 1px solid var(--settings-border); border-radius: 16px; box-shadow: 0 7px 20px rgba(23,43,77,.035); }
 .user-settings-card-heading { display: flex; align-items: center; gap: 11px; margin-bottom: 18px; }
 .user-settings-card-heading > span { display: grid; flex: none; place-items: center; width: 38px; height: 38px; color: var(--settings-teal); background: #e5f5f2; border-radius: 11px; }
