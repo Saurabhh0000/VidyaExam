@@ -192,6 +192,56 @@ function AvailableTests({ tests }) {
   );
 }
 
+function StudentDashboardCharts({ charts }) {
+  const scores = Array.isArray(charts?.score_progress) ? charts.score_progress : [];
+  const accuracy = Array.isArray(charts?.question_accuracy) ? charts.question_accuracy : [];
+  const accuracyTotal = accuracy.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+  let cumulative = 0;
+  const accuracyGradient = accuracy.map((item) => {
+    const start = accuracyTotal ? (cumulative / accuracyTotal) * 100 : 0;
+    cumulative += Number(item.value) || 0;
+    const end = accuracyTotal ? (cumulative / accuracyTotal) * 100 : 0;
+    return `${item.color || "#0f766e"} ${start}% ${end}%`;
+  }).join(", ");
+  return (
+    <section className="sd-dashboard-charts" aria-label="Your exam performance charts">
+      <article className="sd-dashboard-chart sd-dashboard-chart--scores">
+        <header><span className="sd-dashboard-chart__eyebrow">SCORE PROGRESS</span><h2>Score by exam</h2><p>Compare your percentage across recent exams.</p></header>
+        {scores.length ? <div className="sd-score-progress-chart" role="group" aria-label="Exam score percentages">
+          <div className="sd-score-progress-chart__scale" aria-hidden="true">{[0, 25, 50, 75, 100].map((tick) => <span key={tick}>{tick}%</span>)}</div>
+          <div className="sd-score-progress-chart__rows">
+            {scores.map((item, index) => {
+              const score = Math.max(0, Math.min(100, Number(item.score_percentage) || 0));
+              const scoreObtained = Number(item.score_obtained) || 0;
+              const totalMarks = Number(item.total_marks) || 0;
+              const result = item.is_passed ? "Passed" : "Not passed";
+              return <article className={`sd-score-progress-row ${item.is_passed ? "is-pass" : "is-fail"}`} key={`${item.exam_title}-${index}`} tabIndex="0" aria-label={`${item.exam_title}: ${score.toFixed(1)} percent, ${scoreObtained} of ${totalMarks} marks, ${result}`} title={`${item.exam_title} · ${score.toFixed(1)}% · ${scoreObtained}/${totalMarks} marks · ${result}`}>
+                <div className="sd-score-progress-row__heading"><strong>{item.exam_title || "Exam"}</strong><span>{score.toFixed(1)}%</span></div>
+                <div className="sd-score-progress-row__track" role="img" aria-label={`${score.toFixed(1)} percent`}><span style={{ width: `${score}%` }} /></div>
+                <div className="sd-score-progress-row__meta"><span>{item.date_label || "Recent exam"} · {scoreObtained}/{totalMarks} marks</span><span className="sd-score-progress-row__result">{result}</span></div>
+              </article>;
+            })}
+          </div>
+        </div> : <p className="sd-dashboard-chart__empty">Your score progress will appear after you complete exams.</p>}
+      </article>
+
+      <article className="sd-dashboard-chart sd-dashboard-chart--accuracy">
+        <header><span className="sd-dashboard-chart__eyebrow">QUESTION ACCURACY</span><h2>Answer accuracy</h2><p>See how your answers are distributed.</p></header>
+        {accuracy.length && accuracyTotal ? <div className="sd-accuracy-chart">
+          <div className="sd-accuracy-chart__donut" style={{ background: `conic-gradient(${accuracyGradient})` }} role="img" tabIndex="0" aria-label={`${accuracyTotal.toLocaleString()} questions answered: ${accuracy.map((item) => `${item.label} ${item.value}`).join(", ")}`} title={accuracy.map((item) => `${item.label}: ${Number(item.value).toLocaleString()}`).join(" · ")}>
+            <span><strong>{accuracyTotal.toLocaleString()}</strong><small>questions</small></span>
+          </div>
+          <ul className="sd-accuracy-chart__legend">
+            {accuracy.map((item, index) => <li key={`${item.label}-${index}`} tabIndex="0" title={`${item.label}: ${Number(item.value).toLocaleString()} (${((Number(item.value) / accuracyTotal) * 100).toFixed(1)}%)`}>
+              <i style={{ backgroundColor: item.color || "#0f766e" }} /><span>{item.label}</span><strong>{Number(item.value).toLocaleString()}<small>{((Number(item.value) / accuracyTotal) * 100).toFixed(1)}%</small></strong>
+            </li>)}
+          </ul>
+        </div> : <p className="sd-dashboard-chart__empty">Question accuracy will appear after you complete exams.</p>}
+      </article>
+    </section>
+  );
+}
+
 export default function StudentDashboard() {
   const { user, subscription } = useAuthState();
   const [dashboard, setDashboard] = useState(null);
@@ -221,6 +271,7 @@ export default function StudentDashboard() {
   const performance = dashboard?.performance_metrics || {};
   const recentTests = Array.isArray(dashboard?.recent_tests) ? dashboard.recent_tests : [];
   const availableTests = Array.isArray(dashboard?.available_tests) ? dashboard.available_tests : [];
+  const charts = dashboard?.charts || {};
   const enrolledBatches = Array.isArray(profile.enrolled_batches) ? profile.enrolled_batches : [];
 
   return (
@@ -255,6 +306,7 @@ export default function StudentDashboard() {
             </section>
             <DashboardKpis metrics={performance} subscription={subscription} />
             <OngoingExamCard exam={dashboard.ongoing_exam} />
+            <StudentDashboardCharts charts={charts} />
             <div className="sd-dashboard-content-grid">
               <RecentTests tests={recentTests} />
               <AvailableTests tests={availableTests} />

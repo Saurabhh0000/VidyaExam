@@ -14,7 +14,6 @@ import {
   Settings2,
   ShieldCheck,
   RefreshCw,
-  FolderGit2,
   LayoutGrid,
   List,
 } from "lucide-react";
@@ -61,6 +60,164 @@ function MetricCard({ label, Icon, value = "—", stateLabel, isLive = false }) 
       </span>
     </article>
   );
+}
+
+function GrowthTrendChart({ data }) {
+  if (!data.length) return <p className="sa-chart-empty">Growth data will appear when the dashboard API provides it.</p>;
+  const width = 640;
+  const left = 54;
+  const right = 54;
+  const top = 20;
+  const bottom = 202;
+  const plotWidth = width - left - right;
+  const plotHeight = bottom - top;
+  const tenantMax = Math.max(1, ...data.map((point) => Number(point.new_tenants) || 0));
+  const userMax = Math.max(1, ...data.map((point) => Number(point.new_users) || 0));
+  const x = (index) => left + (data.length === 1 ? plotWidth / 2 : (index / (data.length - 1)) * plotWidth);
+  const y = (value, max) => bottom - ((Number(value) || 0) / max) * plotHeight;
+  const tenantsPoints = data.map((point, index) => `${x(index)},${y(point.new_tenants, tenantMax)}`).join(" ");
+  const usersPoints = data.map((point, index) => `${x(index)},${y(point.new_users, userMax)}`).join(" ");
+
+  return <div className="sa-chart-wrap">
+    <div className="sa-chart-legend"><span className="is-tenants">New tenants</span><span className="is-users">New users</span></div>
+    <svg className="sa-chart-svg" viewBox={`0 0 ${width} 250`} role="img" aria-label="Monthly tenant and user growth trend">
+      {[0, 1, 2, 3, 4].map((step) => {
+        const ratio = step / 4;
+        const yPos = bottom - ratio * plotHeight;
+        return <g key={step}>
+          <line x1={left} x2={width - right} y1={yPos} y2={yPos} className="sa-chart-gridline" />
+          <text x={left - 9} y={yPos + 4} textAnchor="end" className="sa-chart-axis-label">{Math.round(tenantMax * ratio)}</text>
+          <text x={width - right + 9} y={yPos + 4} textAnchor="start" className="sa-chart-axis-label">{Math.round(userMax * ratio)}</text>
+        </g>;
+      })}
+      <polyline points={tenantsPoints} className="sa-chart-line is-tenants" />
+      <polyline points={usersPoints} className="sa-chart-line is-users" />
+      {data.map((point, index) => <g key={`${point.label}-${index}`}>
+        <circle cx={x(index)} cy={y(point.new_tenants, tenantMax)} r="4" className="sa-chart-point is-tenants" />
+        <circle cx={x(index)} cy={y(point.new_users, userMax)} r="4" className="sa-chart-point is-users" />
+        <text x={x(index)} y="229" textAnchor="middle" className="sa-chart-month">{point.label}</text>
+      </g>)}
+      {data.flatMap((point, index) => [
+        { key: "tenants", value: point.new_tenants, label: "New tenants", className: "is-tenants" },
+        { key: "users", value: point.new_users, label: "New users", className: "is-users" },
+      ].map((series) => <circle
+        key={`growth-hover-${series.key}-${point.label}-${index}`}
+        cx={x(index)}
+        cy={y(series.value, series.key === "tenants" ? tenantMax : userMax)}
+        r="11"
+        className={`sa-chart-point-hit ${series.className}`}
+        tabIndex="0"
+        aria-label={`${point.label}: ${series.label}, ${Number(series.value || 0).toLocaleString()}`}
+      ><title>{`${point.label}\n${series.label}: ${Number(series.value || 0).toLocaleString()}`}</title></circle>))}
+    </svg>
+    <div className="sa-chart-axis-caption"><span>Tenants</span><span>Users</span></div>
+  </div>;
+}
+
+function TestVolumeChart({ data }) {
+  if (!data.length) return <p className="sa-chart-empty">Test volume data will appear when available.</p>;
+  const width = 640;
+  const left = 48;
+  const right = 14;
+  const top = 24;
+  const bottom = 260;
+  const plotHeight = bottom - top;
+  const plotWidth = width - left - right;
+  const max = Math.max(1, ...data.flatMap((point) => [Number(point.total_attempts) || 0, Number(point.completed_tests) || 0]));
+  const step = plotWidth / data.length;
+  const barWidth = Math.min(30, step * .34);
+  const y = (value) => bottom - ((Number(value) || 0) / max) * plotHeight;
+  const centers = data.map((_, index) => left + step * (index + .5));
+  const completedPoints = data.map((point, index) => `${centers[index]},${y(point.completed_tests)}`).join(" ");
+  return <div className="sa-chart-wrap">
+    <div className="sa-chart-legend"><span className="is-attempts">All attempts</span><span className="is-completed">Completed</span></div>
+    <svg className="sa-chart-svg sa-chart-svg--volume" viewBox={`0 0 ${width} 310`} role="img" aria-label="Monthly exam attempts and completed tests">
+      {Array.from({ length: max <= 4 ? Math.max(1, max) + 1 : 5 }, (_, tick) => {
+        const tickCount = max <= 4 ? Math.max(1, max) : 4;
+        const ratio = tick / tickCount;
+        const value = Math.round(max * ratio);
+        const yPos = bottom - ratio * plotHeight;
+        return <g key={tick}>
+          <line x1={left} x2={width - right} y1={yPos} y2={yPos} className="sa-chart-gridline" />
+          <text x={left - 8} y={yPos + 4} textAnchor="end" className="sa-chart-axis-label">{value.toLocaleString()}</text>
+        </g>;
+      })}
+      {data.map((point, index) => {
+        const center = centers[index];
+        const totalY = y(point.total_attempts);
+        return <g key={`${point.label}-${index}`}>
+          <rect x={center - barWidth / 2} y={totalY} width={barWidth} height={Math.max(0, bottom - totalY)} rx="4" className="sa-chart-bar is-attempts" />
+          {Number(point.total_attempts) > 0 && <text x={center} y={Math.max(top + 12, totalY - 7)} textAnchor="middle" className="sa-chart-value-label is-attempts">{Number(point.total_attempts).toLocaleString()}</text>}
+          <text x={center} y="292" textAnchor="middle" className="sa-chart-month">{point.label}</text>
+        </g>;
+      })}
+      <polyline points={completedPoints} className="sa-chart-volume-line" />
+      {data.map((point, index) => {
+        const pointY = y(point.completed_tests);
+        return <g key={`completed-${point.label}-${index}`}>
+          <circle cx={centers[index]} cy={pointY} r="4.5" className="sa-chart-volume-point" />
+          {Number(point.completed_tests) > 0 && <text x={centers[index]} y={Math.max(top + 12, pointY - 9)} textAnchor="middle" className="sa-chart-value-label is-completed">{Number(point.completed_tests).toLocaleString()}</text>}
+        </g>;
+      })}
+      {data.map((point, index) => <rect
+        key={`hover-${point.label}-${index}`}
+        x={centers[index] - step / 2}
+        y={top}
+        width={step}
+        height={plotHeight}
+        className="sa-chart-hover-target"
+        tabIndex="0"
+        aria-label={`${point.label}: ${Number(point.total_attempts || 0).toLocaleString()} all attempts, ${Number(point.completed_tests || 0).toLocaleString()} completed`}
+      >
+        <title>{`${point.label}\nAll attempts: ${Number(point.total_attempts || 0).toLocaleString()}\nCompleted: ${Number(point.completed_tests || 0).toLocaleString()}`}</title>
+      </rect>)}
+    </svg>
+  </div>;
+}
+
+function CategoryDistributionChart({ data }) {
+  const palette = ["#0f766e", "#315fca", "#d87900", "#16814f", "#8b5cc7", "#db5b70"];
+  const total = data.reduce((sum, item) => sum + (Number(item.value) || 0), 0);
+  let accumulated = 0;
+  const gradient = data.map((item, index) => {
+    const start = total ? (accumulated / total) * 100 : 0;
+    accumulated += Number(item.value) || 0;
+    const end = total ? (accumulated / total) * 100 : 0;
+    return `${palette[index % palette.length]} ${start}% ${end}%`;
+  }).join(", ");
+
+  if (!data.length || total === 0) return <p className="sa-chart-empty">Category data will appear when available.</p>;
+  return <div className="sa-category-chart">
+    <div className="sa-category-donut" style={{ background: `conic-gradient(${gradient})` }} role="img" aria-label={`Question categories, ${total.toLocaleString()} total`} title={`Total questions: ${total.toLocaleString()}`}>
+      <span><strong>{total.toLocaleString()}</strong><small>questions</small></span>
+    </div>
+    <ul className="sa-category-legend">
+      {data.map((item, index) => <li key={`${item.label}-${index}`} tabIndex="0" title={`${item.label}: ${Number(item.value).toLocaleString()} questions (${((Number(item.value) / total) * 100).toFixed(1)}%)`}>
+        <span className="sa-category-legend__name"><i style={{ "--legend-color": palette[index % palette.length] }} />{item.label}</span>
+        <strong>{Number(item.value).toLocaleString()}<small>{((Number(item.value) / total) * 100).toFixed(0)}%</small></strong>
+      </li>)}
+    </ul>
+  </div>;
+}
+
+function PlatformCharts({ charts }) {
+  const growthTrend = Array.isArray(charts?.growth_trend) ? charts.growth_trend : [];
+  const volumeTrend = Array.isArray(charts?.test_volume_trend) ? charts.test_volume_trend : [];
+  const categories = Array.isArray(charts?.category_distribution) ? charts.category_distribution : [];
+  return <section className="sa-chart-grid" aria-label="Platform charts">
+    <article className="sa-content-panel sa-chart-panel sa-chart-panel--growth">
+      <header><span className="sa-eyebrow">PLATFORM GROWTH</span><h2>Organizations & users</h2><p>New organizations and users over time.</p></header>
+      <GrowthTrendChart data={growthTrend} />
+    </article>
+    <article className="sa-content-panel sa-chart-panel sa-chart-panel--volume">
+      <header><span className="sa-eyebrow">TESTING ACTIVITY</span><h2>Test volume</h2><p>Total attempts compared with completed tests.</p></header>
+      <TestVolumeChart data={volumeTrend} />
+    </article>
+    <article className="sa-content-panel sa-chart-panel sa-chart-panel--categories">
+      <header><span className="sa-eyebrow">CONTENT MIX</span><h2>Category distribution</h2><p>Questions grouped by category.</p></header>
+      <CategoryDistributionChart data={categories} />
+    </article>
+  </section>;
 }
 
 function UnavailableSection({ section }) {
@@ -184,6 +341,7 @@ function Overview({ user }) {
   const exams = overview.exams || {};
   const questions = overview.questions || {};
   const activity = overview.testing_activity || {};
+  const charts = dashboard?.charts || {};
   const formatNumber = (value) => Number(value || 0).toLocaleString();
   const recentTenants = Array.isArray(dashboard?.recent_tenants) ? dashboard.recent_tenants : [];
   const submissions = Array.isArray(dashboard?.recent_submissions) ? dashboard.recent_submissions : [];
@@ -269,32 +427,10 @@ function Overview({ user }) {
               </div> : <p className="sa-dashboard-empty">Submitted exam results will appear here.</p>}
             </article>
           </section>
+
+          <PlatformCharts charts={charts} />
         </>
       )}
-
-      <section className="sa-content-panel sa-shortcuts">
-        <div className="sa-panel-heading">
-          <div><span className="sa-eyebrow">QUICK ACCESS</span><h2>Platform workspaces</h2></div>
-          <p>Jump to a platform area to manage directory, users, subscriptions, and platform settings.</p>
-        </div>
-        <div className="sa-shortcut-grid">
-          {[
-            { title: "Organizations / Tenants", text: "Platform-wide tenant directory", to: `${SUPER_ADMIN_DASHBOARD}/organizations`, Icon: Building2 },
-            { title: "Users", text: "Global account administration", to: `${SUPER_ADMIN_DASHBOARD}/users`, Icon: Users },
-            { title: "Taxonomy & Curriculum", text: "Categories, subjects & topics", to: `${SUPER_ADMIN_DASHBOARD}/taxonomy`, Icon: FolderGit2 },
-            { title: "Teachers", text: "Platform-wide teacher accounts", to: `${SUPER_ADMIN_DASHBOARD}/teachers`, Icon: GraduationCap },
-            { title: "Students", text: "Platform-wide student accounts", to: `${SUPER_ADMIN_DASHBOARD}/students`, Icon: UserRound },
-            { title: "Subscriptions & Plans", text: "Review configured plans", to: `${SUPER_ADMIN_DASHBOARD}/subscriptions`, Icon: CreditCard },
-            { title: "Reports & Analytics", text: "Platform reporting", to: `${SUPER_ADMIN_DASHBOARD}/analytics`, Icon: ChartNoAxesCombined },
-          ].map(({ title, text, to, Icon }) => (
-            <Link className="sa-shortcut" to={to} key={title}>
-              <span className="sa-shortcut-icon"><Icon size={19} aria-hidden="true" /></span>
-              <span className="sa-shortcut-copy"><strong>{title}</strong><small>{text}</small></span>
-              <ArrowRight size={17} aria-hidden="true" />
-            </Link>
-          ))}
-        </div>
-      </section>
     </>
   );
 }

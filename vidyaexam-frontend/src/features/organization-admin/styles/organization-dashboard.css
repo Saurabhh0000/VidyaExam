@@ -538,6 +538,48 @@
 .org-overview-metric__copy > span { color: #52637a; font-size: .72rem; font-weight: 750; }
 .org-overview-metric__copy > strong { color: var(--overview-color); font-size: 1.45rem; line-height: 1.15; }
 .org-overview-metric__copy > small { color: #728197; font-size: .64rem; line-height: 1.4; overflow-wrap: anywhere; }
+.org-dashboard-charts { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); align-items: stretch; gap: 12px; }
+.org-dashboard-chart { position: relative; isolation: isolate; display: grid; align-content: start; gap: 12px; min-width: 0; overflow: hidden; padding: 17px; background: linear-gradient(145deg, #fff, #f8fcfb); border: 1px solid var(--org-border); border-radius: 16px; box-shadow: 0 7px 20px rgb(23 43 77 / 5%); transition: transform .18s ease, box-shadow .18s ease; }
+.org-dashboard-chart:hover { transform: translateY(-2px); box-shadow: 0 13px 26px rgb(23 43 77 / 9%); }
+.org-dashboard-chart--batches { grid-column: span 7; background: radial-gradient(18rem 12rem at 100% 0%, #d9f2ec 0, transparent 78%), linear-gradient(145deg, #effaf8, #fff 72%); border-color: #cce9e2; }
+.org-dashboard-chart--passfail { grid-column: span 5; background: radial-gradient(16rem 12rem at 100% 0%, #dce7ff 0, transparent 78%), linear-gradient(145deg, #f3f6ff, #fff 74%); border-color: #d5e0fa; }
+.org-dashboard-chart--submissions { grid-column: 1 / -1; background: radial-gradient(20rem 12rem at 100% 0%, #fff0cf 0, transparent 78%), linear-gradient(145deg, #fffaf0, #fff 70%); border-color: #f0e3c4; }
+.org-dashboard-chart > header { display: grid; gap: 3px; }
+.org-dashboard-chart__eyebrow { justify-self: start; padding: 4px 8px; color: #0f766e; background: #e5f5f1; border: 1px solid #d1ebe4; border-radius: 999px; font-size: .61rem; font-weight: 850; letter-spacing: .07em; }
+.org-dashboard-chart--passfail .org-dashboard-chart__eyebrow { color: #315fca; background: #eaf0ff; border-color: #dbe5ff; }
+.org-dashboard-chart--submissions .org-dashboard-chart__eyebrow { color: #a66708; background: #fff4d8; border-color: #f5e7c3; }
+.org-dashboard-chart > header h2 { margin: 2px 0 0; color: var(--org-navy); font-size: .98rem; }
+.org-dashboard-chart > header p { margin: 0; color: var(--org-muted); font-size: .7rem; line-height: 1.45; }
+.org-batch-chart-list { display: grid; gap: 11px; }
+.org-batch-chart-row { display: grid; gap: 7px; padding: 11px 12px; background: rgb(255 255 255 / 88%); border: 1px solid #dcece7; border-radius: 12px; box-shadow: 0 3px 10px rgb(15 118 110 / 3%); cursor: help; transition: transform .18s ease, border-color .18s ease, box-shadow .18s ease; }
+.org-batch-chart-row:hover, .org-batch-chart-row:focus-visible { transform: translateY(-1px); background: #fff; border-color: #8dcfc0; box-shadow: 0 8px 16px rgb(15 118 110 / 9%); outline: none; }
+.org-batch-chart-row__heading, .org-batch-chart-row__meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-width: 0; }
+.org-batch-chart-row__heading strong { overflow: hidden; color: #263b59; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+.org-batch-chart-row__heading > span { flex: none; padding: 3px 8px; color: #0f766e; background: #e7f6f2; border-radius: 999px; font-size: .72rem; font-weight: 850; font-variant-numeric: tabular-nums; }
+.org-batch-chart-row__track { height: 8px; overflow: hidden; background: #e8f1ef; border-radius: 999px; }
+.org-batch-chart-row__track > span { display: block; height: 100%; background: linear-gradient(90deg, #0f766e, #45bea5); border-radius: inherit; transition: width .35s ease; }
+.org-batch-chart-row__meta { color: #75869b; font-size: .62rem; }
+.org-passfail-chart { display: grid; grid-template-columns: minmax(105px, .9fr) minmax(0, 1.1fr); align-items: center; gap: 12px; min-height: 175px; padding: 14px; background: rgb(255 255 255 / 88%); border: 1px solid #dfe7f6; border-radius: 14px; box-shadow: 0 5px 14px rgb(49 95 202 / 4%); }
+.org-passfail-donut { position: relative; display: grid; width: min(100%, 150px); aspect-ratio: 1; place-items: center; background: conic-gradient(var(--pass-color) 0 var(--pass-share), var(--fail-color) var(--pass-share) 100%); border-radius: 50%; filter: drop-shadow(0 7px 10px rgb(23 43 77 / 12%)); cursor: help; transition: transform .2s ease, filter .2s ease; }
+.org-passfail-donut:hover, .org-passfail-donut:focus-visible { transform: scale(1.045); filter: drop-shadow(0 10px 14px rgb(23 43 77 / 19%)); outline: none; }
+.org-passfail-donut::before { position: absolute; inset: 20%; content: ""; background: #fff; border: 1px solid #e7edf4; border-radius: 50%; }
+.org-passfail-donut > span { position: relative; display: grid; gap: 1px; text-align: center; }
+.org-passfail-donut strong { color: var(--org-navy); font-size: 1.2rem; font-variant-numeric: tabular-nums; }
+.org-passfail-donut small { color: #7b8ba0; font-size: .62rem; }
+.org-passfail-legend { display: grid; gap: 9px; min-width: 0; }
+.org-passfail-legend > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; align-items: center; gap: 7px; padding: 8px 9px; color: #52637a; background: #f9fbff; border: 1px solid #e8edf6; border-radius: 9px; font-size: .69rem; cursor: help; transition: background .16s ease, border-color .16s ease; }
+.org-passfail-legend > div:hover, .org-passfail-legend > div:focus-visible { background: #eef3ff; border-color: #cbd9f5; outline: none; }
+.org-passfail-legend i { width: 9px; height: 9px; border-radius: 3px; }
+.org-passfail-legend strong { color: #263b59; font-size: .76rem; font-variant-numeric: tabular-nums; }
+.org-passfail-legend > small { padding-top: 7px; color: #0f766e; border-top: 1px solid #e8eef5; font-size: .67rem; font-weight: 800; }
+.org-submission-chart { display: block; width: 100%; height: auto; max-height: 260px; padding: 10px 12px 0; background: rgb(255 255 255 / 90%); border: 1px solid #f0e6d0; border-radius: 14px; box-shadow: 0 6px 16px rgb(166 103 8 / 5%); overflow: visible; }
+.org-submission-chart__grid { stroke: #e9eee9; stroke-width: 1; }
+.org-submission-chart__axis, .org-submission-chart__label { fill: #7b8ba0; font-family: inherit; font-size: 10px; }
+.org-submission-chart__label { font-size: 11px; font-weight: 650; }
+.org-submission-chart__line { fill: none; stroke: #c08322; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.org-submission-chart__point { fill: #fff; stroke: #c08322; stroke-width: 3; vector-effect: non-scaling-stroke; cursor: help; transition: r .15s ease, fill .15s ease; }
+.org-submission-chart__point:hover, .org-submission-chart__point:focus-visible { r: 7px; fill: #fff4d8; stroke: #a66708; stroke-width: 3.5; outline: none; }
+.org-dashboard-chart__empty { display: grid; min-height: 135px; place-items: center; padding: 14px; margin: 0; color: #718096; background: rgb(255 255 255 / 70%); border: 1px dashed #d7e7e3; border-radius: 12px; font-size: .72rem; text-align: center; }
 .org-overview-panels { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(280px, .8fr); align-items: start; gap: 12px; }
 .org-overview-panel { display: grid; align-content: start; min-width: 0; padding: 17px; background: linear-gradient(145deg, #fff, #fcfefd); border: 1px solid var(--org-border); border-radius: 15px; box-shadow: 0 6px 18px rgb(23 43 77 / 4%); }
 .org-overview-panel__header { display: flex; align-items: center; gap: 10px; padding-bottom: 13px; border-bottom: 1px solid #e8efee; }
@@ -576,10 +618,18 @@
 
 @media (max-width: 1050px) {
   .org-overview-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .org-dashboard-chart--batches { grid-column: span 7; }
+  .org-dashboard-chart--passfail { grid-column: span 5; }
   .org-overview-panels { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 700px) {
   .org-overview-metrics { gap: 8px; }
+  .org-dashboard-charts { grid-template-columns: minmax(0, 1fr); gap: 10px; }
+  .org-dashboard-chart--batches, .org-dashboard-chart--passfail, .org-dashboard-chart--submissions { grid-column: 1; }
+  .org-dashboard-chart { padding: 14px; }
+  .org-passfail-chart { grid-template-columns: minmax(95px, .8fr) minmax(0, 1.2fr); min-height: 145px; }
+  .org-passfail-donut { width: min(100%, 125px); }
+  .org-submission-chart__label { font-size: 9px; }
   .org-overview-metric { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; min-height: 100px; padding: 11px; }
   .org-overview-metric__icon { width: 36px; height: 36px; border-radius: 10px; }
   .org-overview-metric__copy > span { font-size: .67rem; }
@@ -605,6 +655,6 @@
   .org-overview-submission__score { justify-items: start; text-align: left; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .org-overview-metric { transition: none; }
-  .org-overview-metric:hover { transform: none; }
+  .org-overview-metric, .org-dashboard-chart, .org-batch-chart-row, .org-batch-chart-row__track > span, .org-passfail-donut, .org-submission-chart__point { transition: none; }
+  .org-overview-metric:hover, .org-dashboard-chart:hover, .org-batch-chart-row:hover, .org-passfail-donut:hover { transform: none; }
 }

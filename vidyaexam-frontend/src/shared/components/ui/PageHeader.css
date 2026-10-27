@@ -4,7 +4,7 @@
   width: 100%;
   min-width: 0;
   overflow: hidden;
-  padding: clamp(20px, 3.2vw, 34px);
+  padding: clamp(16px, 2.3vw, 26px);
   color: #172b4d;
   background: linear-gradient(112deg, #fff 0%, #fff 49%, #f7fcfb 100%);
   border: 1px solid #d7e9e7;
@@ -31,6 +31,7 @@
   height: 100%;
   overflow: visible;
 }
+.ve-page-header__art .ve-page-header__left-art { z-index: 1; left: 0; width: min(54%, 650px); height: 100%; }
 .ve-page-header__art svg {
   /* Keep the curved ribbons visible at short and tall header sizes. */
   min-height: 100%;
@@ -62,20 +63,20 @@
   background: rgb(96 215 201 / 36%);
   box-shadow: 130px -42px 0 3px rgb(89 208 198 / 24%), 235px -8px 0 1px rgb(68 192 215 / 23%);
 }
-.ve-page-header__layout { position: relative; z-index: 1; display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 28px; }
+.ve-page-header__layout { position: relative; z-index: 2; display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: 22px; }
 .ve-page-header__content { display: flex; min-width: 0; align-items: center; gap: 15px; }
 .ve-page-header__copy { min-width: 0; }
 .ve-page-header__icon { display: grid; flex: none; place-items: center; width: 48px; height: 48px; color: #0f766e; background: #e5f5f2; border: 1px solid #d2ece7; border-radius: 13px; }
 .ve-page-header__eyebrow { display: inline-flex; align-items: center; gap: 7px; margin: 0 0 7px; color: #0f766e; font-size: .75rem; font-weight: 750; letter-spacing: .1em; line-height: 1.35; text-transform: uppercase; }
 .ve-page-header__eyebrow::before { width: 6px; height: 6px; content: ""; background: #0f766e; border-radius: 50%; }
 .ve-page-header h1 { margin: 0; color: #172b4d; font-size: clamp(1.5rem, 3.4vw, 2.25rem); font-weight: 800; line-height: 1.15; letter-spacing: -.03em; overflow-wrap: anywhere; text-wrap: balance; }
-.ve-page-header__description { max-width: 62ch; margin-top: 7px; color: #64748b; font-size: .94rem; line-height: 1.6; overflow-wrap: anywhere; }
+.ve-page-header__description { max-width: 62ch; margin-top: 5px; color: #64748b; font-size: .94rem; line-height: 1.45; overflow-wrap: anywhere; }
 .ve-page-header__meta { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-top: 11px; }
 .ve-page-header__meta-item { display: inline-flex; min-width: 0; align-items: center; gap: 6px; padding: 5px 9px; color: #50677b; background: #f4f8f8; border: 1px solid #e5eded; border-radius: 999px; font-size: .74rem; line-height: 1.35; overflow-wrap: anywhere; }
 .ve-page-header__actions { display: flex; flex: 0 0 auto; min-width: 0; align-items: center; justify-content: flex-end; gap: 8px; }
 .ve-page-header__actions > * { min-width: 0; }
-.qb-page-header--compact { padding: clamp(18px, 2.4vw, 24px); }
-.ve-page-header__breadcrumbs { position: relative; z-index: 1; margin-bottom: 13px; color: #64748b; font-size: .76rem; }
+.qb-page-header--compact { padding: clamp(15px, 2.1vw, 21px); }
+.ve-page-header__breadcrumbs { position: relative; z-index: 2; margin-bottom: 13px; color: #64748b; font-size: .76rem; }
 .ve-page-header__breadcrumbs ol { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin: 0; padding: 0; list-style: none; }
 .ve-page-header__breadcrumbs li { display: inline-flex; min-width: 0; align-items: center; gap: 6px; }
 .ve-page-header__breadcrumbs svg { flex: none; color: #94a3b8; }
@@ -108,12 +109,12 @@
 .sa-tax-tab-content > .ve-page-header { margin-bottom: 16px; }
 
 @media (max-width: 639px) {
-  .ve-page-header { padding: 20px 16px; border-radius: 16px; }
+  .ve-page-header { padding: 15px 14px; border-radius: 16px; }
   .ve-page-header__art { opacity: .78; }
+  .ve-page-header__art .ve-page-header__left-art { width: 72%; opacity: .7; }
   .ve-page-header__content { align-items: flex-start; gap: 11px; }
   .ve-page-header__icon { width: 40px; height: 40px; border-radius: 11px; }
   .ve-page-header__icon svg { width: 20px; height: 20px; }
-  .ve-page-header__eyebrow { margin-bottom: 6px; font-size: .68rem; }
   .ve-page-header h1 { font-size: clamp(1.45rem, 7vw, 1.85rem); line-height: 1.16; }
   .ve-page-header__description { margin-top: 6px; font-size: .88rem; }
   .ve-page-header__actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; }

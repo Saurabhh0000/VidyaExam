@@ -2811,6 +2811,78 @@ function UserDirectory({
   );
 }
 
+function TenantDashboardCharts({ charts }) {
+  const batches = Array.isArray(charts?.batch_performance) ? charts.batch_performance : [];
+  const passFail = Array.isArray(charts?.pass_fail_ratio) ? charts.pass_fail_ratio : [];
+  const submissions = Array.isArray(charts?.daily_submissions_trend) ? charts.daily_submissions_trend : [];
+  const passed = passFail.find((item) => String(item.label).toLowerCase() === "passed");
+  const failed = passFail.find((item) => String(item.label).toLowerCase() === "failed");
+  const passedCount = Number(passed?.value) || 0;
+  const failedCount = Number(failed?.value) || 0;
+  const passFailTotal = passedCount + failedCount;
+  const passPercent = passFailTotal ? (passedCount / passFailTotal) * 100 : 0;
+  const dailyMax = Math.max(1, ...submissions.map((item) => Number(item.submissions) || 0));
+  const chartWidth = 680;
+  const chartHeight = 230;
+  const chartLeft = 42;
+  const chartRight = 18;
+  const chartTop = 18;
+  const chartBottom = 180;
+  const chartPlotWidth = chartWidth - chartLeft - chartRight;
+  const chartPlotHeight = chartBottom - chartTop;
+  const chartX = (index) => chartLeft + (submissions.length === 1 ? chartPlotWidth / 2 : index / Math.max(1, submissions.length - 1) * chartPlotWidth);
+  const chartY = (value) => chartBottom - (Number(value || 0) / dailyMax) * chartPlotHeight;
+  const submissionPoints = submissions.map((item, index) => `${chartX(index)},${chartY(item.submissions)}`).join(" ");
+
+  return (
+    <section className="org-dashboard-charts" aria-label="Organization performance charts">
+      <article className="org-dashboard-chart org-dashboard-chart--batches">
+        <header><span className="org-dashboard-chart__eyebrow">BATCH PERFORMANCE</span><h2>Batch performance</h2><p>Average scores, test completions, and student counts.</p></header>
+        {batches.length ? <div className="org-batch-chart-list">
+          {batches.map((batch) => {
+            const score = Math.max(0, Math.min(100, Number(batch.avg_score_percentage) || 0));
+            return <div className="org-batch-chart-row" key={batch.batch_id || batch.label} tabIndex="0" aria-label={`${batch.label}: ${score.toFixed(1)}% average score, ${Number(batch.tests_completed) || 0} tests completed, ${Number(batch.student_count) || 0} students`} title={`${batch.label}: ${score.toFixed(1)}% average score, ${Number(batch.tests_completed) || 0} tests completed, ${Number(batch.student_count) || 0} students`}>
+              <div className="org-batch-chart-row__heading"><strong>{batch.label || "Batch"}</strong><span>{score.toFixed(1)}%</span></div>
+              <div className="org-batch-chart-row__track" role="img" aria-label={`${batch.label || "Batch"} average score ${score.toFixed(1)} percent`}><span style={{ width: `${score}%` }} /></div>
+              <div className="org-batch-chart-row__meta"><span>{Number(batch.student_count) || 0} students</span><span>{Number(batch.tests_completed) || 0} tests completed</span></div>
+            </div>;
+          })}
+        </div> : <p className="org-dashboard-chart__empty">Batch performance data will appear here.</p>}
+      </article>
+
+      <article className="org-dashboard-chart org-dashboard-chart--passfail">
+        <header><span className="org-dashboard-chart__eyebrow">ASSESSMENT OUTCOMES</span><h2>Pass / fail ratio</h2><p>Completed test outcomes across your organization.</p></header>
+        {passFailTotal ? <div className="org-passfail-chart">
+          <div className="org-passfail-donut" style={{ "--pass-share": `${passPercent}%`, "--pass-color": passed?.color || "#10b981", "--fail-color": failed?.color || "#ef4444" }} role="img" tabIndex="0" aria-label={`${passedCount} passed and ${failedCount} failed`} title={`${passedCount} passed · ${failedCount} failed`}>
+            <span><strong>{passFailTotal.toLocaleString()}</strong><small>results</small></span>
+          </div>
+          <div className="org-passfail-legend">
+            <div tabIndex="0" title={`Passed: ${passedCount.toLocaleString()} results (${passPercent.toFixed(1)}%)`}><i style={{ backgroundColor: passed?.color || "#10b981" }} /><span>Passed</span><strong>{passedCount.toLocaleString()}</strong></div>
+            <div tabIndex="0" title={`Failed: ${failedCount.toLocaleString()} results (${(100 - passPercent).toFixed(1)}%)`}><i style={{ backgroundColor: failed?.color || "#ef4444" }} /><span>Failed</span><strong>{failedCount.toLocaleString()}</strong></div>
+            <small>{passPercent.toFixed(1)}% pass rate</small>
+          </div>
+        </div> : <p className="org-dashboard-chart__empty">Pass and fail results will appear here.</p>}
+      </article>
+
+      <article className="org-dashboard-chart org-dashboard-chart--submissions">
+        <header><span className="org-dashboard-chart__eyebrow">RECENT ACTIVITY</span><h2>Daily submissions</h2><p>Submitted tests over the latest days.</p></header>
+        {submissions.length ? <svg className="org-submission-chart" viewBox={`0 0 ${chartWidth} ${chartHeight}`} role="img" aria-label="Daily exam submission trend">
+          {[0, 1, 2, 3].map((step) => {
+            const ratio = step / 3;
+            const y = chartBottom - ratio * chartPlotHeight;
+            return <g key={step}><line x1={chartLeft} x2={chartWidth - chartRight} y1={y} y2={y} className="org-submission-chart__grid" /><text x={chartLeft - 9} y={y + 4} textAnchor="end" className="org-submission-chart__axis">{Math.round(dailyMax * ratio)}</text></g>;
+          })}
+          <polyline points={submissionPoints} className="org-submission-chart__line" />
+          {submissions.map((item, index) => <g key={`${item.label}-${index}`}>
+            <circle cx={chartX(index)} cy={chartY(item.submissions)} r="5" className="org-submission-chart__point" tabIndex="0" aria-label={`${item.label}: ${Number(item.submissions) || 0} submissions`}><title>{`${item.label}: ${Number(item.submissions) || 0} submissions`}</title></circle>
+            <text x={chartX(index)} y="211" textAnchor="middle" className="org-submission-chart__label">{item.label}</text>
+          </g>)}
+        </svg> : <p className="org-dashboard-chart__empty">Daily submission data will appear here.</p>}
+      </article>
+    </section>
+  );
+}
+
 function TenantDashboardOverview() {
   const [dashboard, setDashboard] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -2865,6 +2937,7 @@ function TenantDashboardOverview() {
   ];
   const submissions = Array.isArray(dashboard?.recent_submissions) ? dashboard.recent_submissions : [];
   const upcoming = Array.isArray(dashboard?.upcoming_exams) ? dashboard.upcoming_exams : [];
+  const charts = dashboard?.charts || {};
 
   return (
     <div className="org-overview-content">
@@ -2880,6 +2953,8 @@ function TenantDashboardOverview() {
           </article>
         ))}
       </section>
+
+      <TenantDashboardCharts charts={charts} />
 
       <section className="org-overview-panels">
         <article className="org-overview-panel">
