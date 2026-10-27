@@ -1,90 +1,266 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BookOpen, CalendarDays, CircleAlert, Clock3, History, RefreshCw, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Award,
+  BadgeCheck,
+  BookOpen,
+  CalendarDays,
+  CircleAlert,
+  CircleCheck,
+  CircleX,
+  Clock3,
+  GraduationCap,
+  RefreshCw,
+  ShieldCheck,
+  Target,
+  Timer,
+  TrendingUp,
+} from "lucide-react";
 import useAuthState from "../../auth/utils/useAuthState";
-import { getExamErrorMessage, getMyExams } from "../../exams/services/exams.service";
+import { getStudentDashboard } from "../services/student-dashboard.service";
 import DashboardWelcome from "../components/DashboardWelcome";
-import DashboardHeroSlider from "../components/DashboardHeroSlider";
-import PlanOverview from "../components/PlanOverview";
-import PlanFeatures from "../components/PlanFeatures";
-import EmptyPanel from "../components/EmptyPanel";
+import BrandLoader from "../../../shared/components/ui/BrandLoader";
 import "../styles/student-dashboard.css";
 
-function AvailableExamsPanel() {
-  const [exams, setExams] = useState([]);
-  const [studentBatchesCount, setStudentBatchesCount] = useState(null);
+function formatDate(value, options = {}) {
+  if (!value) return "Schedule to be announced";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Schedule to be announced";
+  return new Intl.DateTimeFormat(undefined, {
+    dateStyle: "medium",
+    ...options,
+  }).format(date);
+}
+
+function formatDuration(seconds) {
+  const safeSeconds = Math.max(0, Number(seconds) || 0);
+  const hours = Math.floor(safeSeconds / 3600);
+  const minutes = Math.floor((safeSeconds % 3600) / 60);
+  const remainingSeconds = safeSeconds % 60;
+  return hours
+    ? `${hours}h ${String(minutes).padStart(2, "0")}m`
+    : `${minutes}m ${String(remainingSeconds).padStart(2, "0")}s`;
+}
+
+function OngoingExamCard({ exam }) {
+  const [remaining, setRemaining] = useState(Number(exam?.remaining_seconds) || 0);
+
+  useEffect(() => {
+    setRemaining(Number(exam?.remaining_seconds) || 0);
+  }, [exam?.attempt_id, exam?.remaining_seconds]);
+
+  useEffect(() => {
+    if (remaining <= 0) return undefined;
+    const timer = window.setInterval(() => {
+      setRemaining((value) => Math.max(0, value - 1));
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [remaining > 0]);
+
+  if (!exam?.attempt_id || !exam?.exam_id) return null;
+
+  return (
+    <section className="sd-ongoing-card" aria-labelledby="sd-ongoing-title">
+      <div className="sd-ongoing-card__icon"><Timer size={21} aria-hidden="true" /></div>
+      <div className="sd-ongoing-card__copy">
+        <span className="sd-section-kicker">IN PROGRESS</span>
+        <h2 id="sd-ongoing-title">{exam.exam_title || "Your exam"}</h2>
+        <p>Started {formatDate(exam.started_at, { timeStyle: "short" })} · {exam.duration_minutes ?? "—"} minutes</p>
+      </div>
+      <div className="sd-ongoing-card__timer" aria-live="polite">
+        <span>Time remaining</span>
+        <strong>{formatDuration(remaining)}</strong>
+      </div>
+      <Link
+        className="sd-dashboard-primary-link"
+        to={`/student/dashboard/exams/${encodeURIComponent(exam.exam_id)}/attempt/${encodeURIComponent(exam.attempt_id)}`}>
+        Resume exam <ArrowRight size={16} aria-hidden="true" />
+      </Link>
+    </section>
+  );
+}
+
+function displayPlanValue(value) {
+  if (!value) return "—";
+  return String(value)
+    .toLowerCase()
+    .replace(/[_-]+/g, " ")
+    .replace(/\b\w/g, (letter) => letter.toUpperCase());
+}
+
+function DashboardKpis({ metrics, subscription }) {
+  const items = [
+    { label: "Current plan", value: displayPlanValue(subscription?.plan_name), note: "Your subscription", Icon: BadgeCheck, tone: "blue" },
+    { label: "Plan status", value: displayPlanValue(subscription?.status), note: "Subscription status", Icon: ShieldCheck, tone: "green" },
+    { label: "Tests completed", value: metrics?.tests_completed ?? 0, note: "Completed assessments", Icon: BookOpen, tone: "blue" },
+    { label: "Tests passed", value: metrics?.tests_passed ?? 0, note: "Successful results", Icon: CircleCheck, tone: "green" },
+    { label: "Tests failed", value: metrics?.tests_failed ?? 0, note: "Keep practicing", Icon: CircleX, tone: "amber" },
+    { label: "Average score", value: `${Number(metrics?.overall_avg_percentage ?? 0).toFixed(1)}%`, note: "Across completed tests", Icon: TrendingUp, tone: "teal" },
+    { label: "Success rate", value: `${Number(metrics?.success_rate_percentage ?? 0).toFixed(1)}%`, note: "Passed tests", Icon: Target, tone: "green" },
+    { label: "Available exams", value: metrics?.available_exams_count ?? 0, note: "Ready for you", Icon: CalendarDays, tone: "violet" },
+    { label: "Practice time", value: `${Math.round(Number(metrics?.total_practice_minutes ?? 0))} min`, note: `${metrics?.total_attempts_taken ?? 0} attempts taken`, Icon: Clock3, tone: "rose" },
+  ];
+
+  return (
+    <section className="sd-dashboard-kpis" aria-label="Your performance">
+      {items.map(({ label, value, note, Icon, tone }) => (
+        <article className={`sd-dashboard-kpi is-${tone}`} key={label}>
+          <span className="sd-dashboard-kpi__icon"><Icon size={19} aria-hidden="true" /></span>
+          <span className="sd-dashboard-kpi__label">{label}</span>
+          <strong className="sd-dashboard-kpi__value">{value}</strong>
+          <span className="sd-dashboard-kpi__note">{note}</span>
+        </article>
+      ))}
+    </section>
+  );
+}
+
+function RecentTests({ tests }) {
+  return (
+    <section className="sd-card sd-dashboard-panel sd-dashboard-panel--recent" aria-labelledby="sd-recent-title">
+      <div className="sd-dashboard-panel__heading">
+        <span className="sd-dashboard-panel__heading-icon"><Award size={18} aria-hidden="true" /></span>
+        <div><h2 id="sd-recent-title">Recent tests</h2><p>Your latest submitted results.</p></div>
+        <Link to="/student/dashboard/exams" className="sd-dashboard-text-link">History <ArrowRight size={14} /></Link>
+      </div>
+      {tests.length ? (
+        <div className="sd-recent-tests">
+          {tests.slice(0, 4).map((test) => (
+            <article className="sd-recent-test" key={test.attempt_id}>
+              <span className={`sd-recent-test__status ${test.is_passed ? "is-pass" : "is-fail"}`}>
+                {test.is_passed ? <CircleCheck size={17} /> : <CircleX size={17} />}
+              </span>
+              <div className="sd-recent-test__main">
+                <strong>{test.exam_title || "Exam"}</strong>
+                <span>{test.category_name || "Assessment"} · {formatDate(test.submitted_at)}</span>
+              </div>
+              <div className="sd-recent-test__score">
+                <strong>{Number(test.score_obtained ?? 0).toFixed(2)}<small> / {Number(test.total_marks ?? 0).toFixed(2)}</small></strong>
+                <span>{Number(test.percentage ?? 0).toFixed(1)}%</span>
+              </div>
+              {test.attempt_id && (
+                <Link
+                  to={`/student/dashboard/exams/result/${encodeURIComponent(test.attempt_id)}`}
+                  className="sd-recent-test__result"
+                  aria-label={`View result for ${test.exam_title || "exam"}`}>
+                  <ArrowRight size={16} aria-hidden="true" />
+                </Link>
+              )}
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="sd-dashboard-empty"><Award size={20} /><span>Your submitted test results will appear here.</span></div>
+      )}
+    </section>
+  );
+}
+
+function AvailableTests({ tests }) {
+  return (
+    <section className="sd-card sd-dashboard-panel sd-dashboard-panel--available" aria-labelledby="sd-available-title">
+      <div className="sd-dashboard-panel__heading">
+        <span className="sd-dashboard-panel__heading-icon is-teal"><GraduationCap size={18} aria-hidden="true" /></span>
+        <div><h2 id="sd-available-title">Available tests</h2><p>Exams assigned to your batches.</p></div>
+        <Link to="/student/dashboard/exams" className="sd-dashboard-text-link">My Test <ArrowRight size={14} /></Link>
+      </div>
+      {tests.length ? (
+        <div className="sd-available-tests">
+          {tests.slice(0, 3).map((test) => (
+            <article className="sd-available-test" key={test.exam_id}>
+              <span className="sd-available-test__icon"><BookOpen size={17} aria-hidden="true" /></span>
+              <div className="sd-available-test__main">
+                <strong>{test.title || "Untitled exam"}</strong>
+                <span>{test.category_name || "Exam"}</span>
+              </div>
+              <div className="sd-available-test__meta">
+                <span><Clock3 size={13} />{test.duration_minutes ?? "—"} min</span>
+                <span><Target size={13} />{Number(test.total_marks ?? 0).toFixed(0)} marks</span>
+              </div>
+              <time>
+                {formatDate(test.starts_at, { timeStyle: "short" })}
+                {test.ends_at ? ` – ${formatDate(test.ends_at, { timeStyle: "short" })}` : ""}
+              </time>
+            </article>
+          ))}
+        </div>
+      ) : (
+        <div className="sd-dashboard-empty"><CalendarDays size={20} /><span>No new tests are available right now.</span></div>
+      )}
+    </section>
+  );
+}
+
+export default function StudentDashboard() {
+  const { user, subscription } = useAuthState();
+  const [dashboard, setDashboard] = useState(null);
   const [status, setStatus] = useState("loading");
   const [error, setError] = useState("");
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
-    let active = true;
+    const controller = new AbortController();
     setStatus("loading");
     setError("");
-    getMyExams()
-      .then((result) => {
-        if (!active) return;
-        setExams(result.data);
-        setStudentBatchesCount(result.studentBatchesCount);
+    getStudentDashboard({ signal: controller.signal })
+      .then((data) => {
+        if (controller.signal.aborted) return;
+        setDashboard(data);
         setStatus("ready");
       })
       .catch((requestError) => {
-        if (!active) return;
-        setError(getExamErrorMessage(requestError, requestError.message || "Your exams could not be loaded."));
+        if (controller.signal.aborted || requestError?.code === "ERR_CANCELED") return;
+        setError(requestError?.response?.data?.message || requestError?.message || "Student dashboard could not be loaded.");
         setStatus("error");
       });
-    return () => { active = false; };
+    return () => controller.abort();
   }, [refreshKey]);
 
-  return <section className="sd-card sd-exam-summary" aria-labelledby="sd-exams-title">
-    <div className="sd-exam-summary__heading">
-      <h2 id="sd-exams-title" className="sd-card__title"><BookOpen size={18} aria-hidden="true" />Available exams</h2>
-      {status === "ready" && exams.length > 0 && <span className="sd-exam-summary__count">{exams.length} available</span>}
-    </div>
-    {status === "loading" ? <p className="sd-exam-summary__message">Loading your exams…</p>
-      : status === "error" ? <div className="sd-exam-summary__empty is-error"><CircleAlert size={20} /><p>{error}</p><button type="button" onClick={() => setRefreshKey((value) => value + 1)}><RefreshCw size={14} />Try again</button></div>
-        : exams.length > 0 ? <div className="sd-exam-summary__list">{exams.slice(0, 3).map((exam) => <article key={exam.exam_id}>
-          <span className="sd-exam-summary__icon"><CalendarDays size={17} aria-hidden="true" /></span>
-          <div><strong>{exam.title || "Untitled exam"}</strong><p>{exam.category_name || "Exam"} · <Clock3 size={13} aria-hidden="true" /> {exam.duration_minutes ?? "—"} min · {exam.total_marks ?? "—"} marks</p></div>
-        </article>)}</div>
-          : <div className="sd-exam-summary__empty"><CalendarDays size={22} /><p>{studentBatchesCount === 0 ? "Your account is not assigned to a batch yet. Ask your organization admin to check your enrollment." : "Published exams assigned to your batch will appear here."}</p></div>}
-    <Link className="sd-exam-summary__link" to="/student/dashboard/exams">Open My Test <ArrowRight size={15} aria-hidden="true" /></Link>
-  </section>;
-}
-
-export default function StudentDashboard() {
-  const { user, subscription } = useAuthState();
-  const historyIncluded = subscription?.features?.performance_history;
+  const profile = dashboard?.student_profile || {};
+  const performance = dashboard?.performance_metrics || {};
+  const recentTests = Array.isArray(dashboard?.recent_tests) ? dashboard.recent_tests : [];
+  const availableTests = Array.isArray(dashboard?.available_tests) ? dashboard.available_tests : [];
+  const enrolledBatches = Array.isArray(profile.enrolled_batches) ? profile.enrolled_batches : [];
 
   return (
     <div className="sd-page">
       <main className="sd">
-        <DashboardWelcome name={user?.name} />
-        <DashboardHeroSlider subscription={subscription} />
-        <PlanOverview subscription={subscription} />
-
-        <div className="sd-grid">
-          <EmptyPanel
-            id="sd-continue"
-            Icon={History}
-            title="Continue learning"
-            heading="Nothing to resume yet"
-            text="When you start a test, you'll be able to pick up where you left off here."
-          />
-          <EmptyPanel
-            id="sd-progress"
-            Icon={TrendingUp}
-            title="Your progress"
-            heading="No results yet"
-            text={
-              historyIncluded === false
-                ? "Performance history isn't included in your current plan."
-                : "Your scores and progress will appear here after you complete a mock test."
-            }
-          />
-          <AvailableExamsPanel />
-          <PlanFeatures subscription={subscription} />
-        </div>
+        <DashboardWelcome name={profile.full_name || user?.name} />
+        {status === "error" && (
+          <div className="sd-dashboard-load-error" role="alert">
+            <CircleAlert size={19} aria-hidden="true" />
+            <span>{error}</span>
+            <button type="button" onClick={() => setRefreshKey((value) => value + 1)}>
+              <RefreshCw size={14} aria-hidden="true" /> Retry
+            </button>
+          </div>
+        )}
+        {status === "loading" && !dashboard ? (
+          <BrandLoader variant="content" message="Loading your dashboard…" />
+        ) : dashboard ? (
+          <>
+            <section className="sd-student-context" aria-label="Student profile">
+              <span className="sd-student-context__icon"><GraduationCap size={20} aria-hidden="true" /></span>
+              <div className="sd-student-context__identity">
+                <strong>{profile.full_name || user?.name || "Student"}</strong>
+                <span>{profile.institute_name || "Your learning dashboard"}{profile.email ? ` · ${profile.email}` : ""}</span>
+              </div>
+              <div className="sd-student-context__batches">
+                <span>Enrolled batches</span>
+                {enrolledBatches.length ? enrolledBatches.map((batch) => (
+                  <span className="sd-student-batch" key={batch.batch_id || batch.batch_name}>{batch.batch_name}</span>
+                )) : <span className="sd-student-batch is-empty">No batch assigned</span>}
+              </div>
+            </section>
+            <DashboardKpis metrics={performance} subscription={subscription} />
+            <OngoingExamCard exam={dashboard.ongoing_exam} />
+            <div className="sd-dashboard-content-grid">
+              <RecentTests tests={recentTests} />
+              <AvailableTests tests={availableTests} />
+            </div>
+          </>
+        ) : null}
       </main>
     </div>
   );

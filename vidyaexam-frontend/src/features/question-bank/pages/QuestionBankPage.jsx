@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { jsPDF } from "jspdf";
 import {
@@ -48,44 +49,69 @@ const questionSortValue = (item, key) => key === "category_name"
 function DropdownSelect({ value, onChange, options, ariaLabel, className = "", disabled = false, ariaInvalid = false }) {
   const [open, setOpen] = useState(false);
   const [openUp, setOpenUp] = useState(false);
+  const [menuPosition, setMenuPosition] = useState(null);
   const wrapperRef = useRef(null);
+  const menuRef = useRef(null);
   const selected = options.find((option) => String(option.value) === String(value)) || options[0];
+  const portalMenu = Boolean(open && wrapperRef.current?.closest(".ve-modal"));
 
   const openMenu = () => {
     if (disabled) return;
     const rect = wrapperRef.current?.getBoundingClientRect();
     if (rect) {
       const estimatedMenuHeight = Math.min(options.length * 48 + 14, 260);
-      setOpenUp(window.innerHeight - rect.bottom < estimatedMenuHeight + 12 && rect.top > estimatedMenuHeight);
+      const below = window.innerHeight - rect.bottom - 12;
+      const above = rect.top - 12;
+      setOpenUp(below < estimatedMenuHeight && above > below);
     }
     setOpen(true);
   };
 
   useEffect(() => {
     if (!open) return undefined;
+    const updateMenuPosition = () => {
+      if (!portalMenu || !wrapperRef.current) return;
+      const rect = wrapperRef.current.getBoundingClientRect();
+      const width = Math.min(rect.width, window.innerWidth - 24);
+      const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
+      const availableHeight = Math.max(0, openUp ? rect.top - 14 : window.innerHeight - rect.bottom - 14);
+      const maxHeight = Math.min(260, availableHeight);
+      const bottom = window.innerHeight - rect.top + 6;
+      setMenuPosition(openUp
+        ? { position: "fixed", left, top: "auto", right: "auto", bottom, width, maxHeight, zIndex: 10020 }
+        : { position: "fixed", left, top: rect.bottom + 6, right: "auto", bottom: "auto", width, maxHeight, zIndex: 10020 });
+    };
+    updateMenuPosition();
     const handlePointerDown = (event) => {
-      if (!wrapperRef.current?.contains(event.target)) setOpen(false);
+      if (!wrapperRef.current?.contains(event.target) && !menuRef.current?.contains(event.target)) setOpen(false);
     };
     const handleKeyDown = (event) => {
       if (event.key === "Escape") setOpen(false);
     };
     document.addEventListener("pointerdown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
     return () => {
       document.removeEventListener("pointerdown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
     };
-  }, [open]);
+  }, [open, portalMenu, openUp]);
 
   return <div className={`qb-select${open ? " is-open" : ""}${openUp ? " opens-up" : ""} ${className}`} ref={wrapperRef}>
     <button type="button" className="qb-select-trigger" aria-haspopup="listbox" aria-expanded={open} aria-label={ariaLabel} aria-invalid={ariaInvalid || undefined} disabled={disabled} onClick={() => open ? setOpen(false) : openMenu()} onKeyDown={(event) => { if (["ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); openMenu(); } }}>
       <span>{selected?.label ?? "Select an option"}</span><ChevronDown size={17} aria-hidden="true" />
     </button>
-    {open && <div className="qb-select-menu" role="listbox" aria-label={ariaLabel}>
-      {options.map((option) => <button type="button" role="option" aria-selected={String(option.value) === String(value)} className="qb-select-option" key={option.value} onClick={() => { onChange(option.value); setOpen(false); }}>
-        <span>{option.label}</span>{String(option.value) === String(value) && <Check size={16} aria-hidden="true" />}
-      </button>)}
-    </div>}
+    {open && (() => {
+      const menu = <div className="qb-select-menu" role="listbox" aria-label={ariaLabel} ref={menuRef} style={portalMenu ? menuPosition || undefined : undefined}>
+        {options.map((option) => <button type="button" role="option" aria-selected={String(option.value) === String(value)} className="qb-select-option" key={option.value} onClick={() => { onChange(option.value); setOpen(false); }}>
+          <span>{option.label}</span>{String(option.value) === String(value) && <Check size={16} aria-hidden="true" />}
+        </button>)}
+      </div>;
+      return portalMenu ? createPortal(menu, document.body) : menu;
+    })()}
   </div>;
 }
 
@@ -158,7 +184,7 @@ function optionRows(options) {
   }));
 }
 
-function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, batches, batchesStatus, batchesError, onRetryBatches, submitting, canCreate, onCancel, onSubmit }) {
+function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, batches, batchesStatus, batchesError, onRetryBatches, isSuperAdmin, submitting, canCreate, onCancel, onSubmit }) {
   const editing = Boolean(initial?.question_id);
   const [topicId, setTopicId] = useState(asText(initial?.topic_id));
   const [batchId, setBatchId] = useState(asText(initial?.batch_id));
@@ -187,14 +213,13 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
   if (editing && batchId && !batches.some((batch) => asBatchId(batch) === batchId)) {
     batchOptions.push({ value: batchId, label: initial?.batch_name || `Batch ${batchId}` });
   }
-
   const changeOption = (index, key, value) => {
     setOptions((current) => current.map((option, position) => position === index ? { ...option, [key]: value } : option));
   };
   const validate = () => {
     const next = {};
     if (!topicId || (!editing && !topics.some((topic) => asTopicId(topic) === topicId))) next.topicId = "Choose a valid topic.";
-    if (!batchId || !batchOptions.some((batch) => batch.value === batchId)) next.batchId = "Choose a valid batch.";
+    if (!isSuperAdmin && (!batchId || !batchOptions.some((batch) => batch.value === batchId))) next.batchId = "Choose a valid batch.";
     if (!questionText.trim()) next.questionText = "Enter the question.";
     else if (questionText.trim().length > 5000) next.questionText = "Question cannot exceed 5,000 characters.";
     if (explanation.length > 5000) next.explanation = "Explanation cannot exceed 5,000 characters.";
@@ -240,7 +265,9 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
       default_marks: Number(marks),
       default_negative_marks: Number(negativeMarks),
       options: optionPayload,
-      batch_id: batchId,
+      ...(isSuperAdmin
+        ? (editing && initial?.batch_id ? { batch_id: initial.batch_id } : {})
+        : { batch_id: batchId }),
       ...(questionType === "NUMERICAL" ? { numerical_answer: Number(numericalAnswer), correct_answer: Number(numericalAnswer) } : {}),
     };
     if (!editing) {
@@ -273,7 +300,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {topicsStatus === "error" && <small className="qb-field-error">{topicsError} <button type="button" className="qb-inline-action" onClick={onRetryTopics}>Retry</button></small>}
           {topicsStatus === "ready" && !topics.length && !editing && <small className="qb-field-hint">No topics are available yet. Add a topic in Taxonomy first.</small>}
         </label>
-        <label className="qb-field qb-field--wide">
+        {!isSuperAdmin && <label className="qb-field qb-field--wide">
           <span>Batch / class <b>*</b></span>
           <DropdownSelect
             className="qb-form-select"
@@ -288,7 +315,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {batchesStatus === "loading" && <BrandLoader variant="section" className="ve-brand-loader--compact qb-topic-loader" message="Loading available batches…" />}
           {batchesStatus === "error" && <small className="qb-field-error">{batchesError} <button type="button" className="qb-inline-action" onClick={onRetryBatches}>Retry</button></small>}
           {batchesStatus === "ready" && !batches.length && <small className="qb-field-hint">Create a batch in Master before adding questions.</small>}
-        </label>
+        </label>}
         <label className="qb-field">
           <span>Question type <b>*</b></span>
           <DropdownSelect
@@ -777,7 +804,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
         const issues = [];
         const topicIdValue = bulkTopicId;
         if (!topicIdValue || !topics.some((item) => asTopicId(item) === String(topicIdValue))) issues.push("Unknown or missing topic");
-        if (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId))) issues.push("Choose a valid batch");
+        if (role !== "SUPER_ADMIN" && (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId)))) issues.push("Choose a valid batch");
         if (!row.question_text) issues.push("Question text is required");
         const questionType = bulkQuestionType;
         if (!QUESTION_TYPES.some((item) => item.value === questionType)) issues.push("Question type must be SINGLE_CHOICE, MULTIPLE_CHOICE, or NUMERICAL");
@@ -807,7 +834,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
           error: issues.join("; "),
           payload: {
             tenant_id: role === "SUPER_ADMIN" ? null : tenantId,
-            batch_id: bulkBatchId,
+            ...(role !== "SUPER_ADMIN" ? { batch_id: bulkBatchId } : {}),
             topic_id: topicIdValue,
             question_type: questionType,
             difficulty_level: level,
@@ -890,7 +917,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
   const validateBulkSettings = () => {
     const next = {};
     if (!bulkTopicId || !topics.some((item) => asTopicId(item) === bulkTopicId)) next.topic = "Choose a valid topic.";
-    if (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId))) next.batch = "Choose a valid batch.";
+    if (role !== "SUPER_ADMIN" && (!bulkBatchId || !batches.some((item) => asBatchId(item) === String(bulkBatchId)))) next.batch = "Choose a valid batch.";
     if (!QUESTION_TYPES.some((item) => item.value === bulkQuestionType)) next.questionType = "Choose a valid question type.";
     if (!DIFFICULTIES.includes(bulkDifficulty)) next.difficulty = "Choose a valid difficulty level.";
     if (bulkMarks.trim() === "" || !Number.isFinite(Number(bulkMarks)) || Number(bulkMarks) <= 0) next.marks = "Enter a marks value greater than 0.";
@@ -951,7 +978,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               </>}
     </section>
 
-    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : "Add a question to the question bank for the selected topic and batch."} size="lg" className="qb-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} batches={batches} batchesStatus={batchesStatus} batchesError={batchesError} onRetryBatches={() => setBatchesRefresh((value) => value + 1)} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
+    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : role === "SUPER_ADMIN" ? "Add a question to the question bank for the selected topic." : "Add a question to the question bank for the selected topic and batch."} size="lg" className="qb-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} batches={batches} batchesStatus={batchesStatus} batchesError={batchesError} onRetryBatches={() => setBatchesRefresh((value) => value + 1)} isSuperAdmin={role === "SUPER_ADMIN"} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
     {bulkOpen && <Modal isOpen onClose={() => { if (!bulkSubmitting) { setBulkOpen(false); setBulkRows([]); setBulkResult(null); setBulkFileName(""); } }} title={bulkResult ? "Bulk upload results" : "Add questions in bulk"} description={bulkResult ? `Upload summary for ${bulkFileName || "your CSV file"}.` : "Upload a CSV, review its contents, then add valid questions to the bank."} size="lg" className="qb-modal qb-bulk-modal" closeOnEscape={!bulkSubmitting} closeOnOverlay={!bulkSubmitting}>
       <div className="qb-bulk-content">
         {!bulkResult ? <>
@@ -970,7 +997,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               />
               {bulkSettingsErrors.topic && <small className="qb-field-error">{bulkSettingsErrors.topic}</small>}
             </label>
-            <label className="qb-field">
+            {role !== "SUPER_ADMIN" && <label className="qb-field">
               <span>Batch / class <b>*</b></span>
               <DropdownSelect
                 className="qb-form-select"
@@ -985,7 +1012,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               {batchesStatus === "loading" && <small className="qb-field-hint">Loading available batches…</small>}
               {batchesStatus === "error" && <small className="qb-field-error">{batchesError} <button type="button" className="qb-inline-action" onClick={() => setBatchesRefresh((value) => value + 1)}>Retry</button></small>}
               {batchesStatus === "ready" && !batches.length && <small className="qb-field-hint">Create a batch in Master before adding questions.</small>}
-            </label>
+            </label>}
             <label className="qb-field">
               <span>Question type</span>
               <DropdownSelect className="qb-form-select" value={bulkQuestionType} onChange={(value) => { setBulkQuestionType(value); setBulkSettingsErrors((current) => ({ ...current, questionType: "" })); }} options={QUESTION_TYPES} ariaLabel="Bulk upload default question type" ariaInvalid={Boolean(bulkSettingsErrors.questionType)} disabled={bulkRows.length > 0 || bulkSubmitting} />
@@ -1007,7 +1034,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               {bulkSettingsErrors.negativeMarks && <small className="qb-field-error">{bulkSettingsErrors.negativeMarks}</small>}
             </label>
           </div>
-          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Choose topic, batch, type, difficulty, marks, and negative marks above. The selected batch applies to every question in this upload. The CSV contains question text, options, answers, and explanation. Use <code>correct_option</code> as A for single choice or A|C for multiple choice; numerical rows use <code>numerical_answer</code>. Explanation is optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
+          <div className="qb-bulk-toolbar"><div><strong>CSV template</strong><p>Choose topic, {role !== "SUPER_ADMIN" ? "batch, " : ""}type, difficulty, marks, and negative marks above. The CSV contains question text, options, answers, and explanation. Use <code>correct_option</code> as A for single choice or A|C for multiple choice; numerical rows use <code>numerical_answer</code>. Explanation is optional.</p></div><button type="button" className="qb-text-button" onClick={downloadBulkTemplate}><Download size={15} /> Download template</button></div>
           <div className="qb-bulk-upload-zone"><span className="qb-bulk-upload-icon"><Upload size={21} /></span><div><strong>{bulkFileName || "Upload your question CSV"}</strong><p>{bulkFileName ? `${bulkRows.length} data rows found` : "CSV only · Maximum file size 2 MB · Up to 100 questions"}</p>{topicsStatus === "loading" && <p>Loading available topics…</p>}{topicsStatus === "error" && <p className="qb-field-error">{topicsError || "Topics could not be loaded. Retry from the Question Bank first."}</p>}</div><button type="button" className="qb-button qb-button--secondary" onClick={() => bulkFileRef.current?.click()} disabled={bulkSubmitting}><FileSpreadsheet size={16} /> {bulkFileName ? "Choose another file" : "Choose CSV"}</button></div>
           {bulkRows.length > 0 && <>
             <div className="qb-bulk-counts"><span className="is-valid">{bulkRows.filter((item) => !item.error).length} valid</span><span className="is-invalid">{bulkRows.filter((item) => item.error).length} invalid</span><span>{bulkRows.length} total</span></div>

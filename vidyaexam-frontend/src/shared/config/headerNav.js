@@ -13,6 +13,7 @@ export const ROLE_NAV = {
     nav: [
       { label: "Dashboard", to: STUDENT_DASHBOARD, icon: "dashboard", end: true },
       { label: "My Test", to: `${STUDENT_DASHBOARD}/exams`, icon: "exam", end: true },
+      { label: "History", to: `${STUDENT_DASHBOARD}/history`, icon: "history", end: true },
       { label: "Settings", to: `${STUDENT_DASHBOARD}/settings`, icon: "settings", end: true },
     ],
   },

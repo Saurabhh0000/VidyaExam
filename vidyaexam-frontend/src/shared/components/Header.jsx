@@ -15,6 +15,7 @@ import ProfileMenu, {
 import { buildAccountItems } from "../config/accountMenu";
 import NavigationSidebar, { MOBILE_QUERY } from "./NavigationSidebar";
 import NavigationDrawer from "./NavigationDrawer";
+import StudentNotifications from "./StudentNotifications";
 import "../../styles/header.css";
 import "../../styles/profile-menu.css";
 
@@ -231,6 +232,12 @@ export default function Header() {
                 onClick={() => setSidebarOpen((prev) => !prev)}>
                 <Menu size={20} aria-hidden="true" />
               </button>
+            )}
+
+            {authed && (
+              String(user.role || "").toUpperCase() === "STUDENT" && (
+                <StudentNotifications />
+              )
             )}
 
             {authed && (

@@ -4,10 +4,12 @@ import {
   useCallback,
   useEffect,
   useId,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   BookOpen,
@@ -49,6 +51,7 @@ import {
   getOrganizationUsers,
   updateTenantUser,
 } from "../services/organization.service";
+import { getTenantDashboard } from "../services/tenant-dashboard.service";
 import { getBatches } from "../../batches/services/batches.service";
 import Modal from "../../../shared/components/ui/Modal";
 import BrandLoader from "../../../shared/components/ui/BrandLoader";
@@ -105,22 +108,44 @@ function MenuSelect({
   const rootRef = useRef(null);
   const triggerRef = useRef(null);
   const optionsRef = useRef(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const selectedOption =
     options.find((option) => String(option.value) === String(value)) ||
     options[0];
+  const portalOptions = Boolean(open && rootRef.current?.closest(".ve-modal"));
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!open) return undefined;
+    const updateMenuPosition = () => {
+      if (!portalOptions || !triggerRef.current) return;
+      const rect = triggerRef.current.getBoundingClientRect();
+      const width = Math.min(rect.width, window.innerWidth - 24);
+      const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
+      const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - 12);
+      const spaceAbove = Math.max(0, rect.top - 12);
+      const preferTop = placement === "top" || (spaceBelow < 200 && spaceAbove > spaceBelow);
+      const maxHeight = Math.max(90, Math.min(250, preferTop ? spaceAbove : spaceBelow));
+      setMenuPosition(preferTop
+        ? { position: "fixed", left, bottom: window.innerHeight - rect.top + 7, width, maxHeight, zIndex: 10020 }
+        : { position: "fixed", left, top: rect.bottom + 7, width, maxHeight, zIndex: 10020 });
+    };
+    updateMenuPosition();
     const selected = optionsRef.current?.querySelector(
       '[aria-selected="true"]',
     );
     (selected || optionsRef.current?.querySelector('[role="option"]'))?.focus();
     const closeOutside = (event) => {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
+      if (!rootRef.current?.contains(event.target) && !optionsRef.current?.contains(event.target)) setOpen(false);
     };
     document.addEventListener("pointerdown", closeOutside);
-    return () => document.removeEventListener("pointerdown", closeOutside);
-  }, [open]);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+    return () => {
+      document.removeEventListener("pointerdown", closeOutside);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [open, portalOptions, placement]);
 
   function handleKeyDown(event) {
     if (event.key === "Escape") {
@@ -178,12 +203,13 @@ function MenuSelect({
         <span>{selectedOption?.label}</span>
         <ChevronDown size={17} aria-hidden="true" />
       </button>
-      {open && (
-        <div
+      {open && (() => {
+        const menu = <div
           className={`org-menu-select-options ${optionsClassName}`.trim()}
           id={selectId}
           role="listbox"
           aria-label={ariaLabel}
+          style={portalOptions ? menuPosition || undefined : undefined}
           ref={optionsRef}>
           {options.map((option) => (
             <button
@@ -199,8 +225,9 @@ function MenuSelect({
               )}
             </button>
           ))}
-        </div>
-      )}
+        </div>;
+        return portalOptions ? createPortal(menu, document.body) : menu;
+      })()}
     </div>
   );
 }
@@ -469,14 +496,10 @@ function AddMemberModal({
   const [submitting, setSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [touched, setTouched] = useState({});
-  const [roleMenuOpen, setRoleMenuOpen] = useState(false);
   const [batches, setBatches] = useState([]);
   const [batchesLoading, setBatchesLoading] = useState(false);
   const [batchesError, setBatchesError] = useState("");
   const requestInFlight = useRef(false);
-  const rolePickerRef = useRef(null);
-  const roleTriggerRef = useRef(null);
-  const roleOptionsRef = useRef(null);
   const navigate = useNavigate();
 
   const isStudent = form.role_name === "STUDENT";
@@ -486,36 +509,10 @@ function AddMemberModal({
     Number.isFinite(Number(remaining)) &&
     Number(remaining) <= 0;
 
+  // Load batches while the member modal is open so the field is ready when
+  // Student is selected.
   useEffect(() => {
-    if (!roleMenuOpen) return undefined;
-
-    roleOptionsRef.current?.querySelector('[role="option"]')?.focus();
-
-    const onPointerDown = (event) => {
-      if (!rolePickerRef.current?.contains(event.target)) {
-        setRoleMenuOpen(false);
-      }
-    };
-
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        setRoleMenuOpen(false);
-        roleTriggerRef.current?.focus();
-      }
-    };
-
-    document.addEventListener("pointerdown", onPointerDown);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      document.removeEventListener("pointerdown", onPointerDown);
-      document.removeEventListener("keydown", onKeyDown);
-    };
-  }, [roleMenuOpen]);
-
-  // Load batches only when Student is selected.
-  useEffect(() => {
-    if (!isStudent || !tenantAvailable || !tenantId) {
+    if (!tenantAvailable || !tenantId) {
       setBatches([]);
       setBatchesError("");
       setBatchesLoading(false);
@@ -579,7 +576,7 @@ function AddMemberModal({
     return () => {
       active = false;
     };
-  }, [isStudent, tenantAvailable, tenantId]);
+  }, [tenantAvailable, tenantId]);
 
   function updateField(event) {
     const { name, value } = event.target;
@@ -631,8 +628,6 @@ function AddMemberModal({
       form: "",
     }));
 
-    setRoleMenuOpen(false);
-    roleTriggerRef.current?.focus();
   }
 
   async function handleSubmit(event) {
@@ -837,101 +832,67 @@ function AddMemberModal({
           <small className="org-member-hint">Use at least 8 characters.</small>
         </label>
 
-        <div
-          className="org-member-field org-member-role-field"
-          ref={rolePickerRef}>
+        <div className="org-member-field org-member-role-field">
           <span id="org-member-role-label">
             Role <b>*</b>
           </span>
-
-          <button
-            ref={roleTriggerRef}
-            type="button"
-            name="role_name"
-            className="org-member-role-trigger"
-            aria-labelledby="org-member-role-label"
-            aria-haspopup="listbox"
-            aria-expanded={roleMenuOpen}
+          <MenuSelect
+            value={form.role_name}
+            options={[
+              { value: "TEACHER", label: "Teacher" },
+              { value: "STUDENT", label: "Student" },
+            ]}
+            onChange={chooseRole}
+            ariaLabel="Choose member role"
+            className="org-member-role-select"
+            triggerClassName="org-member-role-trigger"
+            optionsClassName="org-member-role-options"
+            invalid={Boolean(errors.role_name)}
             disabled={submitting}
-            onClick={() => setRoleMenuOpen((open) => !open)}>
-            <span>{isStudent ? "Student" : "Teacher"}</span>
-            <ChevronDown size={18} aria-hidden="true" />
-          </button>
-
-          {roleMenuOpen && (
-            <div
-              className="org-member-role-options"
-              role="listbox"
-              aria-label="Choose member role"
-              ref={roleOptionsRef}>
-              {[
-                { value: "TEACHER", label: "Teacher" },
-                { value: "STUDENT", label: "Student" },
-              ].map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  role="option"
-                  aria-selected={form.role_name === option.value}
-                  onClick={() => chooseRole(option.value)}>
-                  <span>{option.label}</span>
-                  {form.role_name === option.value && <Check size={17} />}
-                </button>
-              ))}
-            </div>
-          )}
+          />
 
           {errors.role_name && <small>{errors.role_name}</small>}
         </div>
 
-        {isStudent && (
-          <div className="org-member-field org-member-batch-field">
-            <span>
-              Batch / Class <b>*</b>
-            </span>
-            <MenuSelect
-              value={form.batch_id}
-              options={[
-                {
-                  value: "",
-                  label: batchesLoading
-                    ? "Loading batches…"
-                    : batchesError
-                      ? "Unable to load batches"
-                      : batches.length
-                        ? "Select a batch"
-                        : "No batches available",
-                },
-                ...batches.map((batch) => {
-                  const id = batch.batch_id ?? batch.batchId ?? batch.id;
-                  const name = batch.batch_name ?? batch.batchName ?? "Unnamed batch";
-                  const code = batch.batch_code ?? batch.batchCode;
-                  return { value: String(id), label: `${name}${code ? ` (${code})` : ""}` };
-                }),
-              ]}
-              onChange={(batchId) => {
-                setForm((current) => ({ ...current, batch_id: String(batchId) }));
-                setErrors((current) => ({ ...current, batch_id: "", form: "" }));
-              }}
-              ariaLabel="Choose a batch or class"
-              className="org-member-batch-select"
-              triggerClassName="org-member-role-trigger"
-              optionsClassName="org-member-role-options"
-              invalid={Boolean(errors.batch_id)}
-              disabled={batchesLoading || submitting || Boolean(batchesError) || batches.length === 0}
-            />
-
-            {errors.batch_id && <small>{errors.batch_id}</small>}
-
-            {batchesError && <small role="alert">{batchesError}</small>}
-
-            {!batchesLoading && !batchesError && batches.length === 0 && (
-              <small>
-                No batches found for this organization. Create a batch first.
-              </small>
-            )}
-          </div>
-        )}
+        {isStudent && <div className="org-member-field org-member-batch-field">
+          <span>Batch / Class <b>*</b></span>
+          <MenuSelect
+            value={form.batch_id}
+            options={[
+              {
+                value: "",
+                label: batchesLoading
+                  ? "Loading batches…"
+                  : batchesError
+                    ? "Unable to load batches"
+                    : batches.length
+                      ? "Select a batch"
+                      : "No batches available",
+              },
+              ...batches.map((batch) => {
+                const id = batch.batch_id ?? batch.batchId ?? batch.id;
+                const name = batch.batch_name ?? batch.batchName ?? "Unnamed batch";
+                const code = batch.batch_code ?? batch.batchCode;
+                return { value: String(id), label: `${name}${code ? ` (${code})` : ""}` };
+              }),
+            ]}
+            onChange={(batchId) => {
+              setForm((current) => ({ ...current, batch_id: String(batchId) }));
+              setErrors((current) => ({ ...current, batch_id: "", form: "" }));
+            }}
+            ariaLabel="Choose a batch or class"
+            className="org-member-batch-select"
+            triggerClassName="org-member-role-trigger"
+            optionsClassName="org-member-role-options"
+            invalid={Boolean(errors.batch_id)}
+            disabled={batchesLoading || submitting || Boolean(batchesError) || batches.length === 0}
+          />
+          {errors.batch_id && <small>{errors.batch_id}</small>}
+          {batchesError && <small role="alert">{batchesError}</small>}
+          {!batchesLoading && !batchesError && batches.length === 0 && (
+            <small>No batches found for this organization. Create a batch first.</small>
+          )}
+        </div>}
 
         {quotaExhausted && (
           <p className="org-member-form-error" role="status">
@@ -2850,6 +2811,134 @@ function UserDirectory({
   );
 }
 
+function TenantDashboardOverview() {
+  const [dashboard, setDashboard] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+  const [reloadKey, setReloadKey] = useState(0);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setLoading(true);
+    setError("");
+    getTenantDashboard({ signal: controller.signal })
+      .then(setDashboard)
+      .catch((requestError) => {
+        if (requestError.name !== "CanceledError" && requestError.name !== "AbortError") {
+          setError(requestError.message || "Organization dashboard could not be loaded.");
+        }
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
+    return () => controller.abort();
+  }, [reloadKey]);
+
+  if (loading) return <BrandLoader variant="content" message="Loading organization metrics…" />;
+  if (error) return (
+    <section className="org-overview-state is-error" role="alert">
+      <CircleAlert size={22} aria-hidden="true" />
+      <div><h2>Dashboard data unavailable</h2><p>{error}</p></div>
+      <button className="org-dashboard-button org-dashboard-button--secondary" type="button" onClick={() => setReloadKey((key) => key + 1)}>
+        <RefreshCw size={16} aria-hidden="true" />Retry
+      </button>
+    </section>
+  );
+
+  const overview = dashboard?.overview || {};
+  const members = overview.members || {};
+  const batches = overview.batches || {};
+  const exams = overview.exams || {};
+  const questionBank = overview.question_bank || {};
+  const performance = overview.performance || {};
+  const totalMembers = Number(members.total_students || 0) + Number(members.total_teachers || 0);
+  const formatNumber = (value) => Number(value || 0).toLocaleString();
+  const metrics = [
+    { label: "Members", value: totalMembers, caption: `${formatNumber(members.total_students)} students · ${formatNumber(members.total_teachers)} teachers`, icon: Users, tone: "blue" },
+    { label: "Batches / Classes", value: batches.total_batches, caption: `${formatNumber(batches.active_batches)} active batches`, icon: GraduationCap, tone: "teal" },
+    { label: "Exams", value: exams.total_exams, caption: `${formatNumber(exams.published_exams)} published · ${formatNumber(exams.draft_exams)} drafts`, icon: CalendarDays, tone: "amber" },
+    { label: "Question bank", value: questionBank.total_private_questions, caption: `${formatNumber(questionBank.easy_questions)} easy · ${formatNumber(questionBank.medium_questions)} medium · ${formatNumber(questionBank.hard_questions)} hard`, icon: BookOpen, tone: "violet" },
+    { label: "Completed tests", value: performance.completed_tests, caption: `${formatNumber(performance.total_student_attempts)} student attempts`, icon: ShieldCheck, tone: "green" },
+    { label: "Currently testing", value: performance.currently_testing, caption: `${formatNumber(exams.upcoming_scheduled_exams)} upcoming scheduled exams`, icon: Users, tone: "teal" },
+    { label: "Average score", value: `${Number(performance.avg_student_percentage || 0).toFixed(1)}%`, caption: `${formatNumber(performance.tests_passed)} passed · ${formatNumber(performance.tests_failed)} failed`, icon: BookOpen, tone: "blue" },
+    { label: "Pass rate", value: `${Number(performance.pass_rate_percentage || 0).toFixed(1)}%`, caption: `${formatNumber(members.new_members_last_30_days)} new members in 30 days · ${formatNumber(members.inactive_members)} inactive`, icon: ShieldCheck, tone: "green" },
+  ];
+  const submissions = Array.isArray(dashboard?.recent_submissions) ? dashboard.recent_submissions : [];
+  const upcoming = Array.isArray(dashboard?.upcoming_exams) ? dashboard.upcoming_exams : [];
+
+  return (
+    <div className="org-overview-content">
+      <section className="org-overview-metrics" aria-label="Organization overview">
+        {metrics.map(({ label, value, caption, icon: Icon, tone }) => (
+          <article className={`org-overview-metric is-${tone}`} key={label}>
+            <span className="org-overview-metric__icon"><Icon size={19} aria-hidden="true" /></span>
+            <div className="org-overview-metric__copy">
+              <span>{label}</span>
+              <strong>{typeof value === "number" ? formatNumber(value) : value}</strong>
+              <small>{caption}</small>
+            </div>
+          </article>
+        ))}
+      </section>
+
+      <section className="org-overview-panels">
+        <article className="org-overview-panel">
+          <header className="org-overview-panel__header">
+            <span className="org-panel-icon"><Users size={18} aria-hidden="true" /></span>
+            <div><h2>Recent submissions</h2><p>Latest student exam results.</p></div>
+          </header>
+          {submissions.length ? (
+            <div className="org-overview-submissions">
+              {submissions.map((item) => (
+                <article className="org-overview-submission" key={item.attempt_id}>
+                  <div className="org-overview-submission__main">
+                    <strong>{item.student_name || "Student"}</strong>
+                    <span>{item.exam_title || "Exam"}</span>
+                    <small>{[item.batch_name, item.student_email].filter(Boolean).join(" · ")}</small>
+                  </div>
+                  <div className="org-overview-submission__score">
+                    <strong>{Number(item.score_obtained || 0).toFixed(2)} <small>/ {Number(item.total_marks || 0).toFixed(2)}</small></strong>
+                    <span className={item.is_passed ? "is-passed" : "is-failed"}>{item.is_passed ? "Passed" : "Failed"} · {Number(item.percentage || 0).toFixed(1)}%</span>
+                    <time dateTime={item.submitted_at}>{formatDate(item.submitted_at, true)}</time>
+                  </div>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="org-overview-empty">
+              <span><BookOpen size={18} aria-hidden="true" /></span>
+              <div><strong>No submissions yet</strong><p>Student results will appear here after they submit an exam.</p></div>
+            </div>
+          )}
+        </article>
+
+        <article className="org-overview-panel">
+          <header className="org-overview-panel__header">
+            <span className="org-panel-icon"><CalendarDays size={18} aria-hidden="true" /></span>
+            <div><h2>Upcoming exams</h2><p>Scheduled assessments for your organization.</p></div>
+          </header>
+          {upcoming.length ? (
+            <div className="org-overview-upcoming">
+              {upcoming.map((item) => (
+                <article className="org-overview-upcoming__item" key={item.exam_id}>
+                  <span className="org-overview-upcoming__date"><CalendarDays size={16} aria-hidden="true" />{formatDate(item.starts_at, true)}</span>
+                  <strong>{item.title || "Untitled exam"}</strong>
+                  <small>{formatNumber(item.duration_minutes)} min <i /> {Number(item.total_marks || 0).toFixed(2)} marks</small>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="org-overview-empty">
+              <span><CalendarDays size={18} aria-hidden="true" /></span>
+              <div><strong>No upcoming exams</strong><p>Scheduled exams will appear here.</p></div>
+            </div>
+          )}
+        </article>
+      </section>
+    </div>
+  );
+}
+
 export default function OrganizationDashboard() {
   const { user } = useAuthState();
   const { view: routeView, tab: routeTab } = useParams();
@@ -2918,68 +3007,7 @@ export default function OrganizationDashboard() {
             </div>}
           />
         )}
-        {!view && !["taxonomy", "settings", "master"].includes(routeView) && (
-          <section className="org-dashboard-lower-grid">
-            <article className="org-info-panel">
-              <div className="org-panel-title">
-                <span className="org-panel-icon">
-                  <Users size={18} aria-hidden="true" />
-                </span>
-                <div>
-                  <h2>Employee directory</h2>
-                  <p>
-                    View organization accounts, subscription capacity, and
-                    member activity.
-                  </p>
-                </div>
-              </div>
-              <button
-                className="org-text-action"
-                onClick={() => navigate("/organization/dashboard/employee")}>
-                Open employee directory <span aria-hidden="true">→</span>
-              </button>
-            </article>
-            <aside className="org-info-panel org-quick-panel">
-              <div className="org-panel-title">
-                <span className="org-panel-icon">
-                  <ShieldCheck size={18} aria-hidden="true" />
-                </span>
-                <div>
-                  <h2>Quick actions</h2>
-                  <p>Common organization tasks.</p>
-                </div>
-              </div>
-              <div className="org-shortcuts">
-                <button
-                  className="org-shortcut"
-                  onClick={() => setModalRole("TEACHER")}>
-                  <span className="org-shortcut-icon">
-                    <BookOpen size={18} aria-hidden="true" />
-                  </span>
-                  <span className="org-shortcut-copy">
-                    <strong>Add a teacher</strong>
-                    <small>Create a teacher account for your team.</small>
-                  </span>
-                  <Plus size={16} aria-hidden="true" />
-                </button>
-                <button
-                  className="org-shortcut"
-                  onClick={() => setModalRole("STUDENT")}>
-                  <span className="org-shortcut-icon">
-                    <GraduationCap size={18} aria-hidden="true" />
-                  </span>
-                  <span className="org-shortcut-copy">
-                    <strong>Add a student</strong>
-                    <small>
-                      Create a student account in this organization.
-                    </small>
-                  </span>
-                  <Plus size={16} aria-hidden="true" />
-                </button>
-              </div>
-            </aside>
-          </section>
-        )}
+        {!view && !["taxonomy", "settings", "master"].includes(routeView) && <TenantDashboardOverview />}
       </div>
       {modalRole && (
         <AddMemberModal
