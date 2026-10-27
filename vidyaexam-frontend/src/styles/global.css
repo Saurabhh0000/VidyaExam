@@ -1330,9 +1330,9 @@ button:focus-visible {
 
 .teacher-workspace-page.qb-page,
 .teacher-workspace-page.ve-exams-page {
-  width: min(1440px, calc(100% - 40px));
+  width: min(1440px, calc(100% - 16px));
   margin-inline: auto;
-  padding: clamp(16px, 2vw, 24px) 0 56px;
+  padding: 10px 0 32px;
 }
 
 .user-settings-page.teacher-workspace-page {
@@ -1347,6 +1347,10 @@ button:focus-visible {
   .user-settings-page.teacher-workspace-page {
     width: min(100% - 28px, 640px);
     padding-top: 22px;
+  }
+  .teacher-workspace-page.ve-exams-page {
+    width: min(100% - 20px, 640px);
+    padding: 8px 0 24px;
   }
 }
 

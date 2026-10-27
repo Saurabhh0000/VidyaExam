@@ -1,4 +1,4 @@
-.ve-exams-page { display: grid; gap: 20px; width: min(1440px, calc(100% - 40px)); min-width: 0; margin: 0 auto; padding: clamp(16px, 2vw, 24px) 0 56px; color: #172b4d; }
+.ve-exams-page { display: grid; gap: 12px; width: min(1440px, calc(100% - 16px)); min-width: 0; margin: 0 auto; padding: 10px 0 32px; color: #172b4d; }
 .ve-exams-page > .ve-page-header { margin-bottom: 0; }
 .ve-exams-page:not(.ve-exam-sections-page) .master-workspace__stats { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 .ve-exams-page .master-workspace__stat { cursor: default; }
@@ -306,7 +306,7 @@
 .ve-exam-delete-copy strong { color: #172b4d; }
 
 @media (max-width: 720px) {
-  .ve-exams-page { width: min(100% - 28px, 640px); gap: 15px; padding-top: 22px; }
+  .ve-exams-page { width: min(100% - 20px, 640px); gap: 10px; padding: 8px 0 24px; }
   .ve-exams-page .master-workspace__stats { grid-template-columns: 1fr; gap: 8px; }
   .ve-exams-page .master-workspace__stat { padding: 12px 14px; }
   .ve-exam-toolbar { grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; padding: 12px; }
@@ -371,4 +371,26 @@
   .ve-exam-footer { padding-inline: 13px; }
   .ve-exam-grid { grid-template-columns: minmax(0, 1fr); padding-inline: 10px; }
   .ve-exam-sections-grid { grid-template-columns: minmax(0, 1fr); padding-inline: 10px; }
+}
+
+/* Keep the Admin and Super Admin Exams workspace compact like Master Batches. */
+.super-admin-dashboard:has(.ve-exams-page),
+.organization-dashboard:has(.ve-exams-page) {
+  padding-right: 4px;
+  padding-bottom: 20px;
+  padding-left: 4px;
+}
+.super-admin-dashboard:has(.ve-exams-page) .sa-dashboard-container,
+.organization-dashboard:has(.ve-exams-page) .org-dashboard-container { width: 100%; }
+.super-admin-dashboard:has(.ve-exams-page) .ve-exams-page,
+.organization-dashboard:has(.ve-exams-page) .ve-exams-page {
+  width: calc(100% - 32px);
+  padding-bottom: 20px;
+}
+
+@media (max-width: 720px) {
+  .super-admin-dashboard:has(.ve-exams-page) .ve-exams-page,
+  .organization-dashboard:has(.ve-exams-page) .ve-exams-page {
+    width: calc(100% - 32px);
+  }
 }

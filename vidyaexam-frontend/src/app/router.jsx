@@ -12,6 +12,7 @@ import UnauthorizedPage from "../pages/errors/UnauthorizedPage";
 import RequireRole from "./RequireRole";
 import StudentDashboard from "../features/student/pages/StudentDashboard";
 import MyExamsPage from "../features/student/pages/MyExamsPage";
+import StudentHistoryPage from "../features/student/pages/StudentHistoryPage";
 import { STUDENT_DASHBOARD, SUPER_ADMIN_DASHBOARD, TEACHER_DASHBOARD } from "./roleRoutes";
 import OrganizationDashboard from "../features/organization-admin/pages/OrganizationDashboard";
 import SuperAdminDashboard from "../features/super-admin/pages/SuperAdminDashboard";
@@ -62,6 +63,16 @@ export default function AppRouter() {
             <RequireRole role="STUDENT">
               <MainLayout>
                 <MyExamsPage />
+              </MainLayout>
+            </RequireRole>
+          }
+        />
+        <Route
+          path={`${STUDENT_DASHBOARD}/history`}
+          element={
+            <RequireRole role="STUDENT">
+              <MainLayout>
+                <StudentHistoryPage />
               </MainLayout>
             </RequireRole>
           }

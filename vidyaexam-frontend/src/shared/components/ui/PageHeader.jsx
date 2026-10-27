@@ -3,7 +3,6 @@ import { Link } from "react-router-dom";
 import "./PageHeader.css";
 
 export default function PageHeader({
-  eyebrow,
   title,
   description,
   icon: Icon,
@@ -17,6 +16,15 @@ export default function PageHeader({
   return (
     <header className={`ve-page-header${className ? ` ${className}` : ""}`}>
       <span className="ve-page-header__art" aria-hidden="true">
+        <svg className="ve-page-header__left-art" viewBox="0 0 780 360" preserveAspectRatio="none" focusable="false">
+          <path d="M0 0h780L520 360H0Z" fill="#d9f6ef" fillOpacity=".42" />
+          <path d="M0 0h188l440 360H482Z" fill="#48cbb9" fillOpacity=".12" />
+          <path d="M118 0h126l440 360H558Z" fill="#27b9ac" fillOpacity=".1" />
+          <path d="M298 0h136l346 276v84h-30Z" fill="#7cdec2" fillOpacity=".17" />
+          <path d="M480 0h142l158 134v100Z" fill="#55c8dc" fillOpacity=".13" />
+          <path d="M0 0h780L520 360" fill="none" stroke="#fff" strokeOpacity=".62" strokeWidth="2" />
+          <path d="M118 0l440 360M298 0l482 276M0 184l482 176" fill="none" stroke="#fff" strokeOpacity=".42" strokeWidth="2" />
+        </svg>
         <svg viewBox="0 0 1600 360" preserveAspectRatio="none" focusable="false">
           <defs>
             <linearGradient id="ve-header-wave-a" x1="0" y1="0" x2="1" y2="1">
@@ -62,7 +70,6 @@ export default function PageHeader({
         <div className="ve-page-header__content">
           {Icon && <span className="ve-page-header__icon"><Icon size={23} aria-hidden="true" /></span>}
           <div className="ve-page-header__copy">
-            {eyebrow && <p className="ve-page-header__eyebrow">{eyebrow}</p>}
             <h1>{title}</h1>
             {description && <div className="ve-page-header__description">{description}</div>}
             {metaItems.length > 0 && <div className="ve-page-header__meta">{metaItems.map((item, index) => <span className="ve-page-header__meta-item" key={index}>{item}</span>)}</div>}

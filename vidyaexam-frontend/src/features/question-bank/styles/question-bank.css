@@ -296,3 +296,18 @@
   .qb-detail-option { grid-template-columns: 30px minmax(0, 1fr); }
   .qb-detail-option em { grid-column: 2; }
 }
+
+/* Let Question Bank use the Master workspace width with a small side gutter. */
+.super-admin-dashboard:has(.qb-page),
+.organization-dashboard:has(.qb-page) {
+  padding-right: 10px;
+  padding-left: 10px;
+}
+.super-admin-dashboard:has(.qb-page) .sa-dashboard-container,
+.organization-dashboard:has(.qb-page) .org-dashboard-container { width: 100%; }
+.super-admin-dashboard:has(.qb-page) .qb-page,
+.organization-dashboard:has(.qb-page) .qb-page {
+  width: calc(100% - 20px);
+  max-width: none;
+  margin-inline: auto;
+}

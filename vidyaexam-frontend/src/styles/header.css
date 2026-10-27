@@ -175,6 +175,128 @@
 
 .header-right-cluster { display: flex; flex: none; align-items: center; gap: 0.75rem; margin-left: auto; }
 .header-auth-group { display: flex; align-items: center; gap: 0.5rem; }
+
+/* Student notifications */
+.ve-student-notifications { position: relative; flex: none; color: var(--hdr-navy); }
+.ve-notifications-trigger {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 42px;
+  height: 42px;
+  color: var(--hdr-navy);
+  background: #fff;
+  border: 1px solid rgba(15, 118, 110, 0.16);
+  border-radius: 13px;
+  cursor: pointer;
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+.ve-notifications-trigger:hover,
+.ve-notifications-trigger[aria-expanded="true"] {
+  color: var(--hdr-teal);
+  background: var(--hdr-teal-light);
+  border-color: rgba(15, 118, 110, 0.32);
+}
+.ve-notifications-trigger:active { transform: scale(0.97); }
+.ve-notifications-trigger:focus-visible,
+.ve-notifications-panel button:focus-visible { outline: 3px solid rgba(15, 118, 110, 0.28); outline-offset: 2px; }
+.ve-notifications-count {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  display: grid;
+  min-width: 19px;
+  height: 19px;
+  place-items: center;
+  padding: 0 4px;
+  color: #fff;
+  background: #0f766e;
+  border: 2px solid var(--org-navy, #172b4d);
+  border-radius: 999px;
+  font-size: 0.62rem;
+  font-weight: 800;
+  line-height: 1;
+}
+.ve-notifications-panel {
+  position: absolute;
+  z-index: 120;
+  top: calc(100% + 12px);
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  width: min(390px, calc(100vw - 24px));
+  max-height: min(620px, calc(100vh - 92px), 78vh);
+  overflow: hidden;
+  color: #172b4d;
+  background: #fff;
+  border: 1px solid #dce9e7;
+  border-radius: 17px;
+  box-shadow: 0 20px 54px rgba(15, 38, 62, 0.22), 0 4px 14px rgba(15, 118, 110, 0.08);
+  animation: ve-notifications-enter 150ms ease-out both;
+}
+.ve-notifications-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 17px 18px 14px;
+  background: linear-gradient(115deg, #f4fbfa, #fff 76%);
+  border-bottom: 1px solid #e6efee;
+}
+.ve-notifications-header h2 { margin: 0; color: #172b4d; font-size: 1rem; font-weight: 800; }
+.ve-notifications-header p { margin: 4px 0 0; color: #64748b; font-size: 0.76rem; }
+.ve-notifications-header-actions { display: flex; flex: none; align-items: center; gap: 7px; }
+.ve-notifications-mark-all,
+.ve-notifications-refresh,
+.ve-notification-dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0f766e;
+  background: #fff;
+  border: 1px solid #d8eae7;
+  cursor: pointer;
+  transition: color 140ms ease, background-color 140ms ease, border-color 140ms ease;
+}
+.ve-notifications-mark-all { gap: 6px; min-height: 34px; padding: 0 10px; border-radius: 9px; font-size: 0.72rem; font-weight: 750; white-space: nowrap; }
+.ve-notifications-refresh { width: 34px; height: 34px; border-radius: 9px; }
+.ve-notifications-mark-all:hover:not(:disabled),
+.ve-notifications-refresh:hover:not(:disabled),
+.ve-notification-dismiss:hover:not(:disabled) { color: #0b625b; background: #eaf7f4; border-color: #b9ddd6; }
+.ve-notifications-mark-all:disabled,
+.ve-notifications-refresh:disabled,
+.ve-notification-dismiss:disabled { cursor: wait; opacity: 0.55; }
+.ve-notifications-list { min-height: 80px; overflow-y: auto; overscroll-behavior: contain; }
+.ve-notification-item { position: relative; display: flex; align-items: stretch; border-bottom: 1px solid #edf2f2; }
+.ve-notification-item:last-child { border-bottom: 0; }
+.ve-notification-item.is-unread { background: #f5fbfa; }
+.ve-notification-content {
+  display: flex;
+  flex: 1;
+  align-items: flex-start;
+  gap: 11px;
+  min-width: 0;
+  padding: 15px 8px 14px 17px;
+  color: inherit;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.ve-notification-content:hover { background: rgba(229, 245, 242, 0.52); }
+.ve-notification-content:disabled { cursor: wait; }
+.ve-notification-indicator { flex: none; width: 8px; height: 8px; margin-top: 6px; background: transparent; border-radius: 50%; }
+.is-unread .ve-notification-indicator { background: #0f9b8e; box-shadow: 0 0 0 3px rgba(15, 118, 110, 0.1); }
+.ve-notification-copy { display: grid; min-width: 0; gap: 5px; }
+.ve-notification-copy strong { color: #213653; font-size: 0.81rem; font-weight: 750; line-height: 1.35; }
+.ve-notification-copy > span { color: #5e6f85; font-size: 0.75rem; line-height: 1.5; overflow-wrap: anywhere; }
+.ve-notification-copy time { margin-top: 2px; color: #8492a4; font-size: 0.67rem; }
+.is-read .ve-notification-copy strong { color: #52637a; font-weight: 650; }
+.ve-notification-dismiss { flex: none; align-self: flex-start; width: 30px; height: 30px; margin: 11px 10px 0 0; color: #7b8a9d; border-color: transparent; border-radius: 8px; }
+.ve-notifications-state { display: grid; justify-items: center; gap: 8px; padding: 34px 18px; color: #64748b; text-align: center; font-size: 0.78rem; }
+.ve-notifications-state strong { color: #213653; font-size: 0.88rem; }
+.ve-notifications-empty-icon { display: grid; width: 42px; height: 42px; place-items: center; margin-bottom: 3px; color: #0f766e; background: #e5f5f2; border-radius: 13px; }
+@keyframes ve-notifications-enter { from { opacity: 0; transform: translateY(-5px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 .btn-modern-text {
   padding: 0.5rem 0.875rem;
   font-size: 0.875rem;
@@ -843,6 +965,13 @@
   .site-header .profile-id,
   .site-header .profile-chevron { display: none; }
   .site-header .profile-trigger { padding: 4px; }
+  .ve-notifications-panel {
+    position: fixed;
+    top: calc(var(--hdr-h) + 8px);
+    right: 12px;
+    width: min(390px, calc(100vw - 24px));
+    max-height: calc(100dvh - var(--hdr-h) - 20px);
+  }
 }
 @media (max-width: 420px) {
   .header-main-logo { height: 56px; }

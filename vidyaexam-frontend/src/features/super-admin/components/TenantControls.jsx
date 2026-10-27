@@ -18,17 +18,24 @@ export function TenantSelect({ id, value, options, onChange, label, placement = 
   const [menuPosition, setMenuPosition] = useState(null);
   const listId = useId();
   const selected = options.find((option) => String(option.value) === String(value)) || options[0];
+  const inModal = Boolean(rootRef.current?.closest(".ve-modal"));
+  const shouldPortalOptions = portalOptions || inModal;
 
   useEffect(() => {
     if (!open) return undefined;
     const updateMenuPosition = () => {
-      if (!portalOptions || !triggerRef.current) return;
+      if (!shouldPortalOptions || !triggerRef.current) return;
       const rect = triggerRef.current.getBoundingClientRect();
       const width = Math.min(Math.max(rect.width, compact ? 86 : 0), window.innerWidth - 24);
       const left = Math.min(Math.max(12, rect.left), window.innerWidth - width - 12);
-      setMenuPosition(placement === "top"
-        ? { position: "fixed", left, bottom: window.innerHeight - rect.top + 7, width, zIndex: 2000 }
-        : { position: "fixed", left, top: rect.bottom + 7, width, zIndex: 2000 });
+      const below = Math.max(0, window.innerHeight - rect.bottom - 14);
+      const above = Math.max(0, rect.top - 14);
+      const openAbove = placement === "top" || (below < 260 && above > below);
+      const maxHeight = Math.min(260, openAbove ? above : below);
+      const zIndex = inModal ? 10020 : 2000;
+      setMenuPosition(openAbove
+        ? { position: "fixed", left, top: "auto", bottom: window.innerHeight - rect.top + 7, width, maxHeight, zIndex }
+        : { position: "fixed", left, top: rect.bottom + 7, bottom: "auto", width, maxHeight, zIndex });
     };
     updateMenuPosition();
     (optionsRef.current?.querySelector('[aria-selected="true"]') || optionsRef.current?.querySelector('[role="option"]'))?.focus();
@@ -43,7 +50,7 @@ export function TenantSelect({ id, value, options, onChange, label, placement = 
       window.removeEventListener("resize", updateMenuPosition);
       window.removeEventListener("scroll", updateMenuPosition, true);
     };
-  }, [open, portalOptions, compact, placement]);
+  }, [open, shouldPortalOptions, inModal, compact, placement]);
 
   function handleKeyDown(event) {
     if (event.key === "Escape") {
@@ -73,14 +80,14 @@ export function TenantSelect({ id, value, options, onChange, label, placement = 
         <span>{selected?.label}</span><ChevronDown size={16} aria-hidden="true" />
       </button>
       {open && (() => {
-        const menu = <div className={`sa-custom-select-options is-${placement}${portalOptions ? " is-portaled" : ""}${className ? ` ${className}-options` : ""}`} id={listId} role="listbox" aria-label={label} ref={optionsRef} style={portalOptions ? menuPosition || undefined : undefined}>
+        const menu = <div className={`sa-custom-select-options is-${placement}${shouldPortalOptions ? " is-portaled" : ""}${className ? ` ${className}-options` : ""}`} id={listId} role="listbox" aria-label={label} ref={optionsRef} style={shouldPortalOptions ? menuPosition || undefined : undefined}>
           {options.map((option) => (
             <button key={String(option.value)} type="button" role="option" aria-selected={String(option.value) === String(value)} tabIndex={0} onClick={() => choose(option)}>
               <span>{option.label}</span>{String(option.value) === String(value) && <Check size={16} aria-hidden="true" />}
             </button>
           ))}
         </div>;
-        return portalOptions ? createPortal(menu, document.body) : menu;
+        return shouldPortalOptions ? createPortal(menu, document.body) : menu;
       })()}
     </div>
   );
