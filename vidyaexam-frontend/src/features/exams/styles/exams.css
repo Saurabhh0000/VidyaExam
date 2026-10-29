@@ -51,6 +51,13 @@
 .ve-exam-status-filter-options { gap: 5px; padding: 8px; border-color: #d5e5e2; border-radius: 16px; box-shadow: 0 16px 34px rgb(23 43 77 / 16%); }
 .ve-exam-status-filter-options > button { min-height: 44px; padding: 9px 12px; border-radius: 10px; font-size: .84rem; }
 .ve-exam-status-filter-options > button[aria-selected="true"] { color: #075e58; background: #e7f5f2; border-radius: 8px; font-weight: 750; }
+.ve-exam-category-select, .ve-exam-section-select { width: 100%; }
+.ve-exam-category-select .sa-custom-select-trigger, .ve-exam-section-select .sa-custom-select-trigger { min-height: 43px; padding: 0 12px; border-color: #d5e1e3; border-radius: 10px; box-shadow: none; font-size: .85rem; }
+.ve-exam-category-select .sa-custom-select-trigger:hover, .ve-exam-section-select .sa-custom-select-trigger:hover { border-color: #9fcac3; }
+.ve-exam-category-select .sa-custom-select-options, .ve-exam-section-select .sa-custom-select-options { gap: 5px; padding: 7px; border-color: #d5e5e2; border-radius: 12px; box-shadow: 0 16px 34px rgb(23 43 77 / 16%); }
+.ve-exam-category-select-options > button, .ve-exam-section-select-options > button { min-height: 42px; padding: 9px 11px; border-radius: 9px; font-size: .83rem; }
+.ve-exam-category-select-options > button[aria-selected="true"], .ve-exam-section-select-options > button[aria-selected="true"] { color: #075e58; background: #e7f5f2; font-weight: 750; }
+.ve-exam-field.has-error .ve-exam-category-select .sa-custom-select-trigger { border-color: #d92d3a; box-shadow: 0 0 0 3px rgba(217, 45, 58, .1); }
 .ve-exam-view-toggle { display: inline-flex; align-items: center; gap: 3px; padding: 3px; background: #f0f6f5; border: 1px solid #d9e8e6; border-radius: 11px; }
 .ve-exam-view-toggle button { display: grid; place-items: center; width: 36px; height: 34px; color: #71839a; background: transparent; border: 0; border-radius: 8px; cursor: pointer; }
 .ve-exam-view-toggle button.is-active { color: #fff; background: #0f766e; box-shadow: 0 2px 6px rgb(15 118 110 / 18%); }
@@ -371,6 +378,32 @@
   .ve-exam-footer { padding-inline: 13px; }
   .ve-exam-grid { grid-template-columns: minmax(0, 1fr); padding-inline: 10px; }
   .ve-exam-sections-grid { grid-template-columns: minmax(0, 1fr); padding-inline: 10px; }
+}
+
+/* The create-exam wizard gets a wider, denser desktop canvas. */
+@media (min-width: 761px) {
+  .ve-exam-modal:has(.ve-exam-create-stepper) { width: min(1240px, calc(100vw - 64px)); max-width: 1240px; max-height: min(92dvh, 920px); }
+  .ve-exam-modal:has(.ve-exam-create-stepper) > .ve-modal-content { padding: 18px 28px; scrollbar-width: none; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) > .ve-modal-content::-webkit-scrollbar { display: none; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-form { gap: 12px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-create-stepper { gap: 9px; padding-bottom: 0; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-create-stepper li { gap: 8px; padding: 9px 12px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-form-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px 16px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-field--title,
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-field--category { grid-column: span 3; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) :is(.ve-exam-field--duration, .ve-exam-field--total-marks, .ve-exam-field--passing-marks, .ve-exam-field--max-attempts, .ve-exam-field--starts-at, .ve-exam-field--ends-at) { grid-column: span 2; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-field { gap: 5px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) input[type="datetime-local"] { cursor: pointer; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-field textarea { min-height: 54px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-field textarea[rows="3"] { min-height: 64px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-batch-picker { gap: 7px; padding: 10px 12px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-batch-list { max-height: 145px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-create-staged-sections { gap: 6px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-create-staged-sections > section { gap: 9px; padding: 9px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-staged-section-content { gap: 6px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-staged-question { padding-block: 5px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-create-step-actions { padding-top: 9px; }
+  .ve-exam-modal:has(.ve-exam-create-stepper) .ve-exam-modal-actions { margin-top: 8px; }
 }
 
 /* Keep the Admin and Super Admin Exams workspace compact like Master Batches. */

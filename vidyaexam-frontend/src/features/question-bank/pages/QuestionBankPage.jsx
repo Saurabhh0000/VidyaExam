@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { useLocation } from "react-router-dom";
 import { jsPDF } from "jspdf";
@@ -186,6 +186,7 @@ function optionRows(options) {
 
 function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopics, batches, batchesStatus, batchesError, onRetryBatches, isSuperAdmin, submitting, canCreate, onCancel, onSubmit }) {
   const editing = Boolean(initial?.question_id);
+  const correctOptionGroup = useId();
   const [topicId, setTopicId] = useState(asText(initial?.topic_id));
   const [batchId, setBatchId] = useState(asText(initial?.batch_id));
   const [questionType, setQuestionType] = useState(initial?.question_type || "SINGLE_CHOICE");
@@ -280,7 +281,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
   return (
     <form className="qb-form" onSubmit={submit} noValidate>
       <div className="qb-form-grid">
-        <label className="qb-field qb-field--wide">
+        <label className="qb-field qb-field--wide qb-field--topic">
           <span>Topic <b>*</b></span>
           {editing ? (
             <input value={initial?.topic_name || asTopicName(topics.find((topic) => asTopicId(topic) === topicId))} readOnly aria-readonly="true" />
@@ -300,7 +301,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {topicsStatus === "error" && <small className="qb-field-error">{topicsError} <button type="button" className="qb-inline-action" onClick={onRetryTopics}>Retry</button></small>}
           {topicsStatus === "ready" && !topics.length && !editing && <small className="qb-field-hint">No topics are available yet. Add a topic in Taxonomy first.</small>}
         </label>
-        {!isSuperAdmin && <label className="qb-field qb-field--wide">
+        {!isSuperAdmin && <label className="qb-field qb-field--batch">
           <span>Batch / class <b>*</b></span>
           <DropdownSelect
             className="qb-form-select"
@@ -316,7 +317,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {batchesStatus === "error" && <small className="qb-field-error">{batchesError} <button type="button" className="qb-inline-action" onClick={onRetryBatches}>Retry</button></small>}
           {batchesStatus === "ready" && !batches.length && <small className="qb-field-hint">Create a batch in Master before adding questions.</small>}
         </label>}
-        <label className="qb-field">
+        <label className="qb-field qb-field--question-type">
           <span>Question type <b>*</b></span>
           <DropdownSelect
             className="qb-form-select"
@@ -330,7 +331,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           {errors.questionType && <small className="qb-field-error">{errors.questionType}</small>}
           {editing && <small className="qb-field-hint">Question type cannot be changed by the documented update API.</small>}
         </label>
-        <label className="qb-field">
+        <label className="qb-field qb-field--difficulty">
           <span>Difficulty <b>*</b></span>
           <DropdownSelect
             className="qb-form-select"
@@ -342,6 +343,16 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           />
           {errors.difficulty && <small className="qb-field-error">{errors.difficulty}</small>}
         </label>
+        <label className="qb-field qb-field--marks">
+          <span>Default marks <b>*</b></span>
+          <input type="number" min="0.01" step="any" required value={marks} onChange={(event) => setMarks(event.target.value)} aria-invalid={Boolean(errors.marks)} />
+          {errors.marks && <small className="qb-field-error">{errors.marks}</small>}
+        </label>
+        <label className="qb-field qb-field--negative-marks">
+          <span>Negative marks <b>*</b></span>
+          <input type="number" min="0" max={marks || undefined} step="any" required value={negativeMarks} onChange={(event) => setNegativeMarks(event.target.value)} aria-invalid={Boolean(errors.negativeMarks)} />
+          {errors.negativeMarks && <small className="qb-field-error">{errors.negativeMarks}</small>}
+        </label>
         <label className="qb-field qb-field--wide">
           <span>Question <b>*</b></span>
           <textarea rows="3" maxLength={5000} value={questionText} onChange={(event) => setQuestionText(event.target.value)} placeholder="Write your question" aria-invalid={Boolean(errors.questionText)} />
@@ -351,16 +362,6 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
           <span>Explanation <small>(optional)</small></span>
           <textarea rows="2" maxLength={5000} value={explanation} onChange={(event) => setExplanation(event.target.value)} placeholder="Explain the answer" aria-invalid={Boolean(errors.explanation)} />
           {errors.explanation && <small className="qb-field-error">{errors.explanation}</small>}
-        </label>
-        <label className="qb-field">
-          <span>Default marks <b>*</b></span>
-          <input type="number" min="0.01" step="any" required value={marks} onChange={(event) => setMarks(event.target.value)} aria-invalid={Boolean(errors.marks)} />
-          {errors.marks && <small className="qb-field-error">{errors.marks}</small>}
-        </label>
-        <label className="qb-field">
-          <span>Negative marks <b>*</b></span>
-          <input type="number" min="0" max={marks || undefined} step="any" required value={negativeMarks} onChange={(event) => setNegativeMarks(event.target.value)} aria-invalid={Boolean(errors.negativeMarks)} />
-          {errors.negativeMarks && <small className="qb-field-error">{errors.negativeMarks}</small>}
         </label>
       </div>
 
@@ -377,7 +378,7 @@ function QuestionForm({ initial, topics, topicsStatus, topicsError, onRetryTopic
         {options.map((option, index) => (
           <div className="qb-option-editor-row" key={`${index}-${option.option_key}`}>
             <label className="qb-correct-choice" aria-label={`Mark option ${optionKey(index)} correct`}>
-              <input type={questionType === "MULTIPLE_CHOICE" ? "checkbox" : "radio"} name="qb-correct-option" checked={option.is_correct} onChange={() => setOptions((current) => current.map((item, i) => i !== index ? item : { ...item, is_correct: questionType === "MULTIPLE_CHOICE" ? !item.is_correct : true }))} />
+              <input type={questionType === "MULTIPLE_CHOICE" ? "checkbox" : "radio"} name={`qb-correct-option-${correctOptionGroup}`} checked={option.is_correct} onChange={(event) => { const checked = event.currentTarget.checked; setOptions((current) => current.map((item, i) => questionType === "MULTIPLE_CHOICE" ? (i === index ? { ...item, is_correct: checked } : item) : { ...item, is_correct: i === index && checked })); }} />
               <span>{optionKey(index)}</span>
             </label>
             <input aria-label={`Option ${optionKey(index)} text`} maxLength={1000} value={option.option_text} onChange={(event) => changeOption(index, "option_text", event.target.value)} placeholder={`Option ${optionKey(index)}`} />
@@ -978,7 +979,7 @@ export default function QuestionBankPage({ initialCreate = false, compact = fals
               </>}
     </section>
 
-    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : role === "SUPER_ADMIN" ? "Add a question to the question bank for the selected topic." : "Add a question to the question bank for the selected topic and batch."} size="lg" className="qb-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} batches={batches} batchesStatus={batchesStatus} batchesError={batchesError} onRetryBatches={() => setBatchesRefresh((value) => value + 1)} isSuperAdmin={role === "SUPER_ADMIN"} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
+    {formOpen && <Modal isOpen onClose={() => { if (!submitting) { setFormOpen(false); setFormInitial(null); } }} title={formInitial ? "Edit question" : "Create question"} description={formInitial ? "Update the supported question fields and answer options." : role === "SUPER_ADMIN" ? "Add a question to the question bank for the selected topic." : "Add a question to the question bank for the selected topic and batch."} size="xl" className="qb-modal qb-question-form-modal" closeOnEscape={!submitting} closeOnOverlay={!submitting}><QuestionForm key={formInitial?.question_id || "create"} initial={formInitial} topics={topics} topicsStatus={topicsStatus} topicsError={topicsError} onRetryTopics={refreshTopics} batches={batches} batchesStatus={batchesStatus} batchesError={batchesError} onRetryBatches={() => setBatchesRefresh((value) => value + 1)} isSuperAdmin={role === "SUPER_ADMIN"} submitting={submitting} canCreate={role === "SUPER_ADMIN" || Boolean(tenantId)} onCancel={() => { setFormOpen(false); setFormInitial(null); }} onSubmit={submitQuestion} /></Modal>}
     {bulkOpen && <Modal isOpen onClose={() => { if (!bulkSubmitting) { setBulkOpen(false); setBulkRows([]); setBulkResult(null); setBulkFileName(""); } }} title={bulkResult ? "Bulk upload results" : "Add questions in bulk"} description={bulkResult ? `Upload summary for ${bulkFileName || "your CSV file"}.` : "Upload a CSV, review its contents, then add valid questions to the bank."} size="lg" className="qb-modal qb-bulk-modal" closeOnEscape={!bulkSubmitting} closeOnOverlay={!bulkSubmitting}>
       <div className="qb-bulk-content">
         {!bulkResult ? <>
